@@ -1404,7 +1404,12 @@ function frame(t) {
     approach(orb, 'peak', active ? A.stats.peak : 0, dt, 0.08, 0.6);
     const warmth = 0.4 * cl((orb.peak - 0.3) / 0.5, 0, 1);
     approach(orb, 'heat', Math.max(heatValue(orb.peak, m.pure ? m.hz : m.carrier), warmth), dt, 0.15, 0.9);
-    if (box.clientWidth && box.clientHeight) drawOrb(ocv, box.clientWidth, box.clientHeight, orb);
+    if (box.clientWidth && box.clientHeight) {
+      const mi = Math.max(0, MOODS.findIndex((q) => q.key === m.key)), hz = m.pure ? m.hz : m.carrier;
+      const x = cl(0.75 * (0.04 + 0.92 * mi / Math.max(1, MOODS.length - 1)) + 0.25 * Math.log(cl(hz || 200, 20, 1000) / 20) / Math.log(50), 0, 1);
+      const ok = typeof drawWaterVis === 'function' && drawWaterVis(ocv, box.clientWidth, box.clientHeight, { x, level: Math.max(orb.amp, orb.peak * 0.8), key: m.key, serial: s.chordSerial }, dt);
+      if (!ok) { ocv.style.visibility = ''; drawOrb(ocv, box.clientWidth, box.clientHeight, orb); }
+    }
   }
   const rcv = pageEl.querySelector('[data-ring]');
   if (rcv) {
