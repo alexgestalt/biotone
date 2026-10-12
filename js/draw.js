@@ -123,15 +123,137 @@ function drawOrb(cv,w,h,f){
  const dot=2.5+3.5*e;g.fillStyle=`rgba(255,255,255,${.55+.35*e})`;g.beginPath();g.arc(c.x,c.y,dot,0,Math.PI*2);g.fill();
 }
 
-// GlowRing (one frame)
-function drawGlowRing(cv,size,breath,angleDeg){
- const g=setupCanvas(cv,size,size);const s=1+.02*breath;const c=size/2;const r=(size-24)/2;
- g.translate(c,c);g.scale(s,s);
- g.strokeStyle='rgba(255,199,31,.10)';g.lineWidth=20;g.beginPath();g.arc(0,0,r,0,Math.PI*2);g.stroke();
- let cg='#FFC71F';
- if(g.createConicGradient){cg=g.createConicGradient((angleDeg-90)*Math.PI/180,0,0);
- cg.addColorStop(0,'#FFC71F');cg.addColorStop(1/3,'rgba(255,128,20,.7)');cg.addColorStop(2/3,'rgba(255,199,31,.4)');cg.addColorStop(1,'#FFC71F');}
- g.shadowColor=`rgba(255,199,31,${.35+.45*breath})`;g.shadowBlur=(8+16*breath)*g._d;
- g.strokeStyle=cg;g.lineWidth=3;g.beginPath();g.arc(0,0,r,0,Math.PI*2);g.stroke();
+// Living glow ring: soft petals, curl-noise drift, thin filaments, one breathing edge.
+// State lives in typed arrays so a frame does not allocate.
+const RINGP = { n: 0, x: null, y: null, vx: null, vy: null, seed: null, sz: null, kind: null, time: 0 };
+function hash2(ix, iy) {
+  let n = Math.imul(ix, 374761393) + Math.imul(iy, 668265263);
+  n = Math.imul(n ^ (n >>> 13), 1274126177);
+  return ((n ^ (n >>> 16)) >>> 0) * 2.3283064365386963e-10;
+}
+function noise2(x, y) {
+  const xi = Math.floor(x), yi = Math.floor(y);
+  const xf = x - xi, yf = y - yi;
+  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+  const a = hash2(xi, yi), b = hash2(xi + 1, yi), c = hash2(xi, yi + 1), d = hash2(xi + 1, yi + 1);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+let curlX = 0, curlY = 0;
+function curlAt(x, y) {
+  const e = 0.18;
+  const nN = noise2(x, y + e), nS = noise2(x, y - e), nE = noise2(x + e, y), nW = noise2(x - e, y);
+  curlX = nN - nS; curlY = nW - nE;
+}
+function ringBudget() { return window.innerWidth < 700 ? 180 : 240; }
+function ensureRingParticles() {
+  const n = ringBudget();
+  if (RINGP.n === n && RINGP.x) return;
+  RINGP.n = n;
+  RINGP.x = new Float32Array(n); RINGP.y = new Float32Array(n);
+  RINGP.vx = new Float32Array(n); RINGP.vy = new Float32Array(n);
+  RINGP.seed = new Float32Array(n); RINGP.sz = new Float32Array(n); RINGP.kind = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    const a = hash2(i, 1) * Math.PI * 2;
+    const rad = 0.4 + hash2(i, 2) * 0.46;
+    RINGP.x[i] = Math.cos(a) * rad; RINGP.y[i] = Math.sin(a) * rad;
+    RINGP.seed[i] = hash2(i, 3); RINGP.sz[i] = 0.9 + hash2(i, 4) * 2.1; RINGP.kind[i] = hash2(i, 5) > 0.58 ? 1 : 0;
+  }
+}
+function stepRingParticles(dt, energy) {
+  if (!(dt > 0) || !RINGP.x) return;
+  const t = RINGP.time, n = RINGP.n;
+  const flow = 0.2 + 0.28 * energy;
+  const k = 1 - Math.exp(-dt / 0.85);
+  for (let i = 0; i < n; i++) {
+    const s = RINGP.seed[i];
+    const x = RINGP.x[i], y = RINGP.y[i];
+    curlAt(x * 1.35 + s * 4.0, y * 1.35 - s * 2.0 + t * 0.07);
+    let vx = RINGP.vx[i] + (curlX * flow - y * 0.11 - RINGP.vx[i]) * k;
+    let vy = RINGP.vy[i] + (curlY * flow + x * 0.11 - RINGP.vy[i]) * k;
+    let nx = x + vx * dt, ny = y + vy * dt;
+    const r = Math.hypot(nx, ny) || 1e-4;
+    if (r > 0.9) {
+      const scl = 0.9 / r; nx *= scl; ny *= scl;
+      vx *= 0.25; vy *= 0.25;
+    } else if (r < 0.38) {
+      const push = (0.38 - r) * 2.2;
+      vx += (nx / r) * push * dt; vy += (ny / r) * push * dt;
+    }
+    RINGP.x[i] = nx; RINGP.y[i] = ny; RINGP.vx[i] = vx; RINGP.vy[i] = vy;
+  }
+  RINGP.time += dt;
+}
+function ringParticleCount() { return RINGP.n; }
+// f: { breath, energy, heat, beatPhase } all smoothed, 0..1 (beatPhase wraps 0..1)
+function drawLivingRing(cv, w, h, f, dt) {
+  const g = setupCanvas(cv, w, h);
+  ensureRingParticles();
+  stepRingParticles(dt, f.energy || 0);
+  const base = heatColor(f.heat || 0);
+  const col = css(base, 1);
+  const R = Math.min(w, h) * 0.5 - 11;
+  const breath = f.breath || 0;
+  const energy = f.energy || 0;
+  const beat = Math.sin((f.beatPhase || 0) * Math.PI * 2);
+  const scale = 1 + 0.042 * breath;
+  g.translate(w / 2, h / 2);
+  g.scale(scale, scale);
+  g.globalCompositeOperation = 'source-over';
+  g.fillStyle = col;
+  g.globalAlpha = 0.045 + 0.07 * energy;
+  g.beginPath(); g.arc(0, 0, R * 0.98, 0, Math.PI * 2); g.fill();
+  g.globalCompositeOperation = 'lighter';
+  const seg = 64;
+  const phase = RINGP.time;
+  for (let i = 0; i < 7; i++) {
+    const rad = R * (0.4 + i * 0.08) * (1 + 0.012 * beat * (0.45 + 0.55 * energy));
+    const rot = phase * (0.04 + 0.012 * i) * (i % 2 ? -1 : 1);
+    g.beginPath();
+    for (let k = 0; k <= seg; k++) {
+      const th = k / seg * Math.PI * 2;
+      const wob = 0.014 * Math.sin(2 * th + phase * 0.35 + i) + 0.008 * Math.sin(3 * th - phase * 0.22 + i * 1.4);
+      const rr = rad * (1 + wob);
+      const a = th + rot;
+      const x = rr * Math.cos(a), y = rr * Math.sin(a);
+      if (k) g.lineTo(x, y); else g.moveTo(x, y);
+    }
+    g.closePath();
+    g.strokeStyle = col;
+    g.globalAlpha = Math.min(0.85, 0.26 + 0.4 * energy * (1 - i / 12));
+    g.lineWidth = 0.85 + (1 - i / 7) * 0.65;
+    g.stroke();
+  }
+  const n = RINGP.n;
+  const pulse = 1 + 0.045 * beat * (0.35 + 0.65 * energy);
+  for (let i = 0; i < n; i++) {
+    const x = RINGP.x[i] * R, y = RINGP.y[i] * R;
+    const sz = RINGP.sz[i] * (1.15 + 1.05 * energy) * pulse;
+    const a = Math.min(0.8, (0.2 + 0.48 * energy) * (0.7 + 0.4 * RINGP.seed[i]));
+    g.fillStyle = col;
+    if (RINGP.kind[i]) {
+      const ang = Math.atan2(RINGP.vy[i] + 0.02, RINGP.vx[i] + 0.02);
+      g.save();
+      g.translate(x, y); g.rotate(ang);
+      g.globalAlpha = a * 0.28;
+      g.beginPath(); g.ellipse(0, 0, sz * 2.5, sz * 0.72, 0, 0, Math.PI * 2); g.fill();
+      g.globalAlpha = a;
+      g.beginPath(); g.ellipse(0, 0, sz * 1.15, sz * 0.36, 0, 0, Math.PI * 2); g.fill();
+      g.restore();
+    } else {
+      g.globalAlpha = a * 0.22;
+      g.beginPath(); g.arc(x, y, sz * 2.15, 0, Math.PI * 2); g.fill();
+      g.globalAlpha = a;
+      g.beginPath(); g.arc(x, y, sz * 0.62, 0, Math.PI * 2); g.fill();
+    }
+  }
+  g.globalAlpha = 0.18 + 0.2 * breath;
+  g.lineWidth = 12;
+  g.strokeStyle = col;
+  g.beginPath(); g.arc(0, 0, R, 0, Math.PI * 2); g.stroke();
+  g.globalAlpha = 0.7 + 0.3 * breath;
+  g.lineWidth = 2.4;
+  g.beginPath(); g.arc(0, 0, R, 0, Math.PI * 2); g.stroke();
+  g.globalAlpha = 1;
+  g.globalCompositeOperation = 'source-over';
 }
 
