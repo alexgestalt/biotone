@@ -235,9 +235,11 @@ canvas{display:block}
 .vhint{text-align:center;font-size:11px;font-weight:600;color:rgba(148,148,148,.75);margin-top:-6px;flex:none}
 /* Opening Schumann ring: large, square, number centered over the canvas. */
 #page-schumann{gap:4px;padding:4px 2px 4px 6px}
-#page-schumann .ringflex{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center}
-#page-schumann .ringstage{position:relative;flex:none;container-type:size}
+#page-schumann .ringflex{flex:1 1 auto;min-height:0;position:relative}
+#page-schumann .ringstage{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);container-type:size;pointer-events:none;z-index:1}
+#page-schumann .hdr,#page-schumann .resrow,#page-schumann .vhint,#page-schumann .sch-controls{position:relative;z-index:2}
 #page-schumann .ringstage canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#page-schumann .ringstage .vnum{pointer-events:auto}
 #page-schumann .ringlabel{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none;padding:14%}
 #page-schumann .ringnum{display:flex;align-items:baseline;gap:.12em}
 #page-schumann .ringstage .vnum{font-size:clamp(52px,28cqmin,108px);line-height:.95;padding:.04em .16em;text-shadow:0 2px 18px rgba(0,0,0,.8)}

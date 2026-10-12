@@ -123,9 +123,18 @@ function drawOrb(cv,w,h,f){
  const dot=2.5+3.5*e;g.fillStyle=`rgba(255,255,255,${.55+.35*e})`;g.beginPath();g.arc(c.x,c.y,dot,0,Math.PI*2);g.fill();
 }
 
-// Living glow ring: soft petals, curl-noise drift, thin filaments, one breathing edge.
-// State lives in typed arrays so a frame does not allocate.
-const RINGP = { n: 0, x: null, y: null, vx: null, vy: null, seed: null, sz: null, kind: null, time: 0 };
+// Opening-page sound field. One canvas, typed-array state, a prebuilt hue palette.
+// Motion stays slow: noise drift, a ~5.5 s breath, rings that take several seconds
+// to cross the disc. The binaural rate only shimmers the interference pattern.
+const VIS_BANDS = 8;
+const TAU = Math.PI * 2;
+const PAL_N = 96;
+const PAL = new Array(PAL_N);
+const PAL_HOT = new Array(PAL_N);
+const EDGE_N = 80;
+const RINGP = { n: 0, x: null, y: null, ang: null, rad: null, seed: null, sz: null, band: null, bright: null, time: 0 };
+const EMIT = { n: 10, r: null, amp: null, band: null, alive: null, acc: 0 };
+
 function hash2(ix, iy) {
   let n = Math.imul(ix, 374761393) + Math.imul(iy, 668265263);
   n = Math.imul(n ^ (n >>> 13), 1274126177);
@@ -138,121 +147,281 @@ function noise2(x, y) {
   const a = hash2(xi, yi), b = hash2(xi + 1, yi), c = hash2(xi, yi + 1), d = hash2(xi + 1, yi + 1);
   return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
 }
-let curlX = 0, curlY = 0;
-function curlAt(x, y) {
-  const e = 0.18;
-  const nN = noise2(x, y + e), nS = noise2(x, y - e), nE = noise2(x + e, y), nW = noise2(x - e, y);
-  curlX = nN - nS; curlY = nW - nE;
+// Gold at 200 Hz, then amber, orange, rose, violet as frequency rises (log).
+function paletteHue(t) {
+  if (t <= 0) return 46;
+  if (t >= 1) return -78;
+  if (t < 0.22) return 46 + (32 - 46) * (t / 0.22);
+  if (t < 0.46) return 32 + (14 - 32) * ((t - 0.22) / 0.24);
+  if (t < 0.72) return 14 + (-8 - 14) * ((t - 0.46) / 0.26);
+  return -8 + (-78 + 8) * ((t - 0.72) / 0.28);
 }
-function ringBudget() { return window.innerWidth < 700 ? 180 : 240; }
+function hslTo(h, s, l, out) {
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const hp = h / 60;
+  const x = c * (1 - Math.abs((hp % 2) - 1));
+  let r = 0, g = 0, b = 0;
+  if (hp < 1) { r = c; g = x; }
+  else if (hp < 2) { r = x; g = c; }
+  else if (hp < 3) { g = c; b = x; }
+  else if (hp < 4) { g = x; b = c; }
+  else if (hp < 5) { r = x; b = c; }
+  else { r = c; b = x; }
+  const m = l - c * 0.5;
+  out[0] = r + m; out[1] = g + m; out[2] = b + m;
+}
+function rgbCss(rgb) {
+  return 'rgb(' + (rgb[0] * 255 + 0.5 | 0) + ',' + (rgb[1] * 255 + 0.5 | 0) + ',' + (rgb[2] * 255 + 0.5 | 0) + ')';
+}
+(function buildPalette() {
+  const rgb = [0, 0, 0];
+  for (let i = 0; i < PAL_N; i++) {
+    let h = paletteHue(i / (PAL_N - 1));
+    h %= 360; if (h < 0) h += 360;
+    hslTo(h, 0.98, 0.58, rgb); PAL[i] = rgbCss(rgb);
+    hslTo(h, 0.48, 0.88, rgb); PAL_HOT[i] = rgbCss(rgb);
+  }
+})();
+function palIndex(t) {
+  if (t <= 0) return 0;
+  if (t >= 1) return PAL_N - 1;
+  return (t * (PAL_N - 1) + 0.5) | 0;
+}
+// Log-frequency position. 200 Hz is gold; beat rate and loudness ease it toward rose.
+function freqTint(hz, beat, amp) {
+  const f = hz < 40 ? 40 : (hz > 8000 ? 8000 : hz);
+  const t = (Math.log(f) - Math.log(200)) / (Math.log(2800) - Math.log(200));
+  const beatPush = (beat > 0 ? (beat > 40 ? 40 : beat) : 0) / 140;
+  const a = amp > 0 ? (amp < 1 ? amp : 1) : 0;
+  let v = t + beatPush + a * 0.1;
+  if (v < 0) v = 0; else if (v > 1) v = 1;
+  return v;
+}
+function prepSpectrumEdges(sr, fftSize, loArr, hiArr) {
+  const bins = fftSize >> 1;
+  const ny = sr * 0.5;
+  const log0 = Math.log(45), log1 = Math.log(Math.min(12000, ny * 0.92));
+  for (let i = 0; i < VIS_BANDS; i++) {
+    const aHz = Math.exp(log0 + (log1 - log0) * (i / VIS_BANDS));
+    const bHz = Math.exp(log0 + (log1 - log0) * ((i + 1) / VIS_BANDS));
+    let lo = Math.floor(aHz / ny * bins);
+    let hi = Math.ceil(bHz / ny * bins);
+    if (lo < 1) lo = 1;
+    if (hi <= lo) hi = lo + 1;
+    if (hi > bins) hi = bins;
+    loArr[i] = lo; hiArr[i] = hi;
+  }
+}
+function fillSpectrum(freq, loArr, hiArr, out) {
+  for (let b = 0; b < VIS_BANDS; b++) {
+    let peak = 0;
+    const a = loArr[b], c = hiArr[b];
+    for (let k = a; k < c; k++) { const v = freq[k]; if (v > peak) peak = v; }
+    out[b] = peak * (1 / 255);
+  }
+}
+// Lub-dub inside a 5.5 s cycle, plus a slower swell. Never a fast blink.
+function heartWave(time) {
+  const ph = time / 5.5 - Math.floor(time / 5.5);
+  const lub = Math.exp(-((ph - 0.08) * (ph - 0.08)) / 0.0018);
+  const dub = 0.7 * Math.exp(-((ph - 0.22) * (ph - 0.22)) / 0.0022);
+  const slow = 0.5 + 0.5 * Math.sin(time * (TAU / 5.6));
+  const h = lub + dub; return 0.45 * slow + 0.55 * (h < 1 ? h : 1);
+}
+function ringBudget() { return window.innerWidth < 700 ? 112 : 160; }
 function ensureRingParticles() {
   const n = ringBudget();
-  if (RINGP.n === n && RINGP.x) return;
-  RINGP.n = n;
-  RINGP.x = new Float32Array(n); RINGP.y = new Float32Array(n);
-  RINGP.vx = new Float32Array(n); RINGP.vy = new Float32Array(n);
-  RINGP.seed = new Float32Array(n); RINGP.sz = new Float32Array(n); RINGP.kind = new Uint8Array(n);
-  for (let i = 0; i < n; i++) {
-    const a = hash2(i, 1) * Math.PI * 2;
-    const rad = 0.4 + hash2(i, 2) * 0.46;
-    RINGP.x[i] = Math.cos(a) * rad; RINGP.y[i] = Math.sin(a) * rad;
-    RINGP.seed[i] = hash2(i, 3); RINGP.sz[i] = 0.9 + hash2(i, 4) * 2.1; RINGP.kind[i] = hash2(i, 5) > 0.58 ? 1 : 0;
+  if (RINGP.n !== n || !RINGP.x) {
+    RINGP.n = n;
+    RINGP.x = new Float32Array(n); RINGP.y = new Float32Array(n);
+    RINGP.ang = new Float32Array(n); RINGP.rad = new Float32Array(n);
+    RINGP.seed = new Float32Array(n); RINGP.sz = new Float32Array(n);
+    RINGP.band = new Uint8Array(n); RINGP.bright = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const b = i % VIS_BANDS;
+      RINGP.band[i] = b;
+      RINGP.ang[i] = hash2(i, 1) * TAU;
+      RINGP.rad[i] = 0.16 + b * 0.075 + hash2(i, 2) * 0.04;
+      RINGP.seed[i] = hash2(i, 3);
+      RINGP.sz[i] = 0.85 + hash2(i, 4) * 1.7;
+      RINGP.bright[i] = 0.22;
+      RINGP.x[i] = Math.cos(RINGP.ang[i]) * RINGP.rad[i];
+      RINGP.y[i] = Math.sin(RINGP.ang[i]) * RINGP.rad[i];
+    }
+  }
+  if (!EMIT.r) {
+    EMIT.r = new Float32Array(EMIT.n);
+    EMIT.amp = new Float32Array(EMIT.n);
+    EMIT.band = new Uint8Array(EMIT.n);
+    EMIT.alive = new Uint8Array(EMIT.n);
+    for (let i = 0; i < 4; i++) {
+      EMIT.alive[i] = 1;
+      EMIT.r[i] = 0.24 + i * 0.16;
+      EMIT.amp[i] = 0.5;
+      EMIT.band[i] = (i * 2) % VIS_BANDS;
+    }
   }
 }
-function stepRingParticles(dt, energy) {
+function stepRingField(dt, energy, bands) {
   if (!(dt > 0) || !RINGP.x) return;
   const t = RINGP.time, n = RINGP.n;
-  const flow = 0.2 + 0.28 * energy;
-  const k = 1 - Math.exp(-dt / 0.85);
+  const kRad = 1 - Math.exp(-dt / 0.7);
+  const kBr = 1 - Math.exp(-dt / 0.28);
   for (let i = 0; i < n; i++) {
-    const s = RINGP.seed[i];
-    const x = RINGP.x[i], y = RINGP.y[i];
-    curlAt(x * 1.35 + s * 4.0, y * 1.35 - s * 2.0 + t * 0.07);
-    let vx = RINGP.vx[i] + (curlX * flow - y * 0.11 - RINGP.vx[i]) * k;
-    let vy = RINGP.vy[i] + (curlY * flow + x * 0.11 - RINGP.vy[i]) * k;
-    let nx = x + vx * dt, ny = y + vy * dt;
-    const r = Math.hypot(nx, ny) || 1e-4;
-    if (r > 0.9) {
-      const scl = 0.9 / r; nx *= scl; ny *= scl;
-      vx *= 0.25; vy *= 0.25;
-    } else if (r < 0.38) {
-      const push = (0.38 - r) * 2.2;
-      vx += (nx / r) * push * dt; vy += (ny / r) * push * dt;
-    }
-    RINGP.x[i] = nx; RINGP.y[i] = ny; RINGP.vx[i] = vx; RINGP.vy[i] = vy;
+    const b = RINGP.band[i];
+    const e = bands ? bands[b] : 0;
+    const target = 0.16 + b * 0.072 + e * 0.14;
+    const rad = RINGP.rad[i] + (target - RINGP.rad[i]) * kRad;
+    const dir = (i & 1) ? 1 : -1;
+    const ang = RINGP.ang[i] + dt * dir * (0.03 + 0.025 * RINGP.seed[i]);
+    const j = (noise2(RINGP.seed[i] * 2.2 + t * 0.045, b * 0.37) - 0.5) * 0.045;
+    RINGP.rad[i] = rad; RINGP.ang[i] = ang;
+    RINGP.x[i] = Math.cos(ang) * (rad + j);
+    RINGP.y[i] = Math.sin(ang) * (rad + j);
+    const bright = 0.16 + 0.84 * e;
+    RINGP.bright[i] += (bright - RINGP.bright[i]) * kBr;
   }
-  RINGP.time += dt;
+  // Travel time is fixed (~7 s). Loudness only changes how often a ring is born.
+  EMIT.acc += dt * (0.34 + 0.55 * (energy || 0));
+  if (EMIT.acc >= 1) {
+    EMIT.acc -= 1;
+    let slot = -1, far = 0;
+    for (let i = 0; i < EMIT.n; i++) {
+      if (!EMIT.alive[i]) { slot = i; break; }
+      if (EMIT.r[i] > EMIT.r[far]) far = i;
+    }
+    if (slot < 0) slot = far;
+    let bi = 0, bv = 0;
+    if (bands) { for (let i = 0; i < VIS_BANDS; i++) if (bands[i] > bv) { bv = bands[i]; bi = i; } }
+    EMIT.alive[slot] = 1;
+    EMIT.r[slot] = 0.14 + bi * 0.012;
+    EMIT.band[slot] = bi;
+    EMIT.amp[slot] = 0.4 + 0.6 * (energy > bv ? energy : bv);
+  }
+  const step = dt * 0.12;
+  for (let i = 0; i < EMIT.n; i++) {
+    if (!EMIT.alive[i]) continue;
+    EMIT.r[i] += step;
+    if (EMIT.r[i] > 1.02) EMIT.alive[i] = 0;
+  }
+  RINGP.time = t + dt;
 }
 function ringParticleCount() { return RINGP.n; }
-// f: { breath, energy, heat, beatPhase } all smoothed, 0..1 (beatPhase wraps 0..1)
+function strokeDisc(g, r) {
+  g.beginPath(); g.arc(0, 0, r, 0, TAU); g.stroke();
+}
+// f: smoothed { breath, energy, tint, beatPhase, shimmer, bands }
 function drawLivingRing(cv, w, h, f, dt) {
   const g = setupCanvas(cv, w, h);
   ensureRingParticles();
-  stepRingParticles(dt, f.energy || 0);
-  const base = heatColor(f.heat || 0);
-  const col = css(base, 1);
-  const R = Math.min(w, h) * 0.5 - 11;
-  const breath = f.breath || 0;
+  const bands = f.bands;
+  stepRingField(dt, f.energy || 0, bands);
+  const tint = f.tint || 0;
   const energy = f.energy || 0;
-  const beat = Math.sin((f.beatPhase || 0) * Math.PI * 2);
-  const scale = 1 + 0.042 * breath;
+  const col = PAL[palIndex(tint)];
+  const hot = PAL_HOT[palIndex(tint)];
+  const t = RINGP.time;
+  const n1 = noise2(t * 0.05, 1.3) - 0.5;
+  const n2 = noise2(2.4, t * 0.037) - 0.5;
+  const breath = heartWave(t) * (0.55 + 0.45 * (f.breath || 0.4));
+  const maxR = Math.min(w, h) * 0.5;
+  let R = (maxR - 8) * (1 + 0.022 * breath + 0.016 * n1);
+  if (R > maxR - 8) R = maxR - 8;
+  const glow = 0.72 + 0.28 * breath + 0.18 * energy;
+  const beatPh = (f.beatPhase || 0) * TAU;
   g.translate(w / 2, h / 2);
-  g.scale(scale, scale);
   g.globalCompositeOperation = 'source-over';
   g.fillStyle = col;
-  g.globalAlpha = 0.045 + 0.07 * energy;
-  g.beginPath(); g.arc(0, 0, R * 0.98, 0, Math.PI * 2); g.fill();
+  g.globalAlpha = 0.09 * glow;
+  g.beginPath(); g.arc(0, 0, R * 0.98, 0, TAU); g.fill();
+  g.globalAlpha = 0.07 * glow;
+  g.beginPath(); g.arc(0, 0, R * 0.5, 0, TAU); g.fill();
   g.globalCompositeOperation = 'lighter';
-  const seg = 64;
-  const phase = RINGP.time;
-  for (let i = 0; i < 7; i++) {
-    const rad = R * (0.4 + i * 0.08) * (1 + 0.012 * beat * (0.45 + 0.55 * energy));
-    const rot = phase * (0.04 + 0.012 * i) * (i % 2 ? -1 : 1);
-    g.beginPath();
-    for (let k = 0; k <= seg; k++) {
-      const th = k / seg * Math.PI * 2;
-      const wob = 0.014 * Math.sin(2 * th + phase * 0.35 + i) + 0.008 * Math.sin(3 * th - phase * 0.22 + i * 1.4);
-      const rr = rad * (1 + wob);
-      const a = th + rot;
-      const x = rr * Math.cos(a), y = rr * Math.sin(a);
-      if (k) g.lineTo(x, y); else g.moveTo(x, y);
-    }
-    g.closePath();
-    g.strokeStyle = col;
-    g.globalAlpha = Math.min(0.85, 0.26 + 0.4 * energy * (1 - i / 12));
-    g.lineWidth = 0.85 + (1 - i / 7) * 0.65;
-    g.stroke();
-  }
-  const n = RINGP.n;
-  const pulse = 1 + 0.045 * beat * (0.35 + 0.65 * energy);
-  for (let i = 0; i < n; i++) {
-    const x = RINGP.x[i] * R, y = RINGP.y[i] * R;
-    const sz = RINGP.sz[i] * (1.15 + 1.05 * energy) * pulse;
-    const a = Math.min(0.8, (0.2 + 0.48 * energy) * (0.7 + 0.4 * RINGP.seed[i]));
-    g.fillStyle = col;
-    if (RINGP.kind[i]) {
-      const ang = Math.atan2(RINGP.vy[i] + 0.02, RINGP.vx[i] + 0.02);
-      g.save();
-      g.translate(x, y); g.rotate(ang);
-      g.globalAlpha = a * 0.28;
-      g.beginPath(); g.ellipse(0, 0, sz * 2.5, sz * 0.72, 0, 0, Math.PI * 2); g.fill();
-      g.globalAlpha = a;
-      g.beginPath(); g.ellipse(0, 0, sz * 1.15, sz * 0.36, 0, 0, Math.PI * 2); g.fill();
-      g.restore();
-    } else {
-      g.globalAlpha = a * 0.22;
-      g.beginPath(); g.arc(x, y, sz * 2.15, 0, Math.PI * 2); g.fill();
-      g.globalAlpha = a;
-      g.beginPath(); g.arc(x, y, sz * 0.62, 0, Math.PI * 2); g.fill();
-    }
-  }
-  g.globalAlpha = 0.18 + 0.2 * breath;
-  g.lineWidth = 12;
   g.strokeStyle = col;
-  g.beginPath(); g.arc(0, 0, R, 0, Math.PI * 2); g.stroke();
-  g.globalAlpha = 0.7 + 0.3 * breath;
-  g.lineWidth = 2.4;
-  g.beginPath(); g.arc(0, 0, R, 0, Math.PI * 2); g.stroke();
+  g.lineJoin = 'round';
+  g.lineCap = 'round';
+  // Spectrum sitting in the disc: each ring is a band, bright when that band is loud.
+  for (let i = 0; i < VIS_BANDS; i++) {
+    const e = bands ? bands[i] : 0;
+    const u = i / (VIS_BANDS - 1);
+    const wob = 0.02 * (noise2(i * 1.7, t * 0.04) - 0.5);
+    const rad = R * (0.3 + u * 0.52) * (1 + wob + 0.03 * e);
+    g.strokeStyle = PAL[palIndex(tint + u * 0.28)];
+    g.globalAlpha = (0.14 + 0.62 * e) * (0.7 + 0.3 * energy);
+    g.lineWidth = 1.15 + 3.4 * e;
+    strokeDisc(g, rad);
+  }
+  // Pulses born near the core, drifting outward. Speed does not follow loudness.
+  for (let i = 0; i < EMIT.n; i++) {
+    if (!EMIT.alive[i]) continue;
+    const u = EMIT.r[i];
+    let life = 1 - (u - 0.14) / 0.9;
+    if (life <= 0) continue;
+    if (life > 1) life = 1;
+    const fade = life * (0.35 + 0.65 * life);
+    g.strokeStyle = PAL[palIndex(tint + EMIT.band[i] * 0.035)];
+    g.globalAlpha = (0.12 + 0.5 * EMIT.amp[i]) * fade;
+    g.lineWidth = 1.4 + 7 * fade;
+    strokeDisc(g, R * u);
+  }
+  // Two close spatial tones. Their product breathes at the binaural rate.
+  const shimmer = f.shimmer || 0.4;
+  const p1 = t * 0.17;
+  const p2 = p1 + beatPh;
+  const amp = 0.012 + 0.02 * shimmer;
+  g.beginPath();
+  for (let k = 0; k < EDGE_N; k++) {
+    const th = k / EDGE_N * TAU;
+    const wave = Math.sin(7 * th + p1) * Math.sin(7 * th + p2);
+    const rr = R * (0.9 + amp * wave + 0.008 * n2 * Math.sin(3 * th + t * 0.2));
+    const x = rr * Math.cos(th), y = rr * Math.sin(th);
+    if (k) g.lineTo(x, y); else g.moveTo(x, y);
+  }
+  g.closePath();
+  g.strokeStyle = col;
+  g.globalAlpha = 0.22 + 0.38 * shimmer;
+  g.lineWidth = 5.5;
+  g.stroke();
+  g.globalAlpha = 0.55 + 0.35 * shimmer;
+  g.lineWidth = 1.35;
+  g.stroke();
+  const n = RINGP.n;
+  const motes = 1 + 0.22 * energy;
+  for (let b = 0; b < VIS_BANDS; b++) {
+    g.fillStyle = PAL[palIndex(tint + b * 0.04)];
+    for (let i = b; i < n; i += VIS_BANDS) {
+      const br = RINGP.bright[i];
+      const sz = RINGP.sz[i] * (0.9 + br) * motes;
+      const x = RINGP.x[i] * R, y = RINGP.y[i] * R;
+      g.globalAlpha = 0.05 + 0.2 * br;
+      g.beginPath(); g.arc(x, y, sz * 2.5, 0, TAU); g.fill();
+      g.globalAlpha = 0.2 + 0.75 * br;
+      g.beginPath(); g.arc(x, y, sz * 0.5, 0, TAU); g.fill();
+    }
+  }
+  // Living edge: slow noise on the radius, heartbeat in the glow, not in the speed.
+  g.strokeStyle = col;
+  g.beginPath();
+  for (let k = 0; k < EDGE_N; k++) {
+    const th = k / EDGE_N * TAU;
+    const wob = 0.012 * Math.sin(2 * th + n1 * 4 + t * 0.31) + 0.007 * Math.sin(5 * th - t * 0.22 + n2 * 3);
+    const rr = R * (1 + wob);
+    const x = rr * Math.cos(th), y = rr * Math.sin(th);
+    if (k) g.lineTo(x, y); else g.moveTo(x, y);
+  }
+  g.closePath();
+  g.globalAlpha = 0.2 * glow;
+  g.lineWidth = 28;
+  g.stroke();
+  g.globalAlpha = 0.38 * glow;
+  g.lineWidth = 12;
+  g.stroke();
+  g.globalAlpha = 0.72 + 0.28 * breath;
+  g.lineWidth = 2.5;
+  g.stroke();
+  g.fillStyle = hot;
+  g.globalAlpha = 0.45 + 0.5 * energy;
+  g.beginPath(); g.arc(0, 0, 2.2 + 2.4 * energy + 1.2 * breath, 0, TAU); g.fill();
   g.globalAlpha = 1;
   g.globalCompositeOperation = 'source-over';
 }
