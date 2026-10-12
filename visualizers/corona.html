@@ -35,11 +35,11 @@ float n2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h2(i)
 float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*n2(p);p=p*2.03+vec2(1.7,9.2);a*=.5;}return v;}
 vec3 fire(float t){t=max(t,0.);return vec3(1.,.72,.25)*t+vec3(.2,.12,0.)*t*t;}
 const float R=.62;
-vec3 eff(vec2 p,float t){float r=length(p),a=atan(p.y,p.x);float N=floor(4.+uF*22.);float sp=.05+uF*.35;
-float tw=a+t*sp+fbm(vec2(r*3.,t*.1))*1.2;float ten=pow(.5+.5*sin(tw*N+fbm(vec2(a*2.,r*4.-t*.3))*3.),4.);
-float len=.06+uF*.2+uL*.08;float d=r-R;float fl=d>0.?ten*exp(-d/len)*(.6+.6*fbm(vec2(a*N*.3,r*6.-t*.8))):0.;
+vec3 eff(vec2 p,float t){float r=length(p),a=atan(p.y,p.x);float N=floor(4.+uF*5.99);float sp=.03+uF*.18;
+float tw=a+t*sp+n2(vec2(r*1.8,t*.05))*1.4;float ten=pow(.5+.5*sin(tw*N+n2(vec2(a*1.2,r*2.-t*.12))*1.4+r*2.5),10.);
+float len=.14+uF*.22+uL*.08;float d=r-R;float fl=d>0.?ten*exp(-d/len)*(.75+.35*fbm(vec2(a*1.5,r*2.-t*.2))):0.;
 float core=smoothstep(R,.0,r);float inner=ten*exp(-(R-r)/(len*.6))*step(r,R)*.6;
-return fire(fl*1.4+inner)*(1.-core*.0);}vec3 icon(vec2 p,float t,vec3 col){float r=length(p);float d=r-R;
+return fire(fl*1.6+inner)*mix(vec3(1.,.95,.8),vec3(1.,.6,.35),uF);}vec3 icon(vec2 p,float t,vec3 col){float r=length(p);float d=r-R;
  vec3 c=col*smoothstep(R,R-.02,r)+col*smoothstep(R+.01,R+.03,r)*.6; // effect, a bit dimmer outside
  c+=vec3(1.,.62,.12)*.35*exp(-max(-d,0.)*7.)*step(r,R); // inward glow
  float th=.055,sh=clamp(1.-abs(d)/th,0.,1.);float lit=.55+.45*dot(normalize(p+1e-5),normalize(vec2(-.6,.8)));
@@ -48,7 +48,7 @@ return fire(fl*1.4+inner)*(1.-core*.0);}vec3 icon(vec2 p,float t,vec3 col){float
  float cyc=2.+uF*10.;float A=(.10+.12*uL)*smoothstep(R*.92,R*.6,abs(p.x));
  float wy=A*sin(p.x/R*3.1416*cyc*.5-t*1.2);float wd=abs(p.y-wy)*inversesqrt(1.+pow(A*cyc*2.5*cos(p.x/R*3.1416*cyc*.5-t*1.2),2.));
  float w2=abs(p.y-.6*wy*cos(t*.3+1.));
- if(abs(p.x)<R){c+=vec3(1.,.85,.2)*(smoothstep(.012,.004,wd)+.35*exp(-wd*45.));c+=vec3(1.,.8,.2)*.25*smoothstep(.006,.0,w2);}
+ if(abs(p.x)<R){float m=smoothstep(.55,.8,fbm(vec2(p.x*4.-t*.25,t*.1)));c+=vec3(1.,.85,.3)*m*(.22*smoothstep(.006,.0,wd)+.08*exp(-wd*45.));}
  return c;}
 void main(){vec2 p=(gl_FragCoord.xy/uRes)*2.-1.;float t=uTime;gl_FragColor=vec4(icon(p,t,eff(p,t)),1.);}
 `));g.linkProgram(pr);g.useProgram(pr);
