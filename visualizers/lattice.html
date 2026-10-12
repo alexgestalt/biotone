@@ -1,7 +1,7 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Fire Mandala · Biotone</title><style>
+<title>Lattice · Biotone</title><style>
 html,body{margin:0;height:100%;background:#000;color:#f3d48a;font-family:system-ui,sans-serif;overflow:hidden;touch-action:none}
-canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+canvas{position:fixed;left:50%;top:44%;transform:translate(-50%,-50%);width:min(100vw,78vh);height:min(100vw,78vh);display:block}
 #ui{position:fixed;left:0;right:0;bottom:0;padding:14px 18px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(transparent,#000c 40%);display:grid;gap:10px}
 .row{display:flex;align-items:center;gap:12px}
 button{background:#1a1206;color:#ffcf6b;border:1px solid #b8862b;border-radius:30px;width:56px;height:56px;font-size:22px;flex:none}
@@ -9,7 +9,7 @@ input[type=range]{flex:1;accent-color:#e9a426;height:36px}
 label{font-size:13px;min-width:62px;opacity:.85}#hz{font-variant-numeric:tabular-nums;min-width:70px;text-align:right}
 #top{position:fixed;top:0;left:0;right:0;padding:12px 16px;font-size:13px;opacity:.75}#top a{color:#ffcf6b}
 </style></head><body><canvas id="c"></canvas>
-<div id="top"><a href="./">‹ Gallery</a> · Fire Mandala — <span>Petals of flame in rotational symmetry; the symmetry order steps with frequency and petals bloom with level.</span></div>
+<div id="top"><a href="./">‹ Gallery</a> · Lattice: A lattice of thin gold lines pulsing like a magnetic field. The fader sets density and field-line warp.</div>
 <div id="ui"><div class="row"><button id="play" aria-label="Play">▶</button>
 <label>Frequency</label><input id="f" type="range" min="0" max="1" step="0.001" value="0.55"><span id="hz"></span></div>
 <div class="row"><label>Level</label><input id="v" type="range" min="0" max="1" step="0.01" value="0.6"></div></div>
@@ -22,40 +22,38 @@ fS.oninput=vS.oninput=upd;upd();
 pb.onclick=()=>{if(!ac){ac=new (window.AudioContext||window.webkitAudioContext)();osc=ac.createOscillator();osc.type='sine';gain=ac.createGain();gain.gain.value=0;an=ac.createAnalyser();an.fftSize=1024;buf=new Float32Array(1024);osc.connect(gain);gain.connect(an);an.connect(ac.destination);osc.start();}
 ac.resume();on=!on;pb.textContent=on?'❚❚':'▶';upd();};
 function level(){if(!an)return 0;an.getFloatTimeDomainData(buf);let s=0;for(let i=0;i<buf.length;i++)s+=buf[i]*buf[i];return Math.min(1,Math.sqrt(s/buf.length)*5);}
-let W,H,dpr;function rs(){dpr=Math.min(devicePixelRatio||1,MODE=='gl'?1.5:2);W=c.width=innerWidth*dpr;H=c.height=innerHeight*dpr;}addEventListener('resize',rs);rs();
+let W,H,dpr;function rs(){W=H=c.width=c.height=1024;}addEventListener('resize',rs);rs();
 const t0=performance.now();
 function tick(){const l=level();L+=(Math.max(l,.12)-L)*.04;F+=(+fS.value-F)*.03;}
 if(MODE=='gl'){const g=c.getContext('webgl');
 const sh=(t,s)=>{const o=g.createShader(t);g.shaderSource(o,s);g.compileShader(o);if(!g.getShaderParameter(o,g.COMPILE_STATUS))throw new Error(g.getShaderInfoLog(o));return o};
 const pr=g.createProgram();g.attachShader(pr,sh(g.VERTEX_SHADER,'attribute vec2 p;void main(){gl_Position=vec4(p,0,1);}'));
 g.attachShader(pr,sh(g.FRAGMENT_SHADER,`precision highp float;uniform vec2 uRes;uniform float uTime,uF,uL;
-float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
-float n2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+1.),f.x),f.y);}
+float h(float n){return fract(sin(n)*43758.5453);}
+float h2(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float n2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h2(i),h2(i+vec2(1,0)),f.x),mix(h2(i+vec2(0,1)),h2(i+1.),f.x),f.y);}
 float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*n2(p);p=p*2.03+vec2(1.7,9.2);a*=.5;}return v;}
-vec3 fire(float t){t=clamp(t,0.,1.);return vec3(pow(t,.6)*1.1,pow(t,1.5)*.82,pow(t,4.)*.5);}
-vec3 gold(float t,float hz){vec3 c=fire(t);return mix(c,c*vec3(1.,.9,.6)+vec3(.0,.03,.0)*t,hz);}
-
-void main(){vec2 p=(gl_FragCoord.xy-.5*uRes)/min(uRes.x,uRes.y);float r=length(p),a=atan(p.y,p.x);float t=uTime*.08;
-float N=floor(3.+uF*13.);float s=6.283/N;float b=mod(a+t*.5,s)-s*.5;b=abs(b);
-vec2 q=vec2(cos(b),sin(b))*r;
-float petal=0.;for(int i=0;i<3;i++){float fi=float(i);float R=.12+fi*.11+uL*.05;
-float pr=length((q-vec2(R,0.))*vec2(1.,2.2+fi));float fl=fbm(vec2(q.x*6.-uTime*.4,q.y*8.+fi));
-petal+=exp(-pr*(9.-fi*2.)/(.6+uL+fl*.6))*(.7-fi*.15);}
-float v=petal+exp(-r*14.)*.8+exp(-abs(r-.42-.03*sin(N*a))*50.)*.4;
-gl_FragColor=vec4(gold(v*.9,uF),1.);}`));g.linkProgram(pr);g.useProgram(pr);
+vec3 fire(float t){t=max(t,0.);return vec3(1.,.72,.25)*t+vec3(.2,.12,0.)*t*t;}
+const float R=.62;
+vec3 eff(vec2 p,float t){float dens=6.+uF*26.;float wp=.05+uF*.5;
+vec2 q=p;float r=length(p);q+=wp*vec2(sin(q.y*3.+t*.4),sin(q.x*3.-t*.3))*(1.-r);
+q=mat2(cos(t*.03),-sin(t*.03),sin(t*.03),cos(t*.03))*q;
+vec2 g=abs(fract(q*dens)-.5);float l=smoothstep(.06,.0,min(g.x,g.y));
+float fl=smoothstep(.03,.0,abs(fract(r*dens*.5-atan(p.y,p.x)*.0-t*.15)-.5)-.47);
+float pulse=.5+.5*sin(r*12.-t*(1.+uF*3.));return vec3(1.,.75,.25)*(l*(.35+.55*pulse)*(.6+uL)+fl*.2);}vec3 icon(vec2 p,float t,vec3 col){float r=length(p);float d=r-R;
+ vec3 c=col*smoothstep(R,R-.02,r)+col*smoothstep(R+.01,R+.03,r)*.6; // effect, a bit dimmer outside
+ c+=vec3(1.,.62,.12)*.35*exp(-max(-d,0.)*7.)*step(r,R); // inward glow
+ float th=.055,sh=clamp(1.-abs(d)/th,0.,1.);float lit=.55+.45*dot(normalize(p+1e-5),normalize(vec2(-.6,.8)));
+ vec3 gold=mix(vec3(.55,.32,.04),vec3(1.,.86,.38),pow(sh,.7)*lit)+vec3(1.,.97,.8)*pow(sh,8.)*.6;
+ c=mix(c,gold,smoothstep(0.,.08,sh));c+=vec3(1.,.6,.1)*.18*exp(-abs(d)*14.); // bloom
+ float cyc=2.+uF*10.;float A=(.10+.12*uL)*smoothstep(R*.92,R*.6,abs(p.x));
+ float wy=A*sin(p.x/R*3.1416*cyc*.5-t*1.2);float wd=abs(p.y-wy)*inversesqrt(1.+pow(A*cyc*2.5*cos(p.x/R*3.1416*cyc*.5-t*1.2),2.));
+ float w2=abs(p.y-.6*wy*cos(t*.3+1.));
+ if(abs(p.x)<R){c+=vec3(1.,.85,.2)*(smoothstep(.012,.004,wd)+.35*exp(-wd*45.));c+=vec3(1.,.8,.2)*.25*smoothstep(.006,.0,w2);}
+ return c;}
+void main(){vec2 p=(gl_FragCoord.xy/uRes)*2.-1.;float t=uTime;gl_FragColor=vec4(icon(p,t,eff(p,t)),1.);}
+`));g.linkProgram(pr);g.useProgram(pr);
 g.bindBuffer(g.ARRAY_BUFFER,g.createBuffer());g.bufferData(g.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),g.STATIC_DRAW);g.enableVertexAttribArray(0);g.vertexAttribPointer(0,2,g.FLOAT,false,0,0);
 const U=n=>g.getUniformLocation(pr,n),uR=U('uRes'),uT=U('uTime'),uFl=U('uF'),uLl=U('uL');
 (function f(){tick();g.viewport(0,0,W,H);g.uniform2f(uR,W,H);g.uniform1f(uT,(performance.now()-t0)/1000);g.uniform1f(uFl,F);g.uniform1f(uLl,L);g.drawArrays(g.TRIANGLES,0,3);requestAnimationFrame(f);})();
-}else{const x=c.getContext('2d');const N=2600,P=[];
-const nz=(a,b)=>Math.sin(a*1.7+Math.sin(b*1.3))+Math.sin(b*2.1-Math.cos(a*.9));
-function spawn(p){const a=Math.random()*6.283,k=Math.floor(2+F*12),lob=1+.12*Math.sin(a*k+performance.now()/4000);const R=Math.min(W,H)*.22*lob;p.x=W/2+Math.cos(a)*R;p.y=H/2+Math.sin(a)*R;p.a=a;p.life=0;p.max=60+Math.random()*160;}
-for(let i=0;i<N;i++){const p={};spawn(p);p.life=Math.random()*p.max;P.push(p);}
-x.fillStyle='#000';x.fillRect(0,0,W,H);
-(function f(){tick();const t=performance.now()/1000;x.globalCompositeOperation='source-over';x.fillStyle='rgba(0,0,0,.08)';x.fillRect(0,0,W,H);x.globalCompositeOperation='lighter';
-const s=.0035/dpr,sp=(.4+L*1.8)*dpr;for(const p of P){const e=1e-2,X=p.x*s,Y=p.y*s,T=t*.07;
-const cx=(nz(X,Y+e+T)-nz(X,Y-e+T))/(2*e),cy=-(nz(X+e,Y+T)-nz(X-e,Y+T))/(2*e);
-const ox=Math.cos(p.a),oy=Math.sin(p.a);p.x+=(cx*.5+ox*(.6+L))*sp;p.y+=(cy*.5+oy*(.6+L))*sp;p.life++;
-const k=1-p.life/p.max;const hue=20+30*k+F*12;x.fillStyle=`hsla(${hue},100%,${35+35*k}%,${.25*k})`;x.fillRect(p.x,p.y,1.6*dpr,1.6*dpr);if(p.life>p.max)spawn(p);}
-const g=x.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.min(W,H)*.24);g.addColorStop(.85,'rgba(0,0,0,0)');g.addColorStop(.97,`rgba(255,170,60,${.05+L*.1})`);g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,W,H);
-requestAnimationFrame(f);})();}
-</script></body></html>
+}</script></body></html>
