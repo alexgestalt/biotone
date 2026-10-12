@@ -233,6 +233,36 @@ canvas{display:block}
 .vnum{font-family:var(--rounded);font-weight:200;line-height:1.1;touch-action:none;cursor:ns-resize;padding:2px 8px;border-radius:14px;transition:background .15s,box-shadow .15s;-webkit-user-select:none;user-select:none}
 .vnum.active{background:rgba(255,199,31,.12);box-shadow:0 0 0 1.5px rgba(255,199,31,.55);color:var(--accent)}
 .vhint{text-align:center;font-size:11px;font-weight:600;color:rgba(148,148,148,.75);margin-top:-6px;flex:none}
+/* Opening Schumann ring: large, square, number centered over the canvas. */
+#page-schumann{gap:4px;padding:4px 2px 4px 6px}
+#page-schumann .ringflex{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center}
+#page-schumann .ringstage{position:relative;flex:none;container-type:size}
+#page-schumann .ringstage canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#page-schumann .ringlabel{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none;padding:14%}
+#page-schumann .ringnum{display:flex;align-items:baseline;gap:.12em}
+#page-schumann .ringstage .vnum{font-size:clamp(52px,28cqmin,108px);line-height:.95;padding:.04em .16em;text-shadow:0 2px 18px rgba(0,0,0,.8)}
+#page-schumann .ringstage .vnum.long{font-size:clamp(36px,18cqmin,72px)}
+#page-schumann .ringhz{font-size:clamp(16px,7.2cqmin,32px);font-weight:300;color:var(--muted)}
+#page-schumann .ringtag{font-size:clamp(12px,4cqmin,18px);font-weight:600;color:var(--accent);line-height:1.2;max-width:72%;margin-bottom:2px}
+#page-schumann .ringdetail{margin-top:4px;font-size:clamp(11px,3.5cqmin,15px);max-width:80%}
+#page-schumann .vhint{margin-top:0;font-size:12px;line-height:1.15}
+#page-schumann .sch-controls{display:flex;flex-direction:column;gap:5px;flex:none}
+#page-schumann .sch-controls .pill div{font-size:14px;padding:7px 2px}
+#page-schumann .sch-controls .caption{font-size:13px}
+#page-schumann .sch-controls .cf{padding:6px 12px}
+#page-schumann .sch-controls .cf .k{font-size:12px}
+#page-schumann .sch-controls .cf .v{font-size:26px}
+#page-schumann .sch-controls .cf .b{width:46px;height:34px}
+#page-schumann .sch-controls .lslider .h{font-size:13px}
+#page-schumann .sch-controls .lbl{font-size:12px}
+#page-schumann .sch-controls .slider{height:26px}
+#page-schumann .sch-controls .slider .tr,#page-schumann .sch-controls .slider .fl{top:11px}
+#page-schumann .sch-controls .slider .th{top:0;width:24px;height:24px}
+#page-schumann .sch-controls .playbtn{height:52px;font-size:17px}
+#page-schumann .hdr .t{font-size:13px;letter-spacing:1.6px}
+#page-schumann .bed{gap:4px}
+#page-schumann .bed .pill div{font-size:13px;padding:7px 2px}
+#page-schumann .badge{font-size:12px;padding:5px 9px}
 .intro-live .vnum{animation:vglow 2.4s ease-in-out infinite}
 @keyframes vglow{0%,100%{text-shadow:0 0 0 rgba(255,199,31,0)}50%{text-shadow:0 0 18px rgba(255,199,31,.8)}}
 /* voice intro overlay: the live Schumann page shows dimmed and blurred behind it */

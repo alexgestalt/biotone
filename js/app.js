@@ -285,6 +285,17 @@ const Snd = {
     }
     this.node.connect(ctx.destination);
     this.node.connect(split);
+    // Tap the mixed output (tone + ambient bed) for the breathing ring. Not sent to the speakers.
+    const mix = ctx.createGain();
+    mix.channelCount = 1;
+    mix.channelCountMode = 'explicit';
+    mix.channelInterpretation = 'speakers';
+    this.anBreath = ctx.createAnalyser();
+    this.anBreath.fftSize = 2048;
+    this.anBreath.smoothingTimeConstant = 0.88;
+    this.breathBuf = new Float32Array(this.anBreath.fftSize);
+    this.node.connect(mix);
+    mix.connect(this.anBreath);
     this.ready = true;
     this.push();
     return true;
@@ -672,8 +683,8 @@ const PAGE_RENDER = {
     else if (sc.engine === 'monaural') detail = `${F.hz(sc.carrier)} + ${F.hz(sc.carrier + sc.beat)} Hz`;
     else detail = `pulsing ${F.hz(sc.carrier)} Hz`;
     const value = def ? '7.83' : F.short(scMain(sc));
-    const ring = `<div style="height:170px;display:flex;justify-content:center;flex:none"><div style="position:relative;width:170px;height:170px"><canvas data-ring="170" style="position:absolute;inset:0"></canvas>
-      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 22px;text-align:center">${sc.label ? `<div style="font-size:12px;font-weight:600;color:var(--accent);line-height:1.2;max-width:120px">${esc(sc.label)}</div>` : ''}<div style="display:flex;align-items:baseline;gap:4px"><span class="vnum" data-vdrag="sch.main" data-vt="sch.main" role="slider" aria-label="Frequency. Drag up or down to tune, tap to type" aria-valuenow="${scMain(sc)}" style="font-size:${value.length > 4 ? 46 : 56}px">${value}</span><span style="font-size:20px;font-weight:300;color:var(--muted)">Hz</span></div><div class="caption" style="margin-top:2px;font-size:11px">${detail}</div></div></div></div><div class="vhint" id="vhint">drag the number ↕ to tune · tap to type</div>`;
+    const ring = `<div class="ringflex"><div class="ringstage"><canvas data-ring="1"></canvas>
+      <div class="ringlabel">${sc.label ? `<div class="ringtag">${esc(sc.label)}</div>` : ''}<div class="ringnum"><span class="vnum${value.length > 5 ? ' long' : ''}" data-vdrag="sch.main" data-vt="sch.main" role="slider" aria-label="Frequency. Drag up or down to tune, tap to type" aria-valuenow="${scMain(sc)}">${value}</span><span class="ringhz">Hz</span></div><div class="caption ringdetail">${detail}</div></div></div></div><div class="vhint" id="vhint">drag the number ↕ to tune · tap to type</div>`;
     const libRow = def ? '' : `<div class="resrow">${I.books}<span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e ? esc(tradLabel(e)) + ' · traditional use' : 'From the Library'}</span><button class="back783" data-act="reset783">${I.back}Back to 7.83</button></div>`;
     let controls;
     if (sc.tone != null) {
@@ -683,10 +694,11 @@ const PAGE_RENDER = {
     } else {
       controls = pill('sch.engine', Object.keys(ENGINE).map((k) => [k, ENGINE[k].label]), sc.engine) + `<div class="caption">${ENGINE[sc.engine].hint}</div>` + compact('sch.carrier', 'Carrier');
     }
-    return hdr(def ? 'Schumann 7.83' : 'Resonance', hpBadge(needsHeadphones(A.state, 'schumann'))) + libRow + ring + controls +
+    return hdr(def ? 'Schumann 7.83' : 'Resonance', hpBadge(needsHeadphones(A.state, 'schumann'))) + libRow + ring +
+      `<div class="sch-controls">` + controls +
       bed('bed', A.state.noise) + bedLevel() + lslider('toneLevel', 'TONE LEVEL') +
       labeledPill('SESSION', 'session', [[0, 'Off'], [15, '15 min'], [30, '30 min'], [60, '1 h'], [480, '8 h']].map(([v, l]) => [String(v), l]), String(A.state.sessionMinutes)) +
-      '<div class="spacer"></div>' + playBtn('schumann');
+      playBtn('schumann') + `</div>`;
   },
   pulse() {
     const p = A.state.pulse;
@@ -1186,9 +1198,10 @@ function initPager() {
 
 // ===================================================================== animation
 const orb = { phase: 0, amp: 0, low: 0, high: 0, bloom: 0, beatPulse: 0, heat: 0, peak: 0, beatPhase: 0, lastSerial: -1 };
+const ringVis = { breath: 0.22, energy: 0.12, heat: 0, beatPhase: 0, env: 0, rmsFast: 0, rmsSlow: 0 };
 const approach = (o, k, target, dt, att, rel) => { const tau = target > o[k] ? att : rel; o[k] += (target - o[k]) * (1 - Math.exp(-dt / tau)); };
 const lv = { v: 0 };
-let lastT = 0, ringAngle = 0;
+let lastT = 0;
 function effFreq(src) {
   const s = snapshot();
   if (!A.tool && src === 'tone') { const w = A.state.tone.waveform; return s.f1 * (w === 'square' || w === 'sawtooth' ? 3 : w === 'triangle' ? 1.5 : 1); }
@@ -1197,6 +1210,66 @@ function effFreq(src) {
 function pageFreq(key) {
   const st = A.state;
   return { tone: st.tone.frequency, binaural: st.binaural.left, pulse: st.pulse.carrier }[key] || 200;
+}
+// Square the opening ring to min(page width, leftover height, 90vw, 420px).
+function layoutRing(stage) {
+  const flex = stage && stage.parentElement;
+  if (!flex) return;
+  const availW = flex.clientWidth, availH = flex.clientHeight;
+  if (availW < 8 || availH < 8) return;
+  const size = Math.floor(Math.min(availW, availH, window.innerWidth * 0.9, 420));
+  if (stage._sz !== size) {
+    stage._sz = size;
+    stage.style.width = size + 'px';
+    stage.style.height = size + 'px';
+  }
+}
+// Breath follows the real output when a bed is playing; otherwise the tone envelope
+// plus a slow (about 6.6 s) organic cycle. Attack/release keeps it calm.
+function outputRms() {
+  const an = Snd.anBreath;
+  if (!an || !Snd.breathBuf) return 0;
+  an.getFloatTimeDomainData(Snd.breathBuf);
+  const b = Snd.breathBuf;
+  let s = 0, n = 0;
+  for (let i = 0; i < b.length; i += 4) { const v = b[i]; s += v * v; n++; }
+  return Math.sqrt(s / Math.max(1, n));
+}
+function updateRingAudio(dt, t) {
+  const live = Snd.ready && (A.isPlaying || A.toolStarted || A.stats.env > 0.01);
+  const rms = live ? outputRms() : 0;
+  if (ringVis.rmsSlow < 1e-4) ringVis.rmsSlow = rms || 0.04;
+  // Fast envelope follows a swell; the slower one is its local mean, so the circle releases between waves.
+  approach(ringVis, 'rmsFast', rms, dt, 0.18, 0.4);
+  approach(ringVis, 'rmsSlow', Math.max(rms, 0.004), dt, 2.6, 2.6);
+  const env = live ? A.stats.env : 0;
+  approach(ringVis, 'env', env, dt, 0.25, 0.6);
+  const w = (t / 1000) * (Math.PI * 2 / 6.6);
+  const organic = 0.5 + 0.5 * (0.82 * Math.sin(w) + 0.18 * Math.sin(w * 0.5 + 1.3));
+  const amb = live && A.state.noise !== 'off' && A.state.noiseLevel > 0.015;
+  let target, energyTarget;
+  if (amb) {
+    const dev = (ringVis.rmsFast - ringVis.rmsSlow) / (ringVis.rmsSlow + 0.015);
+    const shaped = cl(0.5 + dev * 1.7, 0, 1);
+    target = (0.16 + 0.84 * shaped) * (0.9 + 0.1 * organic);
+    energyTarget = 0.12 + 0.88 * shaped;
+  } else if (live) {
+    target = (0.28 + 0.72 * ringVis.env) * (0.58 + 0.42 * organic);
+    energyTarget = ringVis.env * (0.32 + 0.28 * organic);
+  } else {
+    target = 0.16 + 0.1 * organic;
+    energyTarget = 0.1 + 0.06 * organic;
+  }
+  approach(ringVis, 'breath', target, dt, amb ? 0.32 : 0.55, amb ? 0.9 : 0.95);
+  approach(ringVis, 'energy', energyTarget, dt, 0.36, 1.1);
+  const sc = A.state.schumann;
+  const beat = sc.tone != null ? (sc.shimmer ? SCHUMANN : 0) : sc.beat;
+  const vb = beat <= 0 ? 0 : (beat <= 8 ? beat : beat / Math.ceil(beat / 8));
+  ringVis.beatPhase = (ringVis.beatPhase + (live && vb > 0 ? vb : 1 / 6.6) * dt) % 1;
+  const peak = live ? A.stats.peak : 0;
+  const carrier = sc.tone != null ? sc.tone : sc.carrier;
+  const warmth = 0.45 * cl((peak - 0.28) / 0.5, 0, 1);
+  approach(ringVis, 'heat', live ? Math.max(heatValue(peak, carrier), warmth) : 0, dt, 0.22, 1.05);
 }
 function frame(t) {
   requestAnimationFrame(frame);
@@ -1254,10 +1327,11 @@ function frame(t) {
   }
   const rcv = pageEl.querySelector('[data-ring]');
   if (rcv) {
-    const playing = isPlayingSource('schumann');
-    if (playing) ringAngle = (ringAngle + dt * 24) % 360;
-    const breath = playing ? 0.5 + 0.5 * Math.sin(t / 1000 * 2 * Math.PI / 5) : 0.25;
-    drawGlowRing(rcv, +rcv.dataset.ring, breath, ringAngle);
+    const stage = rcv.parentElement;
+    layoutRing(stage);
+    updateRingAudio(dt, t);
+    const w = stage.clientWidth, h = stage.clientHeight;
+    if (w && h) drawLivingRing(rcv, w, h, ringVis, dt);
   }
   const hb = pageEl.querySelector('[data-hbar]');
   if (hb) drawHearingBar(hb);
@@ -1505,5 +1579,5 @@ function init() {
   if (Intro.shouldAuto()) Intro.showCard(); else autoStart();
   onViewport();
 }
-window.__freqium = { Intro, A, Snd, snapshot, libFilter, libSections, goTo, play, stop, ctrl, setCtrl, Tools, STARTERS, save };
+window.__freqium = { Intro, A, Snd, snapshot, libFilter, libSections, goTo, play, stop, ctrl, setCtrl, Tools, STARTERS, save, ringVis, ringParticleCount };
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
