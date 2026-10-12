@@ -341,7 +341,7 @@ class MusicEngine {
   setMood(m) {
     if (m === this.mood) return;
     const first = this.mood === null;
-    this.mood = m; this.params = MOOD_MUSIC[m];
+    this.mood = m; this.params = MOOD_MUSIC[m] || MOOD_MUSIC.calm;
     this.scaleCount = 0;
     for (let s = 0; s < 12; s++) if (this.params.scaleMask & (1 << s)) this.scale[this.scaleCount++] = s;
     if (this.scaleCount === 0) { this.scale[0] = 0; this.scaleCount = 1; }

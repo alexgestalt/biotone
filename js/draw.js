@@ -47,7 +47,9 @@ const I = {
  ear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 9a6 6 0 0 1 12 0c0 3.5-3 4.5-3.5 7.5S13 21 11 21s-3-1.5-3-1.5"/><path d="M10.5 10a2.5 2.5 0 0 1 5 0c0 1.5-1.5 2-1.5 3.5"/></svg>',
  spark:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 2l1.8 5.7L17.5 9.5l-5.7 1.8L10 17l-1.8-5.7L2.5 9.5l5.7-1.8z"/><path d="M18.5 13l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/><path d="M17 2l.6 1.9 1.9.6-1.9.6L17 7l-.6-1.9-1.9-.6 1.9-.6z"/></svg>',
 };
-const moodIcon = {sleep:I.moon, rest:I.leaf, focus:I.scope, active:I.bolt, calm:I.wind, meditate:I.spark};
+const moodIcon = {sleep:I.moon, rest:I.leaf, focus:I.scope, active:I.bolt, calm:I.wind, meditate:I.spark,
+ dream:I.moon, create:I.spark, study:I.scope, flow:I.wind, spark:I.bolt, still:I.leaf,
+ ease:I.wind, glow:I.spark, release:I.leaf, unite:I.spark};
 
 // ---------- Swift ports ----------
 const RGB = {y:[1,.78,.12], o:[1,.5,.08], r:[1,.2,.16]};
@@ -310,6 +312,37 @@ function ringParticleCount() { return RINGP.n; }
 function strokeDisc(g, r) {
   g.beginPath(); g.arc(0, 0, r, 0, TAU); g.stroke();
 }
+function fieldRadius(w, h, breath, n1) {
+  const maxR = Math.min(w, h) * 0.5;
+  let R = (maxR - 8) * (1 + 0.022 * breath + 0.016 * n1);
+  if (R > maxR - 8) R = maxR - 8;
+  return R;
+}
+function tracePetals(g, R, lobes, rot, inner) {
+  g.beginPath();
+  for (let k = 0; k <= EDGE_N; k++) {
+    const th = (k / EDGE_N) * TAU;
+    const c = Math.cos(lobes * (th + rot));
+    const lobe = c > 0 ? Math.pow(c, 0.72) : 0;
+    const rr = R * (inner + (1 - inner) * lobe);
+    const x = rr * Math.cos(th), y = rr * Math.sin(th);
+    if (k) g.lineTo(x, y); else g.moveTo(x, y);
+  }
+  g.closePath();
+}
+function paintPetals(g, R, tint, lobes, rot, inner, shift, e, energy, shimmer) {
+  tracePetals(g, R, lobes, rot, inner);
+  g.fillStyle = PAL[palIndex(tint + shift)];
+  g.globalAlpha = (0.1 + 0.22 * e) * (0.7 + 0.3 * energy);
+  g.fill();
+  g.strokeStyle = PAL[palIndex(tint + shift)];
+  g.globalAlpha = 0.28 + 0.55 * e;
+  g.lineWidth = 1.6 + 3.2 * e;
+  g.stroke();
+  g.globalAlpha = 0.12 + 0.28 * shimmer;
+  g.lineWidth = 5;
+  g.stroke();
+}
 // f: smoothed { breath, energy, tint, beatPhase, shimmer, bands }
 function drawLivingRing(cv, w, h, f, dt) {
   const g = setupCanvas(cv, w, h);
@@ -324,9 +357,7 @@ function drawLivingRing(cv, w, h, f, dt) {
   const n1 = noise2(t * 0.05, 1.3) - 0.5;
   const n2 = noise2(2.4, t * 0.037) - 0.5;
   const breath = heartWave(t) * (0.55 + 0.45 * (f.breath || 0.4));
-  const maxR = Math.min(w, h) * 0.5;
-  let R = (maxR - 8) * (1 + 0.022 * breath + 0.016 * n1);
-  if (R > maxR - 8) R = maxR - 8;
+  const R = fieldRadius(w, h, breath, n1);
   const glow = 0.72 + 0.28 * breath + 0.18 * energy;
   const beatPh = (f.beatPhase || 0) * TAU;
   g.translate(w / 2, h / 2);
@@ -399,7 +430,14 @@ function drawLivingRing(cv, w, h, f, dt) {
       g.beginPath(); g.arc(x, y, sz * 0.5, 0, TAU); g.fill();
     }
   }
-  // Living edge: slow noise on the radius, heartbeat in the glow, not in the speed.
+  strokeLivingEdge(g, R, col, glow, breath, n1, n2, t);
+  g.fillStyle = hot;
+  g.globalAlpha = 0.45 + 0.5 * energy;
+  g.beginPath(); g.arc(0, 0, 2.2 + 2.4 * energy + 1.2 * breath, 0, TAU); g.fill();
+  g.globalAlpha = 1;
+  g.globalCompositeOperation = 'source-over';
+}
+function strokeLivingEdge(g, R, col, glow, breath, n1, n2, t) {
   g.strokeStyle = col;
   g.beginPath();
   for (let k = 0; k < EDGE_N; k++) {
@@ -419,6 +457,55 @@ function drawLivingRing(cv, w, h, f, dt) {
   g.globalAlpha = 0.72 + 0.28 * breath;
   g.lineWidth = 2.5;
   g.stroke();
+}
+// Opening page: same canvas and outer radius as the resonance ring, drawn as layered petals.
+function drawOpeningField(cv, w, h, f, dt) {
+  const g = setupCanvas(cv, w, h);
+  ensureRingParticles();
+  const bands = f.bands;
+  stepRingField(dt, f.energy || 0, bands);
+  const tint = f.tint || 0;
+  const energy = f.energy || 0;
+  const col = PAL[palIndex(tint)];
+  const hot = PAL_HOT[palIndex(tint)];
+  const t = RINGP.time;
+  const n1 = noise2(t * 0.05, 1.3) - 0.5;
+  const n2 = noise2(2.4, t * 0.037) - 0.5;
+  const breath = heartWave(t) * (0.55 + 0.45 * (f.breath || 0.4));
+  const R = fieldRadius(w, h, breath, n1);
+  const glow = 0.72 + 0.28 * breath + 0.18 * energy;
+  const beatPh = (f.beatPhase || 0) * TAU;
+  const shimmer = f.shimmer || 0.4;
+  g.translate(w / 2, h / 2);
+  g.globalCompositeOperation = 'source-over';
+  g.fillStyle = col;
+  g.globalAlpha = 0.09 * glow;
+  g.beginPath(); g.arc(0, 0, R * 0.98, 0, TAU); g.fill();
+  g.globalCompositeOperation = 'lighter';
+  g.lineJoin = 'round';
+  g.lineCap = 'round';
+  const e0 = bands ? bands[0] : 0.2, e1 = bands ? bands[3] : 0.16, e2 = bands ? bands[6] : 0.12;
+  paintPetals(g, R * 0.9, tint, 5, t * 0.05, 0.16, 0, e0, energy, shimmer);
+  paintPetals(g, R * 0.9, tint, 5, t * 0.05 + beatPh * 0.06, 0.2, 0.12, e1, energy, shimmer * 0.7);
+  paintPetals(g, R * 0.62, tint, 3, -t * 0.035, 0.12, 0.22, e2, energy, shimmer);
+  const n = RINGP.n;
+  const motes = 1 + 0.22 * energy;
+  for (let b = 0; b < VIS_BANDS; b++) {
+    g.fillStyle = PAL[palIndex(tint + b * 0.04)];
+    for (let i = b; i < n; i += VIS_BANDS) {
+      const br = RINGP.bright[i];
+      const ang = RINGP.ang[i] + t * 0.04;
+      const lobe = 0.38 + 0.62 * Math.abs(Math.cos(3 * (ang + t * 0.03)));
+      const rad = RINGP.rad[i] * lobe;
+      const sz = RINGP.sz[i] * (0.9 + br) * motes;
+      const x = Math.cos(ang) * rad * R, y = Math.sin(ang) * rad * R;
+      g.globalAlpha = 0.05 + 0.18 * br;
+      g.beginPath(); g.arc(x, y, sz * 2.2, 0, TAU); g.fill();
+      g.globalAlpha = 0.22 + 0.7 * br;
+      g.beginPath(); g.arc(x, y, sz * 0.45, 0, TAU); g.fill();
+    }
+  }
+  strokeLivingEdge(g, R, col, glow, breath, n1, n2, t);
   g.fillStyle = hot;
   g.globalAlpha = 0.45 + 0.5 * energy;
   g.beginPath(); g.arc(0, 0, 2.2 + 2.4 * energy + 1.2 * breath, 0, TAU); g.fill();
