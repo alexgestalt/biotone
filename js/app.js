@@ -30,9 +30,22 @@ const MOODS = [
   { key: 'active', label: 'Active', carrier: 220, beat: 20, tone: 0.38, music: 0.55 },
   { key: 'calm', label: 'Calm Down', carrier: 180, beat: 9, tone: 0.32, music: 0.65 },
   { key: 'meditate', label: 'Meditate', carrier: 150, beat: 7.83, tone: 0.35, music: 0.60 },
+  // Ten more, chosen from presets common in Brainwave, Insight Timer, myNoise, Moongate and Brain.fm-style apps.
+  { key: 'dream', label: 'Dream', carrier: 136, beat: 6, tone: 0.30, music: 0.62, recipe: 'sleep' },
+  { key: 'create', label: 'Create', carrier: 210, beat: 10, tone: 0.34, music: 0.55, recipe: 'calm' },
+  { key: 'study', label: 'Study', carrier: 190, beat: 14, tone: 0.36, music: 0.48, recipe: 'focus' },
+  { key: 'flow', label: 'Flow', carrier: 170, beat: 12, tone: 0.33, music: 0.58, recipe: 'rest' },
+  { key: 'spark', label: 'Spark', carrier: 240, beat: 40, tone: 0.36, music: 0.45, recipe: 'active' },
+  { key: 'still', label: 'Still', carrier: 100, beat: 1, tone: 0.28, music: 0.55, recipe: 'sleep' },
+  { key: 'ease', label: 'Ease', pure: true, hz: 432, tone: 0.40, music: 0.50, recipe: 'meditate' },
+  { key: 'glow', label: 'Glow', pure: true, hz: 528, tone: 0.36, music: 0.55, recipe: 'rest' },
+  { key: 'release', label: 'Release', pure: true, hz: 396, tone: 0.38, music: 0.52, recipe: 'calm' },
+  { key: 'unite', label: 'Unite', pure: true, hz: 639, tone: 0.34, music: 0.50, recipe: 'meditate' },
 ];
 const moodOf = (k) => MOODS.find((m) => m.key === k) || MOODS[0];
-const moodBand = (m) => (m.key === 'meditate' ? 'Schumann 7.83 Hz' : `${F.band(m.beat)} ${F.hz(m.beat)} Hz`);
+const moodLine = (m) => (m.pure ? `${F.hz(m.hz)} Hz tone` : m.key === 'meditate' ? 'Schumann 7.83 Hz' : `${F.band(m.beat)} ${F.hz(m.beat)} Hz`);
+const moodBand = moodLine;
+const moodMusicKey = (m) => m.recipe || m.key;
 const NOISE_LABEL = { off: 'Off', pink: 'Pink', brown: 'Brown', white: 'White', rain: 'Rain', ocean: 'Ocean', wind: 'Wind', stream: 'Stream' };
 const isNat = (k) => ['rain', 'ocean', 'wind', 'stream'].includes(k);
 const phrase = (k) => (isNat(k) ? NOISE_LABEL[k].toLowerCase() : `${NOISE_LABEL[k].toLowerCase()} noise`);
@@ -114,7 +127,7 @@ function detailFor(st, src) {
     case 'pulse': s = `on ${F.hz(st.pulse.carrier)} Hz`; break;
     case 'mood': {
       const m = moodOf(st.moods.selected), lv = moodLevels(st, m.key);
-      s = `Binaural on ${F.hz(m.carrier)} Hz` + (lv.music > 0.001 ? ' + music' : ', tone only');
+      s = (m.pure ? `Tone ${F.hz(m.hz)} Hz` : `Binaural on ${F.hz(m.carrier)} Hz`) + (lv.music > 0.001 ? ' + music' : ', tone only');
       if (lv.ambience !== 'off') s += ` + ${phrase(lv.ambience)}`;
       return s;
     }
@@ -124,7 +137,8 @@ function detailFor(st, src) {
   return s;
 }
 function needsHeadphones(st, src) {
-  if (src === 'binaural' || src === 'mood') return true;
+  if (src === 'binaural') return true;
+  if (src === 'mood') return !moodOf(st.moods.selected).pure;
   if (src === 'schumann') return st.schumann.tone == null && st.schumann.engine === 'binaural';
   if (src === 'mixer') return st.mixer.layers.some((l) => l.kind === 'binaural' && !l.muted && l.volume > 0.001);
   return false;
@@ -198,7 +212,9 @@ function snapshot() {
     }
     case 'mood': {
       const m = moodOf(st.moods.selected), lv = moodLevels(st, m.key);
-      Object.assign(s, { layout: 'binaural', f1: m.carrier, f2: m.carrier + m.beat, toneLevel: lv.tone, mood: m.key, musicLevel: lv.music, noise: lv.ambience, noiseLevel: lv.ambienceLevel });
+      const music = moodMusicKey(m);
+      if (m.pure) Object.assign(s, { layout: 'single', waveform: 'sine', f1: m.hz, f2: m.hz, toneLevel: lv.tone, mood: music, musicLevel: lv.music, noise: lv.ambience, noiseLevel: lv.ambienceLevel });
+      else Object.assign(s, { layout: 'binaural', f1: m.carrier, f2: m.carrier + m.beat, toneLevel: lv.tone, mood: music, musicLevel: lv.music, noise: lv.ambience, noiseLevel: lv.ambienceLevel });
       break;
     }
     case 'mixer': {
@@ -346,7 +362,7 @@ function toggle() { if (A.tool) { Tools.cancel(); return; } if (A.isPlaying) sto
 function afterPlayChange() {
   save(); renderAll(); updateMediaSession(); updateWakeLock();
 }
-// Selecting a source while something else plays switches to it (like the app's PLAY THIS INSTEAD).
+// Selecting a source while something else plays switches to it (the Switch button).
 function edited(src, keepName) {
   if (!keepName && src) A.activePresetName = null;
   pushAudio(); save();
@@ -644,9 +660,9 @@ const compact = (id, label) => `<div class="cf"><div style="flex:1" data-act="ke
 const labeledPill = (label, id, opts, sel) => `<div style="display:flex;align-items:center;gap:8px"><span class="lbl" style="width:52px">${label}</span><div style="flex:1">${pill(id, opts, sel)}</div></div>`;
 const bed = (id, sel, showNoise = true) => `<div class="bed">${showNoise ? `<div class="r"><span class="lbl">NOISE</span><div style="flex:1">${pill(id, ['off', 'pink', 'brown', 'white'].map((k) => [k, NOISE_LABEL[k]]), sel)}</div></div>` : ''}<div class="r"><span class="lbl">NATURE</span><div style="flex:1">${pill(id, (showNoise ? ['rain', 'ocean', 'wind', 'stream'] : ['off', 'rain', 'ocean', 'wind', 'stream']).map((k) => [k, NOISE_LABEL[k]]), sel)}</div></div></div>`;
 function playBtn(src) {
-  if (isPlayingSource(src)) return `<button class="playbtn stop" data-act="play" data-arg="${src}">${I.stop}STOP</button>`;
+  if (isPlayingSource(src)) return `<button class="playbtn stop" data-act="play" data-arg="${src}" aria-label="Stop">${I.stop}STOP</button>`;
   const other = (A.isPlaying || A.toolStarted) && !isPlayingSource(src);
-  return `<button class="playbtn play" data-act="play" data-arg="${src}">${I.play}${other ? 'PLAY THIS INSTEAD' : 'PLAY'}</button>`;
+  return `<button class="playbtn play" data-act="play" data-arg="${src}" aria-label="${other ? 'Switch' : 'Play'}">${I.play}${other ? 'Switch' : 'PLAY'}</button>`;
 }
 const scope = (h) => `<canvas class="scope" data-scope="${h}" style="height:${h}px"></canvas>`;
 const bedLevel = () => (A.state.noise !== 'off' ? lslider('noiseLevel', isNat(A.state.noise) ? 'NATURE LEVEL' : 'NOISE LEVEL') : '');
@@ -655,12 +671,12 @@ const bedLevel = () => (A.state.noise !== 'off' ? lslider('noiseLevel', isNat(A.
 const PAGE_RENDER = {
   moods() {
     const st = A.state, m = moodOf(st.moods.selected), lv = moodLevels(st, m.key), playing = isPlayingSource('mood');
-    const tiles = MOODS.map((x) => `<button class="tile ${x.key === m.key ? 'sel' : ''}" data-act="mood" data-arg="${x.key}"><div class="ic">${moodIcon[x.key]}</div><div style="flex:1;min-width:0"><div class="nm">${x.label}</div><div class="bd">${x.key === 'meditate' ? 'Schumann 7.83 Hz' : `${F.band(x.beat)} ${F.hz(x.beat)} Hz`}</div></div>${x.key === m.key && playing ? `<div style="width:20px;color:var(--accent)">${I.wave}</div>` : ''}</button>`).join('');
-    return hdr('Moods', hpBadge(true)) +
+    const tiles = MOODS.map((x) => `<button class="tile ${x.key === m.key ? 'sel' : ''}" data-act="mood" data-arg="${x.key}"><div class="ic">${moodIcon[x.key] || I.spark}</div><div style="flex:1;min-width:0"><div class="nm">${x.label}</div><div class="bd">${moodLine(x)}</div></div>${x.key === m.key && playing ? `<div class="mw" style="width:20px;color:var(--accent)">${I.wave}</div>` : ''}</button>`).join('');
+    return hdr('Moods', hpBadge(needsHeadphones(A.state, 'mood'))) +
       `<div style="flex:1;min-height:120px;position:relative" class="orbbox"><canvas data-orb="1" style="position:absolute;inset:0"></canvas></div>
       <div style="text-align:center"><div style="font-family:var(--rounded);font-size:24px;font-weight:300;line-height:1.2">${m.label}</div><div class="caption" style="margin-top:2px">${moodBand(m)} · ${playing ? 'tap the mood again to stop' : 'tap a mood to play'}</div></div>
-      <div class="grid2">${tiles}</div>` +
-      lslider('mood.tone', 'BINAURAL TONE') + lslider('mood.music', 'MUSIC') + bed('mood.amb', lv.ambience, false) +
+      <div class="moodwin"><div class="grid2">${tiles}</div></div>` +
+      lslider('mood.tone', m.pure ? 'TONE' : 'BINAURAL TONE') + lslider('mood.music', 'MUSIC') + bed('mood.amb', lv.ambience, false) +
       (lv.ambience !== 'off' ? lslider('mood.ambLevel', `${NOISE_LABEL[lv.ambience].toUpperCase()} LEVEL`) : '');
   },
   tone() {
@@ -691,7 +707,7 @@ const PAGE_RENDER = {
     else detail = `pulsing ${F.hz(sc.carrier)} Hz`;
     const value = def ? '7.83' : F.short(scMain(sc));
     const ring = `<div class="ringflex"><div class="ringstage"><canvas data-ring="1"></canvas>
-      <div class="ringlabel">${sc.label ? `<div class="ringtag">${esc(sc.label)}</div>` : ''}<div class="ringnum"><span class="vnum${value.length > 5 ? ' long' : ''}" data-vdrag="sch.main" data-vt="sch.main" role="slider" aria-label="Frequency. Drag up or down to tune, tap to type" aria-valuenow="${scMain(sc)}">${value}</span><span class="ringhz">Hz</span></div><div class="caption ringdetail">${detail}</div></div></div></div><div class="vhint" id="vhint">drag the number ↕ to tune · tap to type</div>`;
+      <div class="ringlabel">${sc.label ? `<div class="ringtag">${esc(sc.label)}</div>` : ''}<div class="ringnum"><span class="vnum${value.length > 5 ? ' long' : ''}" data-vdrag="sch.main" data-vt="sch.main" role="slider" aria-label="Frequency. Drag up or down to tune, tap to type" aria-valuenow="${scMain(sc)}">${value}</span><span class="ringhz">Hz</span></div>${def ? `<div class="caption ringdetail">${detail}</div>` : ''}</div></div></div>${def ? '<div class="vhint" id="vhint">drag the number ↕ to tune · tap to type</div>' : ''}`;
     const libRow = def ? '' : `<div class="resrow">${I.books}<span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e ? esc(tradLabel(e)) + ' · traditional use' : 'From the Library'}</span><button class="back783" data-act="reset783">${I.back}Back to 7.83</button></div>`;
     let controls;
     if (sc.tone != null) {
@@ -818,7 +834,7 @@ function renderLibList() {
   html += `<div class="libfoot"><span>${LIBRARY.length} entries from brainwave research, the Schumann resonance, Solfeggio, 432 Hz tuning, Hans Cousto's Cosmic Octave and the Rife frequency list (CAFL). Uses are traditional or anecdotal; most have little or no scientific support, and “weak source” marks the shakiest. Press and hold an entry for its note and sources.</span><span style="color:var(--orange)">Traditional and folk uses, not medical treatment. If you have symptoms, see a doctor.</span><span>Swipe on the header or tap a dot to change page.</span></div><div class="kbpad" style="flex:none;height:${UI.kbPad}px"></div>`;
   const top = box.scrollTop; box.innerHTML = html; box.scrollTop = top;
 }
-const UI = { binTarget: { linked: 'base', free: 'left' }, libQuery: '', kbPad: 0, libCat: null, libFlash: null };
+const UI = { binTarget: { linked: 'base', free: 'left' }, libQuery: '', kbPad: 0, libCat: null, libFlash: null, ambOpen: false };
 
 function timerBigText() {
   if (A.isPlaying && A.timerEnd) return F.dur((A.timerEnd - Date.now()) / 1000);
@@ -847,13 +863,50 @@ function renderPage(key) {
   if (key === 'library') renderLibList();
 }
 function renderAll() { for (const p of PAGES) renderPage(p.key); renderMini(); renderDots(); }
+function activeAmbients() {
+  if (A.tool || !(A.isPlaying || A.toolStarted)) return [];
+  const src = A.activeSource, out = [];
+  if (src === 'mixer') {
+    for (const l of A.state.mixer.layers) {
+      if (l.kind === 'ambience' && !l.muted && l.volume > 0.001) out.push({ id: 'mix:' + l.id, name: NOISE_LABEL[l.texture] || 'Nature' });
+    }
+  } else if (src === 'mood') {
+    const m = moodOf(A.state.moods.selected), lv = moodLevels(A.state, m.key);
+    if (lv.ambience && lv.ambience !== 'off' && lv.ambienceLevel > 0.001) out.push({ id: 'mood', name: NOISE_LABEL[lv.ambience] || 'Ambience' });
+  } else if (A.state.noise && A.state.noise !== 'off' && A.state.noiseLevel > 0.001) {
+    out.push({ id: 'bed', name: NOISE_LABEL[A.state.noise] || 'Noise' });
+  }
+  return out;
+}
+function stopAmbient(id) {
+  const ids = id === 'all' ? activeAmbients().map((a) => a.id) : [id];
+  for (const one of ids) {
+    if (one === 'bed') A.state.noise = 'off';
+    else if (one === 'mood') {
+      const k = A.state.moods.selected;
+      A.state.moods.levels[k] = Object.assign(moodLevels(A.state, k), { ambience: 'off' });
+    } else if (one.indexOf('mix:') === 0) {
+      const l = A.state.mixer.layers.find((x) => x.id === one.slice(4));
+      if (l) l.volume = 0;
+    }
+  }
+  if (!activeAmbients().length) UI.ambOpen = false;
+  edited(null, true);
+  renderAll();
+}
 function renderMini() {
   const m = $('#mini'); if (!m) return;
   const playing = A.isPlaying || A.toolStarted;
+  const ambs = activeAmbients();
+  if (!ambs.length) UI.ambOpen = false;
+  const open = UI.ambOpen && ambs.length > 0;
   const t1 = A.tool ? A.tool.title : (A.activePresetName || titleFor(A.state, A.activeSource));
   const t2 = A.tool ? 'Tools · test signal' : detailFor(A.state, A.activeSource);
-  m.innerHTML = `<div class="row"><button class="pb ${playing ? 'stop' : ''}" data-act="toggle" aria-label="${playing ? 'Stop' : 'Play'}">${playing ? I.stop : I.play}<span>${playing ? 'Stop' : 'Play'}</span></button><div class="tt" data-act="gosource"><div class="t1">${esc(t1)}</div><div class="t2">${esc(t2)}</div></div>
-    <div class="chip ${A.isPlaying && A.timerEnd ? 'on' : ''}" data-act="gotimer">${I.moon}<span id="minitimer">${miniTimerText()}</span></div>${!A.tool && needsHeadphones(A.state, A.activeSource) ? `<div class="hp" title="Headphones recommended">${I.head}</div>` : ''}</div>`;
+  const chip = ambs.length ? `<button class="ambchip" data-act="ambtoggle" aria-expanded="${open ? 'true' : 'false'}" aria-label="Background sounds, ${esc(ambs.map((a) => a.name).join(', '))}">${I.spk}<span>${esc(ambs.length === 1 ? ambs[0].name : ambs.length + ' sounds')}</span></button>` : '';
+  const panel = open ? `<div class="ambpanel" role="region" aria-label="Background sounds">${ambs.map((a) => `<div class="ambrow"><span>${esc(a.name)}</span><button type="button" data-act="ambstop" data-arg="${esc(a.id)}" aria-label="Stop ${esc(a.name)}">Stop</button></div>`).join('')}${ambs.length > 1 ? '<button type="button" class="amball" data-act="amball" aria-label="Stop all background sounds">Stop all</button>' : ''}</div>` : '';
+  m.classList.toggle('open', open);
+  m.innerHTML = `${panel}<div class="row"><button class="pb ${playing ? 'stop' : ''}" data-act="toggle" aria-label="${playing ? 'Stop' : 'Play'}">${playing ? I.stop : I.play}<span>${playing ? 'Stop' : 'Play'}</span></button><div class="tt" data-act="gosource"><div class="t1">${esc(t1)}</div><div class="t2">${esc(t2)}</div></div>
+    ${chip}<div class="chip ${A.isPlaying && A.timerEnd ? 'on' : ''}" data-act="gotimer">${I.moon}<span id="minitimer">${miniTimerText()}</span></div>${!A.tool && needsHeadphones(A.state, A.activeSource) ? `<div class="hp" title="Headphones recommended">${I.head}</div>` : ''}</div>`;
 }
 const miniTimerText = () => (A.isPlaying && A.timerEnd ? F.dur((A.timerEnd - Date.now()) / 1000) : A.state.sessionMinutes > 0 ? F.minutes(A.state.sessionMinutes) : 'Off');
 function updateMiniTimer() { const el = $('#minitimer'); if (el) el.textContent = miniTimerText(); }
@@ -1027,6 +1080,9 @@ const ACT = {
     if (m.selected === k && isPlayingSource('mood')) { stop(); return; }
     m.selected = k; A.activePresetName = null; play('mood');
   },
+  ambtoggle() { if (!activeAmbients().length) { UI.ambOpen = false; renderMini(); return; } UI.ambOpen = !UI.ambOpen; renderMini(); },
+  ambstop(id) { stopAmbient(id); },
+  amball() { stopAmbient('all'); },
   ear(k) { if (!A.state.binaural.linked) { UI.binTarget.free = k; renderPage('binaural'); } else { openKeypad(k === 'left' ? 'bin.left' : 'bin.right'); } },
   swap() { const b = A.state.binaural; [b.left, b.right] = [b.right, b.left]; edited('binaural'); refreshAfterEdit('binaural'); },
   autopan() { const b = A.state.binaural; b.autoPan = !b.autoPan; edited('binaural'); refreshAfterEdit('binaural'); },
@@ -1095,6 +1151,10 @@ const PILL = {
 let suppressClick = false;
 document.addEventListener('click', (e) => {
   if (suppressClick) { suppressClick = false; e.preventDefault(); e.stopPropagation(); return; }
+  if (moodPtr && moodPtr.moved && e.target.closest && e.target.closest('.moodwin')) {
+    moodPtr = null; e.preventDefault(); e.stopPropagation(); return;
+  }
+  if (UI.ambOpen && !(e.target.closest && e.target.closest('#mini'))) { UI.ambOpen = false; renderMini(); }
   const pillEl = e.target.closest('[data-pill] > [data-v]');
   if (pillEl) {
     const id = pillEl.parentElement.dataset.pill, v = pillEl.dataset.v;
@@ -1326,12 +1386,12 @@ function frame(t) {
     orb.bloom *= Math.exp(-dt / 2.5);
     orb.phase += dt * (0.18 + 0.5 * orb.amp + (active ? 0.08 : 0));
     const m = moodOf(A.state.moods.selected), lvl = moodLevels(A.state, m.key);
-    const vb = m.beat <= 8 ? m.beat : m.beat / Math.ceil(m.beat / 8);
+    const vb = m.pure ? 0.2 : (m.beat <= 8 ? m.beat : m.beat / Math.ceil(m.beat / 8));
     orb.beatPhase = (orb.beatPhase + vb * dt) % 1;
     orb.beatPulse = active ? Math.sin(2 * Math.PI * orb.beatPhase) * 0.010 * (0.4 + lvl.tone) : 0;
     approach(orb, 'peak', active ? A.stats.peak : 0, dt, 0.08, 0.6);
     const warmth = 0.4 * cl((orb.peak - 0.3) / 0.5, 0, 1);
-    approach(orb, 'heat', Math.max(heatValue(orb.peak, m.carrier), warmth), dt, 0.15, 0.9);
+    approach(orb, 'heat', Math.max(heatValue(orb.peak, m.pure ? m.hz : m.carrier), warmth), dt, 0.15, 0.9);
     if (box.clientWidth && box.clientHeight) drawOrb(ocv, box.clientWidth, box.clientHeight, orb);
   }
   const rcv = pageEl.querySelector('[data-ring]');
@@ -1340,7 +1400,10 @@ function frame(t) {
     layoutRing(stage);
     updateRingAudio(dt, t);
     const w = stage.clientWidth, h = stage.clientHeight;
-    if (w && h) drawLivingRing(rcv, w, h, ringVis, dt);
+    if (w && h) {
+      if (scDefault(A.state.schumann)) drawOpeningField(rcv, w, h, ringVis, dt);
+      else drawLivingRing(rcv, w, h, ringVis, dt);
+    }
   }
   const hb = pageEl.querySelector('[data-hbar]');
   if (hb) drawHearingBar(hb);
@@ -1432,8 +1495,24 @@ document.addEventListener('pointerup', (e) => { if (vd) { e.stopImmediatePropaga
 document.addEventListener('pointercancel', (e) => { if (vd) { e.stopImmediatePropagation(); vdEnd(e, true); } }, { capture: true });
 // iOS: a touch that starts on the number (or a slider/ruler) must never scroll the pager.
 const NOSCROLL = '[data-vdrag],[data-slider],[data-ruler],[data-nudge]';
+let moodPtr = null;
+document.addEventListener('pointerdown', (e) => {
+  const sc = e.target.closest && e.target.closest('.moodwin');
+  if (!sc) { moodPtr = null; return; }
+  moodPtr = { x: e.clientX, y: e.clientY, moved: false };
+}, true);
+document.addEventListener('pointermove', (e) => {
+  if (!moodPtr || moodPtr.moved) return;
+  if (Math.abs(e.clientY - moodPtr.y) > 8 || Math.abs(e.clientX - moodPtr.x) > 8) moodPtr.moved = true;
+}, true);
 document.addEventListener('touchstart', (e) => { if (e.target.closest && e.target.closest('[data-vdrag]')) e.preventDefault(); }, { passive: false });
+document.addEventListener('touchmove', (e) => {
+  if (e.target.closest && e.target.closest('.moodwin')) { e.stopPropagation(); return; }
+}, { capture: true, passive: true });
 document.addEventListener('touchmove', (e) => { if (vd || drag || (e.target.closest && e.target.closest(NOSCROLL))) e.preventDefault(); }, { passive: false });
+document.addEventListener('wheel', (e) => {
+  if (e.target.closest && e.target.closest('.moodwin')) e.stopPropagation();
+}, { capture: true, passive: true });
 
 // ===================================================================== voice intro (first open)
 const INTRO = {"duration": 18.88, "captions": [{"start": 0.35, "end": 2.14, "text": "Hi, welcome to Freqium."}, {"start": 2.59, "end": 4.08, "text": "This is your space for sound."}, {"start": 4.63, "end": 11.82, "text": "Pick how you want to feel, like calmer, more focused, sleepier, or just in a better mood, tap a button, and listen."}, {"start": 12.32, "end": 14.98, "text": "Headphones make the binaural tones work best."}, {"start": 15.43, "end": 17.32, "text": "Swipe up and down to explore."}, {"start": 17.82, "end": 18.48, "text": "Enjoy."}]};
