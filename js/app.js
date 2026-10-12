@@ -285,17 +285,24 @@ const Snd = {
     }
     this.node.connect(ctx.destination);
     this.node.connect(split);
-    // Tap the mixed output (tone + ambient bed) for the breathing ring. Not sent to the speakers.
-    const mix = ctx.createGain();
-    mix.channelCount = 1;
-    mix.channelCountMode = 'explicit';
-    mix.channelInterpretation = 'speakers';
+    // Analyser on the master output (the mix that feeds the speakers: tone, beat, and bed).
+    // Downmixed to mono so both ears count. The tap is not connected onward to the speakers.
+    const tap = ctx.createGain();
+    tap.channelCount = 1;
+    tap.channelCountMode = 'explicit';
+    tap.channelInterpretation = 'speakers';
     this.anBreath = ctx.createAnalyser();
-    this.anBreath.fftSize = 2048;
-    this.anBreath.smoothingTimeConstant = 0.88;
+    this.anBreath.fftSize = 1024;
+    this.anBreath.smoothingTimeConstant = 0.62;
+    this.anBreath.minDecibels = -88;
+    this.anBreath.maxDecibels = -18;
     this.breathBuf = new Float32Array(this.anBreath.fftSize);
-    this.node.connect(mix);
-    mix.connect(this.anBreath);
+    this.freqBuf = new Uint8Array(this.anBreath.frequencyBinCount);
+    this.bandLo = new Uint16Array(VIS_BANDS);
+    this.bandHi = new Uint16Array(VIS_BANDS);
+    prepSpectrumEdges(ctx.sampleRate, this.anBreath.fftSize, this.bandLo, this.bandHi);
+    this.node.connect(tap);
+    tap.connect(this.anBreath);
     this.ready = true;
     this.push();
     return true;
@@ -1198,7 +1205,10 @@ function initPager() {
 
 // ===================================================================== animation
 const orb = { phase: 0, amp: 0, low: 0, high: 0, bloom: 0, beatPulse: 0, heat: 0, peak: 0, beatPhase: 0, lastSerial: -1 };
-const ringVis = { breath: 0.22, energy: 0.12, heat: 0, beatPhase: 0, env: 0, rmsFast: 0, rmsSlow: 0 };
+const ringVis = {
+  breath: 0.4, energy: 0.22, tint: freqTint(200, SCHUMANN, 0), beatPhase: 0, shimmer: 0.42,
+  rmsFast: 0, rmsSlow: 0.02, bands: new Float32Array(VIS_BANDS), bandInst: new Float32Array(VIS_BANDS),
+};
 const approach = (o, k, target, dt, att, rel) => { const tau = target > o[k] ? att : rel; o[k] += (target - o[k]) * (1 - Math.exp(-dt / tau)); };
 const lv = { v: 0 };
 let lastT = 0;
@@ -1211,65 +1221,64 @@ function pageFreq(key) {
   const st = A.state;
   return { tone: st.tone.frequency, binaural: st.binaural.left, pulse: st.pulse.carrier }[key] || 200;
 }
-// Square the opening ring to min(page width, leftover height, 90vw, 420px).
+// Opening ring: about 88% of the viewport width on a phone, never wider than the column.
 function layoutRing(stage) {
   const flex = stage && stage.parentElement;
   if (!flex) return;
-  const availW = flex.clientWidth, availH = flex.clientHeight;
-  if (availW < 8 || availH < 8) return;
-  const size = Math.floor(Math.min(availW, availH, window.innerWidth * 0.9, 420));
+  const availW = flex.clientWidth;
+  if (availW < 8) return;
+  const vw = window.innerWidth || availW;
+  const size = Math.floor(Math.min(availW, vw * 0.9));
   if (stage._sz !== size) {
     stage._sz = size;
     stage.style.width = size + 'px';
     stage.style.height = size + 'px';
   }
 }
-// Breath follows the real output when a bed is playing; otherwise the tone envelope
-// plus a slow (about 6.6 s) organic cycle. Attack/release keeps it calm.
-function outputRms() {
-  const an = Snd.anBreath;
-  if (!an || !Snd.breathBuf) return 0;
-  an.getFloatTimeDomainData(Snd.breathBuf);
-  const b = Snd.breathBuf;
-  let s = 0, n = 0;
-  for (let i = 0; i < b.length; i += 4) { const v = b[i]; s += v * v; n++; }
-  return Math.sqrt(s / Math.max(1, n));
-}
-function updateRingAudio(dt, t) {
-  const live = Snd.ready && (A.isPlaying || A.toolStarted || A.stats.env > 0.01);
-  const rms = live ? outputRms() : 0;
-  if (ringVis.rmsSlow < 1e-4) ringVis.rmsSlow = rms || 0.04;
-  // Fast envelope follows a swell; the slower one is its local mean, so the circle releases between waves.
-  approach(ringVis, 'rmsFast', rms, dt, 0.18, 0.4);
-  approach(ringVis, 'rmsSlow', Math.max(rms, 0.004), dt, 2.6, 2.6);
-  const env = live ? A.stats.env : 0;
-  approach(ringVis, 'env', env, dt, 0.25, 0.6);
-  const w = (t / 1000) * (Math.PI * 2 / 6.6);
-  const organic = 0.5 + 0.5 * (0.82 * Math.sin(w) + 0.18 * Math.sin(w * 0.5 + 1.3));
-  const amb = live && A.state.noise !== 'off' && A.state.noiseLevel > 0.015;
-  let target, energyTarget;
-  if (amb) {
-    const dev = (ringVis.rmsFast - ringVis.rmsSlow) / (ringVis.rmsSlow + 0.015);
-    const shaped = cl(0.5 + dev * 1.7, 0, 1);
-    target = (0.16 + 0.84 * shaped) * (0.9 + 0.1 * organic);
-    energyTarget = 0.12 + 0.88 * shaped;
-  } else if (live) {
-    target = (0.28 + 0.72 * ringVis.env) * (0.58 + 0.42 * organic);
-    energyTarget = ringVis.env * (0.32 + 0.28 * organic);
-  } else {
-    target = 0.16 + 0.1 * organic;
-    energyTarget = 0.1 + 0.06 * organic;
+// RMS plus spectrum from the master-output analyser. Smoothed here so color and
+// size ease, while the beat-rate shimmer stays in the draw.
+function readMasterLevel() {
+  const an = Snd.anBreath, time = Snd.breathBuf;
+  if (!an || !time) return 0;
+  an.getFloatTimeDomainData(time);
+  if (Snd.freqBuf && Snd.bandLo) {
+    an.getByteFrequencyData(Snd.freqBuf);
+    fillSpectrum(Snd.freqBuf, Snd.bandLo, Snd.bandHi, ringVis.bandInst);
   }
-  approach(ringVis, 'breath', target, dt, amb ? 0.32 : 0.55, amb ? 0.9 : 0.95);
-  approach(ringVis, 'energy', energyTarget, dt, 0.36, 1.1);
+  let s = 0;
+  const n = time.length;
+  for (let i = 0; i < n; i += 2) { const v = time[i]; s += v * v; }
+  return Math.sqrt(s / (n >> 1));
+}
+function updateRingAudio(dt) {
+  const live = Snd.ready && (A.isPlaying || A.toolStarted || A.stats.env > 0.01);
+  const rms = live ? readMasterLevel() : 0;
+  // Fast envelope catches swells (rain, waves). Slow enough that a 7.83 Hz beat does not pump the disc.
+  approach(ringVis, 'rmsFast', rms, dt, 0.2, 0.4);
+  approach(ringVis, 'rmsSlow', Math.max(rms, 0.001), dt, 1.5, 1.5);
+  const shaped = Math.pow(cl(ringVis.rmsSlow / 0.16, 0, 1), 0.7);
+  const gust = cl((ringVis.rmsFast - ringVis.rmsSlow) / (ringVis.rmsSlow + 0.025), 0, 1.2);
+  const energyTarget = 0.22 + (live ? 0.78 * Math.max(shaped, gust) : 0);
+  approach(ringVis, 'energy', energyTarget, dt, 0.26, 0.75);
+  approach(ringVis, 'breath', live ? (0.4 + 0.6 * shaped) : 0.42, dt, 0.55, 1);
+  const bands = ringVis.bands, inst = ringVis.bandInst;
+  if (live && Snd.freqBuf) {
+    for (let i = 0; i < VIS_BANDS; i++) {
+      const target = inst[i], cur = bands[i];
+      const tau = target > cur ? 0.09 : 0.42;
+      bands[i] = cur + (target - cur) * (1 - Math.exp(-dt / tau));
+    }
+  } else {
+    const decay = Math.exp(-dt / 0.7);
+    for (let i = 0; i < VIS_BANDS; i++) bands[i] *= decay;
+  }
   const sc = A.state.schumann;
   const beat = sc.tone != null ? (sc.shimmer ? SCHUMANN : 0) : sc.beat;
-  const vb = beat <= 0 ? 0 : (beat <= 8 ? beat : beat / Math.ceil(beat / 8));
-  ringVis.beatPhase = (ringVis.beatPhase + (live && vb > 0 ? vb : 1 / 6.6) * dt) % 1;
-  const peak = live ? A.stats.peak : 0;
+  const rate = beat > 0.05 ? Math.min(beat, 14) : 0;
+  ringVis.beatPhase = (ringVis.beatPhase + (rate > 0 ? rate : 1 / 5.5) * dt) % 1;
   const carrier = sc.tone != null ? sc.tone : sc.carrier;
-  const warmth = 0.45 * cl((peak - 0.28) / 0.5, 0, 1);
-  approach(ringVis, 'heat', live ? Math.max(heatValue(peak, carrier), warmth) : 0, dt, 0.22, 1.05);
+  approach(ringVis, 'tint', freqTint(carrier, beat, shaped), dt, 0.9, 1.25);
+  ringVis.shimmer = live ? (0.4 + 0.6 * Math.max(shaped, 0.2)) : 0.45;
 }
 function frame(t) {
   requestAnimationFrame(frame);
