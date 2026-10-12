@@ -1,0 +1,36 @@
+{
+ "voice": "Piper en_US-lessac-high (offline TTS, generated on the box)",
+ "duration": 18.88,
+ "captions": [
+  {
+   "start": 0.35,
+   "end": 2.14,
+   "text": "Hi, welcome to Freqium."
+  },
+  {
+   "start": 2.59,
+   "end": 4.08,
+   "text": "This is your space for sound."
+  },
+  {
+   "start": 4.63,
+   "end": 11.82,
+   "text": "Pick how you want to feel, like calmer, more focused, sleepier, or just in a better mood, tap a button, and listen."
+  },
+  {
+   "start": 12.32,
+   "end": 14.98,
+   "text": "Headphones make the binaural tones work best."
+  },
+  {
+   "start": 15.43,
+   "end": 17.32,
+   "text": "Swipe up and down to explore."
+  },
+  {
+   "start": 17.82,
+   "end": 18.48,
+   "text": "Enjoy."
+  }
+ ]
+}
