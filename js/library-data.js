@@ -1,0 +1,2002 @@
+// GENERATED from build_library.py by tools/gen_library.py. 170 entries, 25 sources.
+const LIBRARY_TRADITIONS = {"brainwave": "Brainwave bands", "schumann": "Schumann resonance", "solfeggio": "Solfeggio", "tuning432": "432 Hz tuning", "music": "Music research", "cosmic": "Cosmic Octave", "archaeo": "Archaeoacoustics", "rife": "Rife list (CAFL)", "chakra": "Chakra tradition", "nogier": "Nogier (auriculotherapy)"};
+const LIBRARY_CATEGORIES = {"wellbeing": "Wellbeing", "mind": "Mind & Focus", "sleep": "Sleep & Rest", "mood": "Mood & Spirit", "body": "Body comfort", "cosmic": "Earth & Cosmic"};
+const LIBRARY = [
+{
+"id": "acid-stomach",
+"use": "Acid stomach (heartburn)",
+"hz": 230.0,
+"trad": "rife",
+"note": "CAFL 'Hyperacidity, stomach' (7.82, 20, 230).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "heartburn acid reflux stomach digestion",
+"cat": "body"
+},
+{
+"id": "energy",
+"use": "Alertness & energy",
+"hz": 20.0,
+"trad": "brainwave",
+"note": "Beta is associated with alertness and excitement; higher beta also with tension.",
+"sources": "MARZBANI",
+"caution": null,
+"keywords": "beta energy awake morning",
+"cat": "mind"
+},
+{
+"id": "anxious",
+"use": "Anxious feelings",
+"hz": 1.5,
+"trad": "rife",
+"note": "First value of CAFL 'Anxiety' (1.5, 6.8, 7.8, 95, 10000).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "anxiety worry stress nervous",
+"cat": "wellbeing"
+},
+{
+"id": "nogier-f",
+"use": "Appetite & mood (Nogier F)",
+"hz": 73.0,
+"trad": "nogier",
+"note": "Frequency F stimulates the subcortex; used for eating, endocrine and menstrual-cycle issues, and described as mood-lifting.",
+"sources": "NOGIER",
+"caution": "Auriculotherapy uses these as pulsed light or electrical stimulation on ear zones; the evidence is weak and none of it tested listening.",
+"keywords": "nogier appetite mood hormones cycle",
+"cat": "mood"
+},
+{
+"id": "back-spasms",
+"use": "Back spasms",
+"hz": 212.0,
+"trad": "rife",
+"note": "CAFL 'Backache and spasms 1' and 'Backache 1' both include 212.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "back spasm cramp tension",
+"cat": "body"
+},
+{
+"id": "backache",
+"use": "Backache",
+"hz": 9.6,
+"trad": "rife",
+"note": "CAFL 'Backache 2' set, which includes 9.6.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "back pain spine",
+"cat": "body"
+},
+{
+"id": "bad-breath",
+"use": "Bad breath",
+"hz": 1550.0,
+"trad": "rife",
+"note": "CAFL 'Halitosis' (1550, 802, 880, 787, 727, 20).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "breath mouth halitosis",
+"cat": "body"
+},
+{
+"id": "nogier-d",
+"use": "Balance & coordination (Nogier D)",
+"hz": 18.25,
+"trad": "nogier",
+"note": "Frequency D stimulates symmetry, used for locomotion; later writers add posture and coordination.",
+"sources": "NOGIER",
+"caution": "Auriculotherapy uses these as pulsed light or electrical stimulation on ear zones; the evidence is weak and none of it tested listening.",
+"keywords": "nogier balance coordination posture walking symmetry",
+"cat": "body"
+},
+{
+"id": "pluto-141",
+"use": "Belonging & teamwork (Pluto tone)",
+"hz": 140.64,
+"trad": "cosmic",
+"note": "Pluto's orbital tone; Cousto: 'supports the magic group dynamic principle' and integration into society.",
+"sources": "COUSTO; COUSTO_T",
+"caution": "Astrological attribution; no clinical evidence.",
+"keywords": "pluto group team belonging community social",
+"cat": "cosmic"
+},
+{
+"id": "blackheads",
+"use": "Blackheads",
+"hz": 778.0,
+"trad": "rife",
+"note": "CAFL 'Comedones' (778).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "blackheads skin pores comedones",
+"cat": "body"
+},
+{
+"id": "blemishes",
+"use": "Blemishes (acne)",
+"hz": 564.0,
+"trad": "rife",
+"note": "CAFL 'Acne' ('run 564 for 6 min').",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "acne spots blemishes pimples skin",
+"cat": "body"
+},
+{
+"id": "bloating",
+"use": "Bloating & gas",
+"hz": 52.0,
+"trad": "rife",
+"note": "CAFL 'Stomach gas' (50–59 Hz); a very low tone that phone speakers barely play.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "stomach gas wind bloating digestion",
+"cat": "body"
+},
+{
+"id": "bw-1",
+"use": "Body repair & deep rest (delta)",
+"hz": 1.0,
+"trad": "brainwave",
+"note": "Delta (1-4 Hz) is listed with 'sleep, repair' and deep unconsciousness; 1 Hz sits at the slow end.",
+"sources": "MARZBANI; STATPEARLS",
+"caution": "Band characteristics describe measured EEG; whether listening to a beat at this rate shifts your state is debated.",
+"keywords": "delta repair recovery night deep rest",
+"cat": "sleep"
+},
+{
+"id": "bruises",
+"use": "Bruises",
+"hz": 9.1,
+"trad": "rife",
+"note": "CAFL 'Bruises' (9.1, 110, 10000).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "bruise knock bump skin",
+"cat": "body"
+},
+{
+"id": "sr-14",
+"use": "Calm focus (Schumann 2nd mode)",
+"hz": 14.3,
+"trad": "schumann",
+"note": "Second Schumann mode, ~14 Hz (14.1-14.3). Falls in the SMR / low-beta range linked to still, alert attention; Saroka 2016 saw brief EEG-Schumann coherence at 13-14 Hz.",
+"sources": "SR_MODES; SAROKA; MARZBANI",
+"caution": "Measured mode frequency drifts by about ±0.5 Hz; no tradition ties this mode to a specific use, so the label follows the EEG band it falls in. Brain-Schumann links are correlational.",
+"keywords": "schumann harmonic second mode focus attention study smr 14",
+"cat": "cosmic"
+},
+{
+"id": "calm-focus",
+"use": "Calm focus (SMR)",
+"hz": 14.0,
+"trad": "brainwave",
+"note": "Sensorimotor rhythm (12–15 Hz) is associated with mental alertness while the body is still; a common neurofeedback target.",
+"sources": "MARZBANI; NEUROKIT; STATPEARLS",
+"caution": null,
+"keywords": "smr focus attention study adhd stillness",
+"cat": "mind"
+},
+{
+"id": "calm-432",
+"use": "Calm listening (432 Hz)",
+"hz": 432.0,
+"trad": "tuning432",
+"note": "Music tuned to A = 432 Hz was associated with a slightly lower heart rate than 440 Hz in a 33-person pilot study.",
+"sources": "CALAMASSI; SOLF_RW",
+"caution": "Single small pilot; wider claims about 432 Hz are contested.",
+"keywords": "432 verdi tuning calm heart",
+"cat": "wellbeing"
+},
+{
+"id": "calming-6000",
+"use": "Calming (high tone)",
+"hz": 6000.0,
+"trad": "rife",
+"note": "CAFL 'Calming' (6000); also in 'Relaxation to produce' and 'Sedation and pain relief'. A very high, thin tone: keep the volume low.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "calm calming relax sedate",
+"cat": "wellbeing"
+},
+{
+"id": "om-136",
+"use": "Calming the nervous system (OM)",
+"hz": 136.1,
+"trad": "cosmic",
+"note": "Earth-year tone, the 'OM' of Indian music practice; Cousto lists it as relaxing, soothing and balancing, recommended for nervousness and inner restlessness.",
+"sources": "COUSTO; COUSTO_T",
+"caution": "Traditional/esoteric attribution; no clinical evidence.",
+"keywords": "om earth year nervous restless calm heart chakra meditation",
+"cat": "cosmic"
+},
+{
+"id": "nogier-a",
+"use": "Cell vitality (Nogier A)",
+"hz": 2.28,
+"trad": "nogier",
+"note": "Nogier's frequency A 'stimulates the cellular working mechanism'.",
+"sources": "NOGIER",
+"caution": "Auriculotherapy uses these as pulsed light or electrical stimulation on ear zones; the evidence is weak and none of it tested listening.",
+"keywords": "nogier ear auricular cells vitality renewal",
+"cat": "wellbeing"
+},
+{
+"id": "sun-126",
+"use": "Centering (Sun tone)",
+"hz": 126.22,
+"trad": "cosmic",
+"note": "Cousto's constructed Sun tone; traditionally associated with a feeling of centering.",
+"sources": "COUSTO; COUSTO_T",
+"caution": "Traditional/esoteric attribution; no clinical evidence.",
+"keywords": "sun center hara solar inner strength self",
+"cat": "cosmic"
+},
+{
+"id": "circulation",
+"use": "Circulation",
+"hz": 9.39,
+"trad": "rife",
+"note": "CAFL 'Circulation disturbances' (40, 9.39).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "blood circulation cold hands",
+"cat": "wellbeing"
+},
+{
+"id": "solf-741-clarity",
+"use": "Clarity & problem solving (Solfeggio)",
+"hz": 741.0,
+"trad": "solfeggio",
+"note": "Same tone as 'Expression & solutions': Sonora's chart lists 741 Hz as said to 'solve problems'.",
+"sources": "SOLF_SON; SOLF_ARK",
+"caution": "Numerological origin (1970s, published 1999), not ancient; the healing claims are unsupported.",
+"keywords": "solfeggio clarity problem solving clear mind",
+"cat": "mind"
+},
+{
+"id": "clear-thought",
+"use": "Clarity of thought",
+"hz": 20.0,
+"trad": "rife",
+"note": "CAFL 'Intelligence and clarity of thought' (20, 10000).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "clarity clear thinking mind intelligence",
+"cat": "mind"
+},
+{
+"id": "mercury-141",
+"use": "Clear communication (Mercury tone)",
+"hz": 141.27,
+"trad": "cosmic",
+"note": "Mercury's orbital tone; Cousto links it to the throat chakra and the 'communicative-intellectual principle'.",
+"sources": "COUSTO; COUSTO_T",
+"caution": "Astrological attribution; no clinical evidence.",
+"keywords": "mercury speaking communication confidence thinking",
+"cat": "cosmic"
+},
+{
+"id": "solf-417-negativity",
+"use": "Clearing negativity (Solfeggio)",
+"hz": 417.0,
+"trad": "solfeggio",
+"note": "Same tone as 'Facilitating change': Sonora's chart lists 417 Hz as 'said to clear negativity'.",
+"sources": "SOLF_SON",
+"caution": "Numerological origin (1970s, published 1999), not ancient; the healing claims are unsupported.",
+"keywords": "solfeggio negativity cleanse reset fresh start",
+"cat": "mood"
+},
+{
+"id": "solf-174",
+"use": "Comfort & easing pain",
+"hz": 174.0,
+"trad": "solfeggio",
+"note": "Traditionally associated with comfort, security and easing pain in Solfeggio charts.",
+"sources": "SOLF_RW; SOLF_ARK; SOLF_SON",
+"caution": "Later addition to the original six; numerological origin (1970s, published 1999), not ancient; the healing claims are unsupported.",
+"keywords": "solfeggio pain security",
+"cat": "mood"
+},
+{
+"id": "saturn-148",
+"use": "Concentration (Saturn tone)",
+"hz": 147.85,
+"trad": "cosmic",
+"note": "Saturn's orbital tone; Cousto lists it as enhancing concentration.",
+"sources": "COUSTO; COUSTO_T",
+"caution": "Astrological attribution; no clinical evidence.",
+"keywords": "saturn focus concentration",
+"cat": "cosmic"
+},
+{
+"id": "solf-639",
+"use": "Connection & relationships",
+"hz": 639.0,
+"trad": "solfeggio",
+"note": "Traditionally associated with connection and mending relationships.",
+"sources": "SOLF_RW; SOLF_ARK; SOLF_SON",
+"caution": "Numerological origin (1970s, published 1999), not ancient; the healing claims are unsupported.",
+"keywords": "solfeggio fa relationships love connection forgiveness",
+"cat": "mood"
+},
+{
+"id": "constipation",
+"use": "Constipation",
+"hz": 444.0,
+"trad": "rife",
+"note": "CAFL 'Constipation' set (…, 444, 440, 422, 20).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "constipation digestion bowel stomach",
+"cat": "body"
+},
+{
+"id": "chamber-110",
+"use": "Contemplative stillness (110 Hz)",
+"hz": 110.0,
+"trad": "archaeo",
+"note": "In a 30-person EEG pilot, a 110 Hz tone lowered left-temporal (language) activity; linked to resonances of ancient chambers.",
+"sources": "COOK; DEBERTOLIS",
+"caution": "Pilot study; later measurements of the Ħal Saflieni Hypogeum report ~70 and ~114 Hz, not 110 Hz.",
+"keywords": "ancient hypogeum chamber resonance contemplative",
+"cat": "mind"
+},
+{
+"id": "solf-396-courage",
+"use": "Courage (letting go of fear)",
+"hz": 396.0,
+"trad": "solfeggio",
+"note": "Same tone as 'Releasing fear & guilt': Solfeggio charts say 396 Hz releases fear, which wellness apps frame as courage.",
+"sources": "SOLF_SON; SOLF_ARK",
+"caution": "Numerological origin (1970s, published 1999), not ancient; the healing claims are unsupported.",
+"keywords": "solfeggio courage brave fear confidence",
+"cat": "mood"
+},
+{
+"id": "jupiter-184",
+"use": "Creative drive (Jupiter tone)",
+"hz": 183.58,
+"trad": "cosmic",
+"note": "Jupiter's orbital tone; Cousto: 'supports creative power and continuous construction' (generosity, joviality).",
+"sources": "COUSTO; COUSTO_T",
+"caution": "Astrological attribution; no clinical evidence.",
+"keywords": "jupiter creativity motivation productivity joy",
+"cat": "cosmic"
+},
+{
+"id": "creativity",
+"use": "Creativity & insight",
+"hz": 5.0,
+"trad": "brainwave",
+"note": "Theta is traditionally associated with creativity, insight and deep inward states.",
+"sources": "MARZBANI",
+"caution": null,
+"keywords": "theta ideas imagination",
+"cat": "mind"
+},
+{
+"id": "ch-c-crown",
+"use": "Crown chakra (Cosmic Octave)",
+"hz": 172.06,
+"trad": "chakra",
+"note": "Cousto's set uses the Platonic-year tone for the crown chakra and spiritual meditation.",
+"sources": "COUSTO",
+"caution": "Chakras are a spiritual concept, not measurable anatomy; tone-to-chakra pairings are modern wellness conventions.",
+"keywords": "chakra crown platonic spiritual faith",
+"cat": "mood"
+},
+{
+"id": "ch-s-crown",
+"use": "Crown chakra (Solfeggio map)",
+"hz": 963.0,
+"trad": "chakra",
+"note": "Paired with the crown chakra (Sahasrara), 'associated with a sense of connection beyond the self'.",
+"sources": "SOLF_CHAKRA",
+"caution": "Chakras are a spiritual concept, not measurable anatomy; tone-to-chakra pairings are modern wellness conventions.",
+"keywords": "chakra crown sahasrara faith belief spiritual oneness",
+"cat": "mood"
+},
+{
+"id": "cuts",
+"use": "Cuts & scrapes",
+"hz": 220.0,
+"trad": "rife",
+"note": "CAFL 'Wound healing' set (2720, 880, 787, 727, 220, …).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "cuts scrapes graze skin healing",
+"cat": "body"
+},
+{
+"id": "deep-breathing",
+"use": "Deep breathing",
+"hz": 1234.0,
+"trad": "rife",
+"note": "CAFL 'Breathing, deep' (1234, 3702, 3672, 7344, 7760).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "breath breathing lungs calm",
+"cat": "wellbeing"
+},
+{
+"id": "deep-meditation",
+"use": "Deep meditation",
+"hz": 6.0,
+"trad": "brainwave",
+"note": "Theta is often described as the 'optimal meditative state' in neurofeedback literature.",
+"sources": "MARZBANI",
+"caution": null,
+"keywords": "theta mindfulness spiritual",
+"cat": "mood"
+},
+{
+"id": "deep-sleep",
+"use": "Deep sleep",
+"hz": 2.0,
+"trad": "brainwave",
+"note": "Delta (0.5–4 Hz) is the dominant EEG rhythm of deep sleep; traditionally chosen for sleep sessions.",
+"sources": "STATPEARLS; MARZBANI",
+"caution": null,
+"keywords": "delta night rest bedtime",
+"cat": "sleep"
+},
+{
+"id": "detox",
+"use": "Detox support",
+"hz": 24.0,
+"trad": "rife",
+"note": "CAFL 'Detox 1' (10000, 3176, 522, 164, 89, 24).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "detox cleanse",
+"cat": "wellbeing"
+},
+{
+"id": "nogier-b",
+"use": "Digestion & nourishment (Nogier B)",
+"hz": 4.56,
+"trad": "nogier",
+"note": "Frequency B stimulates 'multicellular functions' and is used for nutrition and the digestive system.",
+"sources": "NOGIER",
+"caution": "Auriculotherapy uses these as pulsed light or electrical stimulation on ear zones; the evidence is weak and none of it tested listening.",
+"keywords": "nogier digestion nutrition stomach gut",
+"cat": "body"
+},
+{
+"id": "dizziness",
+"use": "Dizziness (vertigo)",
+"hz": 5.8,
+"trad": "rife",
+"note": "CAFL 'Vertigo' (60, 5.8, 4).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "vertigo dizzy balance",
+"cat": "body"
+},
+{
+"id": "drifting-off",
+"use": "Drifting off",
+"hz": 4.0,
+"trad": "brainwave",
+"note": "Theta appears with drowsiness and light sleep; traditionally associated with the edge of sleep.",
+"sources": "STATPEARLS; MARZBANI",
+"caution": null,
+"keywords": "theta sleep onset drowsy bedtime",
+"cat": "sleep"
+},
+{
+"id": "solf-741",
+"use": "Expression & solutions",
+"hz": 741.0,
+"trad": "solfeggio",
+"note": "Traditionally associated with expression and finding solutions.",
+"sources": "SOLF_RW; SOLF_ARK; SOLF_SON",
+"caution": "Numerological origin (1970s, published 1999), not ancient; the healing claims are unsupported.",
+"keywords": "solfeggio sol expression clarity problem solving",
+"cat": "mood"
+},
+{
+"id": "eye-strain",
+"use": "Eye strain",
+"hz": 1830.0,
+"trad": "rife",
+"note": "CAFL 'Vision poor' and 'Eyesight sharpen' (350, 360, 1830).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "eyes strain screen tired vision",
+"cat": "body"
+},
+{
+"id": "eyes-closed-rest",
+"use": "Eyes-closed rest (alpha)",
+"hz": 9.5,
+"trad": "brainwave",
+"note": "Relaxed wakefulness with eyes closed shows the 8-13 Hz alpha rhythm, which fades as sleep begins.",
+"sources": "AASM; MARZBANI",
+"caution": "Band characteristics describe measured EEG; whether listening to a beat at this rate shifts your state is debated.",
+"keywords": "rest eyes closed break pause relax alpha",
+"cat": "sleep"
+},
+{
+"id": "facial-toning",
+"use": "Facial toning",
+"hz": 1.2,
+"trad": "rife",
+"note": "CAFL 'Facial toning' (1.2).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "face skin beauty toning",
+"cat": "body"
+},
+{
+"id": "solf-417",
+"use": "Facilitating change",
+"hz": 417.0,
+"trad": "solfeggio",
+"note": "Traditionally associated with undoing situations and facilitating change.",
+"sources": "SOLF_RW; SOLF_ARK; SOLF_SON",
+"caution": "Numerological origin (1970s, published 1999), not ancient; the healing claims are unsupported.",
+"keywords": "solfeggio re change",
+"cat": "mood"
+},
+{
+"id": "sleep-n1",
+"use": "Falling asleep (N1 theta)",
+"hz": 5.5,
+"trad": "brainwave",
+"note": "As alpha fades, stage N1 shows 4-7 Hz theta: the first minutes of sleep.",
+"sources": "AASM",
+"caution": "Band characteristics describe measured EEG; whether listening to a beat at this rate shifts your state is debated.",
+"keywords": "sleep onset falling asleep n1 theta drowsy",
+"cat": "sleep"
+},
+{
+"id": "fatigue-120",
+"use": "Fatigue & low energy",
+"hz": 120.0,
+"trad": "rife",
+"note": "CAFL 'Fatigue general' set, which includes 120.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "tired energy vitality",
+"cat": "wellbeing"
+},
+{
+"id": "cold-flu",
+"use": "Feeling unwell (cold & flu)",
+"hz": 880.0,
+"trad": "rife",
+"note": "880 recurs across CAFL 'Cold 1' ('use 800 and 880 for 10 min'), 'Cold 3', 'Cold 4' and several flu sets; for the run-down feeling of an everyday cold.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "cold flu sniffles run down unwell sick under the weather",
+"cat": "wellbeing"
+},
+{
+"id": "focus",
+"use": "Focus & sustained attention",
+"hz": 18.0,
+"trad": "brainwave",
+"note": "Beta (15–20 Hz) is associated with active thinking, focusing and sustained attention.",
+"sources": "MARZBANI; STATPEARLS",
+"caution": null,
+"keywords": "beta concentration work study",
+"cat": "mind"
+},
+{
+"id": "mars-145",
+"use": "Focused energy & will (Mars tone)",
+"hz": 144.72,
+"trad": "cosmic",
+"note": "Mars's orbital tone; astrologically associated with focused energy, will and achievement.",
+"sources": "COUSTO; COUSTO_T",
+"caution": "Astrological attribution; no clinical evidence.",
+"keywords": "mars drive motivation energy confidence inner strength courage",
+"cat": "cosmic"
+},
+{
+"id": "frayed-nerves",
+"use": "Frayed nerves",
+"hz": 7.64,
+"trad": "rife",
+"note": "CAFL 'Nerves healing' (200, 10, 7.64).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "nerves frayed on edge stress calm",
+"cat": "wellbeing"
+},
+{
+"id": "uranus-207",
+"use": "Fresh start & renewal (Uranus tone)",
+"hz": 207.36,
+"trad": "cosmic",
+"note": "Uranus's orbital tone; Cousto: 'supports the power of surprise and renewal'.",
+"sources": "COUSTO; COUSTO_T",
+"caution": "Astrological attribution; no clinical evidence.",
+"keywords": "uranus renewal change new beginning surprise",
+"cat": "cosmic"
+},
+{
+"id": "frozen-shoulder",
+"use": "Frozen shoulder",
+"hz": 802.0,
+"trad": "rife",
+"note": "CAFL 'Frozen shoulder' (10000, 880, 802, 787, 766, 727).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "shoulder frozen stiff",
+"cat": "body"
+},
+{
+"id": "moon-210",
+"use": "Full-moon meditation (Moon tone)",
+"hz": 210.42,
+"trad": "cosmic",
+"note": "Synodic-month tone; Cousto calls it suitable for meditation music for full-moon rituals.",
+"sources": "COUSTO; COUSTO_T",
+"caution": "Traditional/esoteric attribution; no clinical evidence.",
+"keywords": "moon lunar ritual",
+"cat": "cosmic"
+},
+{
+"id": "aches",
+"use": "General aches & pains",
+"hz": 80.0,
+"trad": "rife",
+"note": "CAFL 'Pain, general' (3000, 2720, 95, 666, 80, 40).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "aches pains sore body",
+"cat": "body"
+},
+{
+"id": "sr-wellbeing",
+"use": "General wellbeing (Schumann)",
+"hz": 7.83,
+"trad": "schumann",
+"note": "CAFL 'Wellness' set (6.8, 7.83); Cherry 2002 proposed Earth's resonance as a link between geomagnetic activity and wellbeing.",
+"sources": "CAFL; CHERRY",
+"caution": "Studied as an electromagnetic field or by correlation, not as sound; listening to this rate as a beat is a modern wellness use with no direct evidence. Cherry's mechanism is an unconfirmed hypothesis.",
+"keywords": "wellness wellbeing feel good balance schumann",
+"cat": "wellbeing"
+},
+{
+"id": "schumann",
+"use": "Grounding & relaxation (Schumann)",
+"hz": 7.83,
+"trad": "schumann",
+"note": "Fundamental of Earth's electromagnetic cavity resonance (~7.8 Hz, set by lightning and Earth's size). Traditionally used for grounding and relaxation (CAFL 'Schumann resonance: Earth frequencies which may be relaxing'; 'Relaxation to produce' 6000, 10, 7.83). König (1950s-60s) and Saroka 2016 noted similar 7-8 Hz peaks in resting EEG.",
+"sources": "SCHUMANN; SR_MODES; SAROKA; CAFL",
+"caution": "The resonance is electromagnetic, not sound; its use as a listening rate is a modern wellness tradition.",
+"keywords": "earth grounding nature 7.83 relax calm schumann fundamental",
+"cat": "cosmic"
+},
+{
+"id": "hangover",
+"use": "Hangover",
+"hz": 146.0,
+"trad": "rife",
+"note": "CAFL 'Hangover' (10000, 522, 146).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "hangover morning after headache nausea",
+"cat": "wellbeing"
+},
+{
+"id": "hay-fever",
+"use": "Hay fever",
+"hz": 880.0,
+"trad": "rife",
+"note": "CAFL 'Hay fever (only some types)' (880, 787, 727, 20).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "hay fever allergy pollen sneezing seasonal",
+"cat": "body"
+},
+{
+"id": "headache-10",
+"use": "Headache relief",
+"hz": 10.0,
+"trad": "rife",
+"note": "Traditionally associated with headaches: CAFL 'Headaches' (144, 160, 1.2, 520, 10, …) and 'Migraine' (10).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "headache migraine head pain",
+"cat": "body"
+},
+{
+"id": "sr-headache",
+"use": "Headache relief (Schumann)",
+"hz": 7.83,
+"trad": "schumann",
+"note": "CAFL 'Headaches, unknown cause' (10, 4, 5.8, 6.3, 7.83, …) and 'Headaches comp' include 7.83.",
+"sources": "CAFL; SCHUMANN",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "headache migraine head pain schumann",
+"cat": "cosmic"
+},
+{
+"id": "headache-144",
+"use": "Headache relief (tone)",
+"hz": 144.0,
+"trad": "rife",
+"note": "Audible alternative: 144 Hz, the first value of the CAFL 'Headaches' set.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "headache migraine head pain",
+"cat": "body"
+},
+{
+"id": "solf-285",
+"use": "Healing & rejuvenation",
+"hz": 285.0,
+"trad": "solfeggio",
+"note": "Traditionally associated with healing and rejuvenation (often 'tissue renewal').",
+"sources": "SOLF_RW; SOLF_ARK; SOLF_SON",
+"caution": "Later addition to the original six; numerological origin (1970s, published 1999), not ancient; the healing claims are unsupported.",
+"keywords": "solfeggio renewal recovery",
+"cat": "mood"
+},
+{
+"id": "hair",
+"use": "Healthy hair",
+"hz": 646.0,
+"trad": "rife",
+"note": "CAFL 'Hair, human' (646).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "hair scalp beauty",
+"cat": "body"
+},
+{
+"id": "ch-c-heart",
+"use": "Heart chakra (Cosmic Octave)",
+"hz": 136.1,
+"trad": "chakra",
+"note": "Cousto's set uses the Earth-year 'OM' tone for the heart chakra: relaxing, soothing, balancing.",
+"sources": "COUSTO",
+"caution": "Chakras are a spiritual concept, not measurable anatomy; tone-to-chakra pairings are modern wellness conventions.",
+"keywords": "chakra heart om love calm",
+"cat": "mood"
+},
+{
+"id": "ch-s-heart",
+"use": "Heart chakra (Solfeggio map)",
+"hz": 639.0,
+"trad": "chakra",
+"note": "Paired with the heart chakra (Anahata), 'associated in the tradition with warmth, compassion and connection'.",
+"sources": "SOLF_CHAKRA",
+"caution": "Chakras are a spiritual concept, not measurable anatomy; tone-to-chakra pairings are modern wellness conventions.",
+"keywords": "chakra heart anahata love compassion gratitude forgiveness kindness",
+"cat": "mood"
+},
+{
+"id": "hiccups",
+"use": "Hiccups",
+"hz": 20.0,
+"trad": "rife",
+"note": "CAFL 'Hiccups' (20, 10000).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "hiccup",
+"cat": "body"
+},
+{
+"id": "hip",
+"use": "Hip aches",
+"hz": 787.0,
+"trad": "rife",
+"note": "CAFL 'Hip pain' (880, 787, 727, 20).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "hip joint ache",
+"cat": "body"
+},
+{
+"id": "hives",
+"use": "Hives",
+"hz": 522.0,
+"trad": "rife",
+"note": "CAFL 'Urticaria' set (1800, 880, 787, 727, 522, 146, 4.9).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "hives itchy rash urticaria",
+"cat": "body"
+},
+{
+"id": "hoarse",
+"use": "Hoarse voice",
+"hz": 760.0,
+"trad": "rife",
+"note": "CAFL 'Hoarseness' (880, 760, 727).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "hoarse voice throat singing speaking",
+"cat": "body"
+},
+{
+"id": "hormonal",
+"use": "Hormonal balance",
+"hz": 5.5,
+"trad": "rife",
+"note": "CAFL 'Hormonal imbalances' (5.5).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "hormones balance cycle",
+"cat": "wellbeing"
+},
+{
+"id": "hot-flushes",
+"use": "Hot flushes",
+"hz": 727.0,
+"trad": "rife",
+"note": "CAFL 'Hot flashes' (10000, 880, 787, 727).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "hot flash flush menopause heat sweating",
+"cat": "body"
+},
+{
+"id": "electrolytes",
+"use": "Hydration & electrolytes",
+"hz": 8.1,
+"trad": "rife",
+"note": "CAFL 'Electrolyte levels' (8.1, 20, 10000). Drink water too.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "hydration water electrolytes thirst",
+"cat": "wellbeing"
+},
+{
+"id": "indigestion",
+"use": "Indigestion",
+"hz": 4.9,
+"trad": "rife",
+"note": "CAFL 'Dyspepsia (indigestion)' set, which includes 4.9.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "stomach digestion dyspepsia",
+"cat": "body"
+},
+{
+"id": "sr-insomnia",
+"use": "Insomnia (Schumann)",
+"hz": 7.83,
+"trad": "schumann",
+"note": "A small randomized, double-blind trial (40 people with insomnia, 4 weeks) found a bedside 7.83 Hz device improved sleep onset and total sleep time vs. placebo. CAFL 'Insomnia' also lists 7.83.",
+"sources": "HUANG; CAFL",
+"caution": "Single small trial of an electromagnetic device (mixed with theta/delta), not of listening to sound.",
+"keywords": "insomnia sleep night bedtime schumann",
+"cat": "sleep"
+},
+{
+"id": "bw-25",
+"use": "Intensity & drive (high beta)",
+"hz": 25.0,
+"trad": "brainwave",
+"note": "High beta (20-32 Hz) is listed with 'intensity, hyperalertness' and also anxiety, so use briefly.",
+"sources": "MARZBANI",
+"caution": "Band characteristics describe measured EEG; whether listening to a beat at this rate shifts your state is debated.",
+"keywords": "high beta intensity workout drive energy pump",
+"cat": "mind"
+},
+{
+"id": "neptune-211",
+"use": "Intuition & dreams (Neptune tone)",
+"hz": 211.44,
+"trad": "cosmic",
+"note": "Neptune's orbital tone; Cousto: 'supports intuition, the unconscious and enhances the dream experience'.",
+"sources": "COUSTO; COUSTO_T",
+"caution": "Astrological attribution; no clinical evidence.",
+"keywords": "neptune intuition dreams unconscious lucid sleep",
+"cat": "sleep"
+},
+{
+"id": "bw-7",
+"use": "Intuition & insight (theta)",
+"hz": 7.0,
+"trad": "brainwave",
+"note": "Upper theta (4-8 Hz) is listed with 'creativity, insight, deep states'.",
+"sources": "MARZBANI",
+"caution": "Band characteristics describe measured EEG; whether listening to a beat at this rate shifts your state is debated.",
+"keywords": "theta intuition insight inner visualization imagery",
+"cat": "mind"
+},
+{
+"id": "solf-852-intuition",
+"use": "Intuition (Solfeggio)",
+"hz": 852.0,
+"trad": "solfeggio",
+"note": "Same tone as 'Returning to spiritual order': Sonora's chart lists 852 Hz as 'said to awaken intuition'.",
+"sources": "SOLF_SON; SOLF_ARK",
+"caution": "Numerological origin (1970s, published 1999), not ancient; the healing claims are unsupported.",
+"keywords": "solfeggio intuition insight sixth sense",
+"cat": "mood"
+},
+{
+"id": "itchy-skin",
+"use": "Itchy skin",
+"hz": 444.0,
+"trad": "rife",
+"note": "CAFL 'Itching' set (880, 787, 727, 444, 125, …).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "itch itching skin rash",
+"cat": "body"
+},
+{
+"id": "jet-lag",
+"use": "Jet lag (body clock)",
+"hz": 10.0,
+"trad": "schumann",
+"note": "Wever's bunker studies: a weak 10 Hz field, standing in for natural Schumann-band fields, kept the body clock tighter and prevented its rhythms from drifting apart. Wellness apps borrow this for travel.",
+"sources": "WEVER; STATPEARLS",
+"caution": "1970 electric-field study in an isolation bunker; not sound, and never tested on jet lag.",
+"keywords": "jet lag travel time zone circadian body clock flight",
+"cat": "sleep"
+},
+{
+"id": "joint-160",
+"use": "Joint aches",
+"hz": 160.0,
+"trad": "rife",
+"note": "First value of CAFL 'Joint pain basic' (160, 500, 1600, …).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "joints knees pain arthritis",
+"cat": "body"
+},
+{
+"id": "knee",
+"use": "Knee aches",
+"hz": 28.0,
+"trad": "rife",
+"note": "CAFL 'Knee joint pain' set, which includes 28.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "knee joint ache running",
+"cat": "body"
+},
+{
+"id": "sr-34",
+"use": "Learning & study (Schumann 5th mode)",
+"hz": 33.8,
+"trad": "schumann",
+"note": "Fifth Schumann mode, ~33 Hz (CAFL lists 33). Sits at the low edge of gamma, which neurofeedback literature associates with learning and cognitive processing.",
+"sources": "SR_MODES; MARZBANI; CAFL",
+"caution": "Measured mode frequency drifts by about ±0.5 Hz; no tradition ties this mode to a specific use, so the label follows the EEG band it falls in. Brain-Schumann links are correlational.",
+"keywords": "schumann harmonic fifth mode learning study memory gamma 33",
+"cat": "cosmic"
+},
+{
+"id": "sleep-spindles",
+"use": "Light sleep (sleep spindles)",
+"hz": 12.5,
+"trad": "brainwave",
+"note": "Stage N2, about half of a night, is marked by sleep spindles; slow spindles run 12-14 Hz.",
+"sources": "AASM; STATPEARLS",
+"caution": "Band characteristics describe measured EEG; whether listening to a beat at this rate shifts your state is debated.",
+"keywords": "light sleep n2 spindles nap",
+"cat": "sleep"
+},
+{
+"id": "appetite",
+"use": "Low appetite",
+"hz": 465.0,
+"trad": "rife",
+"note": "CAFL 'Appetite, lack of' (465, 444, 1865, …).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "appetite hunger eating",
+"cat": "wellbeing"
+},
+{
+"id": "low-strength",
+"use": "Low strength in later life",
+"hz": 27.5,
+"trad": "rife",
+"note": "CAFL 'Adynamia geriatric' (410, 220, 100, 60, 27.5).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "strength weakness elderly older age vitality",
+"cat": "wellbeing"
+},
+{
+"id": "lumbago",
+"use": "Lower back ache (lumbago)",
+"hz": 300.0,
+"trad": "rife",
+"note": "CAFL 'Lumbago' set, which ends with 300.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "lower back lumbago ache",
+"cat": "body"
+},
+{
+"id": "lymph",
+"use": "Lymph flow",
+"hz": 10.36,
+"trad": "rife",
+"note": "CAFL 'Lymph support' (15.05, 10.36, 3176).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "lymph flow drainage puffy",
+"cat": "wellbeing"
+},
+{
+"id": "memory",
+"use": "Memory recall",
+"hz": 9.0,
+"trad": "brainwave",
+"note": "Lower alpha (8–10 Hz) is described as associated with recalling.",
+"sources": "MARZBANI",
+"caution": null,
+"keywords": "alpha remember study",
+"cat": "mind"
+},
+{
+"id": "menopause",
+"use": "Menopause comfort",
+"hz": 5.5,
+"trad": "rife",
+"note": "CAFL 'Menopause symptoms TR' (880, 787, 727, 5.5).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "menopause hormones hot flush",
+"cat": "body"
+},
+{
+"id": "menstrual",
+"use": "Menstrual cramps",
+"hz": 26.0,
+"trad": "rife",
+"note": "CAFL 'Cramps, menstrual' (26).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "period cramps pms",
+"cat": "body"
+},
+{
+"id": "sr-39",
+"use": "Mental clarity (Schumann 6th mode)",
+"hz": 39.0,
+"trad": "schumann",
+"note": "Sixth Schumann mode, ~39-40 Hz (CAFL's Schumann set lists 39; a 1986 spectral study resolved a stable peak at 39.5 Hz). Low gamma, which neurofeedback literature links to mental sharpness.",
+"sources": "SR_MODES; CAFL; MARZBANI",
+"caution": "Measured mode frequency drifts by about ±0.5 Hz; no tradition ties this mode to a specific use, so the label follows the EEG band it falls in. Brain-Schumann links are correlational.",
+"keywords": "schumann harmonic sixth mode clarity sharp gamma 39",
+"cat": "cosmic"
+},
+{
+"id": "concentration-782",
+"use": "Mental concentration",
+"hz": 7.82,
+"trad": "rife",
+"note": "CAFL 'Mental concentration' (10000, 7.82): almost the Schumann rate.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "focus concentration study",
+"cat": "mind"
+},
+{
+"id": "gamma-40",
+"use": "Mental sharpness (gamma 40)",
+"hz": 40.0,
+"trad": "brainwave",
+"note": "Gamma (~40 Hz) is associated with learning and cognitive processing; 40 Hz sound/light research is mostly in mice.",
+"sources": "MARZBANI; MARTORELL",
+"caution": "40 Hz results are from animal studies; human 40 Hz beat studies are mixed.",
+"keywords": "gamma cognition memory brain",
+"cat": "mind"
+},
+{
+"id": "stimulation-22",
+"use": "Mental stimulation",
+"hz": 22.0,
+"trad": "rife",
+"note": "CAFL 'Brain beta stim' (7.83, 22, 19.5).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "beta energy alert",
+"cat": "mind"
+},
+{
+"id": "nogier-g",
+"use": "Mind & mental organization (Nogier G)",
+"hz": 146.0,
+"trad": "nogier",
+"note": "Frequency G stimulates the cortex and is used for psychosomatic complaints.",
+"sources": "NOGIER",
+"caution": "Auriculotherapy uses these as pulsed light or electrical stimulation on ear zones; the evidence is weak and none of it tested listening.",
+"keywords": "nogier mind cortex thinking psychosomatic",
+"cat": "mind"
+},
+{
+"id": "sprains",
+"use": "Minor sprains",
+"hz": 110.0,
+"trad": "rife",
+"note": "CAFL 'Distortion' and 'Luxation' (9.1, 110): German terms for sprains and dislocations.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence. Get a real injury checked.",
+"keywords": "sprain twist ankle wrist",
+"cat": "body"
+},
+{
+"id": "venus-221",
+"use": "Mood lift & harmony (Venus tone)",
+"hz": 221.23,
+"trad": "cosmic",
+"note": "Venus's orbital tone; Cousto says it 'supports higher love energy and aspiration for harmony' and 'promotes inner harmony'.",
+"sources": "COUSTO; COUSTO_T",
+"caution": "Astrological attribution; no clinical evidence.",
+"keywords": "venus mood love warmth harmony happy low mood",
+"cat": "cosmic"
+},
+{
+"id": "motion-sickness",
+"use": "Motion sickness",
+"hz": 125.0,
+"trad": "rife",
+"note": "CAFL 'Motion sickness' set, which includes 125.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "travel car sea nausea",
+"cat": "body"
+},
+{
+"id": "sr-27",
+"use": "Motivation & drive (Schumann 4th mode)",
+"hz": 27.3,
+"trad": "schumann",
+"note": "Fourth Schumann mode, ~26-27 Hz (CAFL's Schumann set lists 26). High beta (20-32 Hz) is associated with alertness and arousal, and also with tension, so keep sessions short.",
+"sources": "SR_MODES; MARZBANI; CAFL",
+"caution": "Measured mode frequency drifts by about ±0.5 Hz; no tradition ties this mode to a specific use, so the label follows the EEG band it falls in. Brain-Schumann links are correlational.",
+"keywords": "schumann harmonic fourth mode motivation drive get going energy 27",
+"cat": "cosmic"
+},
+{
+"id": "nogier-c",
+"use": "Movement & muscles (Nogier C)",
+"hz": 9.12,
+"trad": "nogier",
+"note": "Frequency C stimulates muscle contraction and movement.",
+"sources": "NOGIER",
+"caution": "Auriculotherapy uses these as pulsed light or electrical stimulation on ear zones; the evidence is weak and none of it tested listening.",
+"keywords": "nogier muscles movement exercise",
+"cat": "body"
+},
+{
+"id": "muscle-relax",
+"use": "Muscle relaxation",
+"hz": 6.8,
+"trad": "rife",
+"note": "CAFL 'Muscles to relax' and 'Spasms, muscle' (6.8).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "muscle tension spasm body",
+"cat": "body"
+},
+{
+"id": "muscle-tone",
+"use": "Muscle tone",
+"hz": 240.0,
+"trad": "rife",
+"note": "CAFL 'Muscle tonic' (20, 120, 240, 300, …).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "muscle tone fitness strength workout",
+"cat": "body"
+},
+{
+"id": "nausea",
+"use": "Nausea & cramping",
+"hz": 72.0,
+"trad": "rife",
+"note": "First value of CAFL 'Nausea and cramping' (72, 95, 190, …).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "stomach nausea cramps",
+"cat": "body"
+},
+{
+"id": "autonomic-balance",
+"use": "Nervous system balance",
+"hz": 40.0,
+"trad": "rife",
+"note": "CAFL 'Vegetative dystonia' (40): the old term for an unbalanced autonomic nervous system.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "nervous system autonomic balance stress",
+"cat": "wellbeing"
+},
+{
+"id": "nervousness",
+"use": "Nervousness & agitation",
+"hz": 3.0,
+"trad": "rife",
+"note": "CAFL 'Nervousness / agitation' (3, 7.83).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "nervous system calm agitation restless",
+"cat": "wellbeing"
+},
+{
+"id": "solf-963",
+"use": "Oneness & intuition",
+"hz": 963.0,
+"trad": "solfeggio",
+"note": "Traditionally associated with oneness and intuition (sometimes called the 'pineal' tone).",
+"sources": "SOLF_RW; SOLF_ARK; SOLF_SON",
+"caution": "Later addition to the original six; numerological origin (1970s, published 1999), not ancient; the healing claims are unsupported.",
+"keywords": "solfeggio crown spiritual pineal faith belief",
+"cat": "mood"
+},
+{
+"id": "nogier-e",
+"use": "Pain easing (Nogier E)",
+"hz": 36.5,
+"trad": "nogier",
+"note": "Frequency E stimulates the spinal cord and is used for painful disorders (the 'analgesic' frequency).",
+"sources": "NOGIER",
+"caution": "Auriculotherapy uses these as pulsed light or electrical stimulation on ear zones; the evidence is weak and none of it tested listening.",
+"keywords": "nogier pain ache spine",
+"cat": "body"
+},
+{
+"id": "pain-304",
+"use": "Pain relief",
+"hz": 304.0,
+"trad": "rife",
+"note": "CAFL 'Pain relief' and 'Sedation and pain relief' (both begin with 304).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "pain ache sedation",
+"cat": "body"
+},
+{
+"id": "bw-11",
+"use": "Peaceful readiness (alpha)",
+"hz": 11.0,
+"trad": "brainwave",
+"note": "Alpha is listed with 'alertness and peacefulness, readiness, meditation'; 11 Hz is mid-alpha.",
+"sources": "MARZBANI; STATPEARLS",
+"caution": "Band characteristics describe measured EEG; whether listening to a beat at this rate shifts your state is debated.",
+"keywords": "alpha calm ready present mindful",
+"cat": "mind"
+},
+{
+"id": "peak-performance",
+"use": "Peak performance",
+"hz": 12.0,
+"trad": "brainwave",
+"note": "Upper alpha (10–13 Hz) is described as associated with optimal cognitive performance.",
+"sources": "MARZBANI",
+"caution": null,
+"keywords": "alpha upper flow",
+"cat": "mind"
+},
+{
+"id": "pets",
+"use": "Pet harmony (cats & dogs)",
+"hz": 3.6,
+"trad": "rife",
+"note": "CAFL 'Dog and cat hostility' (3.6), for a calmer home with pets.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "pets cat dog animals home harmony",
+"cat": "wellbeing"
+},
+{
+"id": "pins-needles",
+"use": "Pins & needles",
+"hz": 5.5,
+"trad": "rife",
+"note": "CAFL 'Paresthesia' (5.5).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "pins needles tingling numb",
+"cat": "body"
+},
+{
+"id": "bw-35",
+"use": "Problem solving (gamma)",
+"hz": 35.0,
+"trad": "brainwave",
+"note": "Gamma (32-100 Hz) is listed with 'learning, cognitive processing, problem solving tasks, mental sharpness'.",
+"sources": "MARZBANI",
+"caution": "Band characteristics describe measured EEG; whether listening to a beat at this rate shifts your state is debated.",
+"keywords": "gamma problem solving learning sharp",
+"cat": "mind"
+},
+{
+"id": "puffiness",
+"use": "Puffiness & swelling",
+"hz": 6.3,
+"trad": "rife",
+"note": "CAFL 'Swelling' set, which includes 6.3.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "swelling puffy water retention legs",
+"cat": "body"
+},
+{
+"id": "recovery",
+"use": "Recovery & regeneration",
+"hz": 266.0,
+"trad": "rife",
+"note": "CAFL 'Healing and regeneration' (2720, 266, 47).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "recovery regeneration healing rest",
+"cat": "wellbeing"
+},
+{
+"id": "relaxed-alertness",
+"use": "Relaxed alertness",
+"hz": 10.0,
+"trad": "brainwave",
+"note": "Alpha (8–13 Hz), the resting rhythm of the awake brain with eyes closed; traditionally used for calm awareness and stress relief.",
+"sources": "STATPEARLS; MARZBANI; GARCIA",
+"caution": null,
+"keywords": "alpha calm stress relaxation",
+"cat": "mind"
+},
+{
+"id": "solf-396",
+"use": "Releasing fear & guilt",
+"hz": 396.0,
+"trad": "solfeggio",
+"note": "Traditionally associated with releasing fear and guilt.",
+"sources": "SOLF_RW; SOLF_ARK; SOLF_SON",
+"caution": "Numerological origin (1970s, published 1999), not ancient; the healing claims are unsupported.",
+"keywords": "solfeggio ut fear guilt courage forgiveness letting go",
+"cat": "mood"
+},
+{
+"id": "rest",
+"use": "Rest & unwinding",
+"hz": 8.0,
+"trad": "brainwave",
+"note": "Lower alpha; alpha is traditionally associated with being awake but deeply relaxed.",
+"sources": "MARZBANI; STATPEARLS",
+"caution": null,
+"keywords": "alpha relax calm chill",
+"cat": "sleep"
+},
+{
+"id": "bw-3",
+"use": "Restorative sleep (delta)",
+"hz": 3.0,
+"trad": "brainwave",
+"note": "Mid-delta, the rhythm of slow-wave (deep) sleep; traditionally chosen for long overnight sessions.",
+"sources": "STATPEARLS; MARZBANI",
+"caution": "Band characteristics describe measured EEG; whether listening to a beat at this rate shifts your state is debated.",
+"keywords": "delta deep sleep slow wave night",
+"cat": "sleep"
+},
+{
+"id": "solf-852",
+"use": "Returning to spiritual order",
+"hz": 852.0,
+"trad": "solfeggio",
+"note": "Traditionally associated with a 'return to spiritual order' and intuition.",
+"sources": "SOLF_RW; SOLF_ARK; SOLF_SON",
+"caution": "Numerological origin (1970s, published 1999), not ancient; the healing claims are unsupported.",
+"keywords": "solfeggio la intuition spiritual",
+"cat": "mood"
+},
+{
+"id": "ringing-ears",
+"use": "Ringing in the ears",
+"hz": 728.0,
+"trad": "rife",
+"note": "CAFL 'Tinnitus' (20, 2720, 728, 784, 880). Keep the volume low.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence. Persistent ringing needs a hearing check.",
+"keywords": "tinnitus ringing ears hearing",
+"cat": "body"
+},
+{
+"id": "ch-c-root",
+"use": "Root chakra (Cosmic Octave)",
+"hz": 194.18,
+"trad": "chakra",
+"note": "Cousto's chakra set uses the Earth-day tone for the base chakra: 'dynamic, vitalizing'.",
+"sources": "COUSTO",
+"caution": "Chakras are a spiritual concept, not measurable anatomy; tone-to-chakra pairings are modern wellness conventions.",
+"keywords": "chakra root base earth day vitality grounding",
+"cat": "mood"
+},
+{
+"id": "ch-s-root",
+"use": "Root chakra (Solfeggio map)",
+"hz": 396.0,
+"trad": "chakra",
+"note": "Wellness charts pair 396 Hz with the root chakra (Muladhara, base of the spine); the tone itself is said to release fear and guilt.",
+"sources": "SOLF_CHAKRA; SOLF_SON",
+"caution": "Chakras are a spiritual concept, not measurable anatomy; tone-to-chakra pairings are modern wellness conventions.",
+"keywords": "chakra root muladhara grounding security safety base",
+"cat": "mood"
+},
+{
+"id": "ch-c-sacral",
+"use": "Sacral chakra (Cosmic Octave)",
+"hz": 210.42,
+"trad": "chakra",
+"note": "Cousto's set uses the synodic Moon tone for the 2nd chakra; he links it to communication and sexuality.",
+"sources": "COUSTO",
+"caution": "Chakras are a spiritual concept, not measurable anatomy; tone-to-chakra pairings are modern wellness conventions.",
+"keywords": "chakra sacral moon sensuality",
+"cat": "mood"
+},
+{
+"id": "ch-s-sacral",
+"use": "Sacral chakra (Solfeggio map)",
+"hz": 417.0,
+"trad": "chakra",
+"note": "Paired with the sacral chakra (Svadhisthana, lower abdomen); the tone is said to clear negativity and ease change.",
+"sources": "SOLF_CHAKRA; SOLF_SON",
+"caution": "Chakras are a spiritual concept, not measurable anatomy; tone-to-chakra pairings are modern wellness conventions.",
+"keywords": "chakra sacral svadhisthana creativity flow",
+"cat": "mood"
+},
+{
+"id": "sciatic",
+"use": "Sciatic twinges",
+"hz": 25.4,
+"trad": "rife",
+"note": "CAFL 'Sciatica 1' (254, 464, 465, 866, 15, 25.4).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "sciatica leg back nerve",
+"cat": "body"
+},
+{
+"id": "electrosmog",
+"use": "Screen & device fatigue",
+"hz": 99.5,
+"trad": "rife",
+"note": "CAFL 'Electrosmog 1' (99.5).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "screen phone computer device electrosmog wifi tired",
+"cat": "wellbeing"
+},
+{
+"id": "eyesight",
+"use": "Sharper eyesight",
+"hz": 350.0,
+"trad": "rife",
+"note": "CAFL 'Eyesight, sharpen' (350, 360, 1830).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "eyes vision eyesight screen tired eyes",
+"cat": "body"
+},
+{
+"id": "sleep-memory",
+"use": "Sleep & memory (fast spindles)",
+"hz": 14.5,
+"trad": "brainwave",
+"note": "Fast spindles (14-16 Hz) are linked to sleep mechanisms including memory consolidation.",
+"sources": "AASM; STATPEARLS",
+"caution": "Band characteristics describe measured EEG; whether listening to a beat at this rate shifts your state is debated.",
+"keywords": "sleep memory learning consolidation spindles study",
+"cat": "sleep"
+},
+{
+"id": "sleeplessness",
+"use": "Sleeplessness",
+"hz": 3.59,
+"trad": "rife",
+"note": "First value of CAFL 'Insomnia' (3.59, 3, 7.83, 10, …).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "insomnia sleep night",
+"cat": "sleep"
+},
+{
+"id": "sleep-n3",
+"use": "Slow-wave sleep (N3)",
+"hz": 0.8,
+"trad": "brainwave",
+"note": "Stage N3 is defined by high-amplitude delta waves of 0.5-2 Hz: the deepest, most restorative sleep.",
+"sources": "AASM",
+"caution": "Band characteristics describe measured EEG; whether listening to a beat at this rate shifts your state is debated.",
+"keywords": "deep sleep slow wave n3 delta night",
+"cat": "sleep"
+},
+{
+"id": "sneezing",
+"use": "Sneezing fits",
+"hz": 683.0,
+"trad": "rife",
+"note": "CAFL 'Sneezing' (880, 787, 727, 683, 465, 146).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "sneeze sneezing allergy",
+"cat": "body"
+},
+{
+"id": "ch-c-solar",
+"use": "Solar plexus chakra (Cosmic Octave)",
+"hz": 126.22,
+"trad": "chakra",
+"note": "Cousto's set uses the Sun tone for Manipura / Hara, the body's centre.",
+"sources": "COUSTO",
+"caution": "Chakras are a spiritual concept, not measurable anatomy; tone-to-chakra pairings are modern wellness conventions.",
+"keywords": "chakra solar plexus hara sun centre inner strength",
+"cat": "mood"
+},
+{
+"id": "ch-s-solar",
+"use": "Solar plexus chakra (Solfeggio map)",
+"hz": 528.0,
+"trad": "chakra",
+"note": "Paired with the solar plexus chakra (Manipura, upper abdomen); 528 Hz is the so-called 'love frequency'.",
+"sources": "SOLF_CHAKRA; SOLF_SON",
+"caution": "Chakras are a spiritual concept, not measurable anatomy; tone-to-chakra pairings are modern wellness conventions.",
+"keywords": "chakra solar plexus manipura confidence willpower inner strength",
+"cat": "mood"
+},
+{
+"id": "sore-muscles",
+"use": "Sore muscles after exercise",
+"hz": 324.0,
+"trad": "rife",
+"note": "CAFL 'Muscular pain and injury' set, which includes 324.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "sore muscles workout gym doms recovery",
+"cat": "body"
+},
+{
+"id": "sore-throat",
+"use": "Sore throat",
+"hz": 452.0,
+"trad": "rife",
+"note": "CAFL 'Sore throat TR' (2720, 1800, 144, 452).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "sore throat scratchy cold",
+"cat": "body"
+},
+{
+"id": "platonic-172",
+"use": "Spiritual meditation (Platonic year)",
+"hz": 172.06,
+"trad": "cosmic",
+"note": "Platonic-year tone; Cousto links it to the crown chakra and meditation on the spiritual path.",
+"sources": "COUSTO; COUSTO_T",
+"caution": "Uses a traditional 25,920-year figure; esoteric attribution.",
+"keywords": "crown chakra spiritual meditation",
+"cat": "cosmic"
+},
+{
+"id": "stammering",
+"use": "Stammering",
+"hz": 7.83,
+"trad": "rife",
+"note": "CAFL 'Stammering' (10000, 20, 6000, 7.83).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "stammer stutter speech speaking confidence",
+"cat": "mind"
+},
+{
+"id": "stiff-muscles",
+"use": "Stiff muscles",
+"hz": 328.0,
+"trad": "rife",
+"note": "CAFL 'Stiff muscles' (320, 328, 304, …).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "stiff muscles sore workout doms",
+"cat": "body"
+},
+{
+"id": "stiff-neck",
+"use": "Stiff neck",
+"hz": 9.19,
+"trad": "rife",
+"note": "CAFL 'Stiff neck' (4.9, 6, 9.19).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "neck tension shoulders",
+"cat": "body"
+},
+{
+"id": "stiff-shoulder",
+"use": "Stiff shoulders",
+"hz": 766.0,
+"trad": "rife",
+"note": "CAFL 'Stiff shoulder' (10000, 727, 766, 20).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "shoulder stiff tension desk",
+"cat": "body"
+},
+{
+"id": "bw-13",
+"use": "Still body, alert mind (SMR)",
+"hz": 13.0,
+"trad": "brainwave",
+"note": "Sensorimotor rhythm (13-15 Hz): 'mental alertness, physical relaxation'.",
+"sources": "MARZBANI; NEUROKIT",
+"caution": "Band characteristics describe measured EEG; whether listening to a beat at this rate shifts your state is debated.",
+"keywords": "smr calm alert stillness reading",
+"cat": "mind"
+},
+{
+"id": "stress-528",
+"use": "Stress relief",
+"hz": 528.0,
+"trad": "music",
+"note": "Five minutes of 528 Hz-tuned music lowered salivary cortisol and tension-anxiety scores versus 440 Hz in a small pilot study.",
+"sources": "AKIMOTO",
+"caution": "Pilot study with 9 participants; not replicated at scale.",
+"keywords": "stress cortisol anxiety relax 528",
+"cat": "wellbeing"
+},
+{
+"id": "sr-stress",
+"use": "Stress relief (Schumann)",
+"hz": 7.83,
+"trad": "schumann",
+"note": "HeartMath / Global Coherence study: in 10 people over a month, heart-rate variability (a stress-recovery marker) rose and fell with Schumann resonance power. CAFL lists 7.83 under 'Relaxation to produce'.",
+"sources": "MCCRATY; CHERRY; CAFL",
+"caution": "Studied as an electromagnetic field or by correlation, not as sound; listening to this rate as a beat is a modern wellness use with no direct evidence.",
+"keywords": "stress tension heart hrv coherence calm schumann",
+"cat": "wellbeing"
+},
+{
+"id": "catarrh",
+"use": "Stuffy nose (catarrh)",
+"hz": 1713.0,
+"trad": "rife",
+"note": "CAFL 'Catarrh' (1800, 1713, 1550, …).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "stuffy nose blocked congestion catarrh mucus",
+"cat": "body"
+},
+{
+"id": "sweaty-feet",
+"use": "Sweaty feet",
+"hz": 148.0,
+"trad": "rife",
+"note": "CAFL 'Sudor pedis' (148).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "feet sweat sweaty odour",
+"cat": "body"
+},
+{
+"id": "bw-16",
+"use": "Thinking & problem solving (beta)",
+"hz": 16.0,
+"trad": "brainwave",
+"note": "Beta (15-20 Hz) is listed with 'thinking, focusing, sustained attention'.",
+"sources": "MARZBANI",
+"caution": "Band characteristics describe measured EEG; whether listening to a beat at this rate shifts your state is debated.",
+"keywords": "beta thinking problem solving work analysis",
+"cat": "mind"
+},
+{
+"id": "thin-hair",
+"use": "Thinning hair",
+"hz": 330.0,
+"trad": "rife",
+"note": "CAFL 'Alopecia' set, which includes 330.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "hair loss thinning bald",
+"cat": "body"
+},
+{
+"id": "ch-c-third-eye",
+"use": "Third-eye chakra (Cosmic Octave)",
+"hz": 221.23,
+"trad": "chakra",
+"note": "Cousto's set uses the Venus tone for the third eye: 'promotes inner harmony'.",
+"sources": "COUSTO",
+"caution": "Chakras are a spiritual concept, not measurable anatomy; tone-to-chakra pairings are modern wellness conventions.",
+"keywords": "chakra third eye venus harmony intuition",
+"cat": "mood"
+},
+{
+"id": "ch-s-third-eye",
+"use": "Third-eye chakra (Solfeggio map)",
+"hz": 852.0,
+"trad": "chakra",
+"note": "Paired with the third-eye chakra (Ajna, between the eyebrows); the tone is said to awaken intuition.",
+"sources": "SOLF_CHAKRA; SOLF_SON",
+"caution": "Chakras are a spiritual concept, not measurable anatomy; tone-to-chakra pairings are modern wellness conventions.",
+"keywords": "chakra third eye ajna intuition insight",
+"cat": "mood"
+},
+{
+"id": "ch-c-throat",
+"use": "Throat chakra (Cosmic Octave)",
+"hz": 141.27,
+"trad": "chakra",
+"note": "Cousto's set uses the Mercury tone for the throat chakra: the communicative-intellectual principle.",
+"sources": "COUSTO",
+"caution": "Chakras are a spiritual concept, not measurable anatomy; tone-to-chakra pairings are modern wellness conventions.",
+"keywords": "chakra throat mercury communication",
+"cat": "mood"
+},
+{
+"id": "ch-s-throat",
+"use": "Throat chakra (Solfeggio map)",
+"hz": 741.0,
+"trad": "chakra",
+"note": "Paired with the throat chakra (Vishuddha); the tone is said to aid expression and solutions.",
+"sources": "SOLF_CHAKRA; SOLF_SON",
+"caution": "Chakras are a spiritual concept, not measurable anatomy; tone-to-chakra pairings are modern wellness conventions.",
+"keywords": "chakra throat vishuddha expression voice speaking",
+"cat": "mood"
+},
+{
+"id": "tickly-throat",
+"use": "Tickly throat",
+"hz": 690.0,
+"trad": "rife",
+"note": "CAFL 'Throat tickle, chronic' (120, 666, 690, …).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "throat tickle cough",
+"cat": "body"
+},
+{
+"id": "fascia",
+"use": "Tight fascia",
+"hz": 20.0,
+"trad": "rife",
+"note": "CAFL 'Fascia' (20).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "fascia tight stretch mobility yoga",
+"cat": "body"
+},
+{
+"id": "too-much-sun",
+"use": "Too much sun (heat)",
+"hz": 440.0,
+"trad": "rife",
+"note": "CAFL 'Fever, sunstroke' (20, 440, 880). Cool down, drink water; heat stroke is an emergency.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "sun heat summer sunstroke hot",
+"cat": "body"
+},
+{
+"id": "toothache",
+"use": "Toothache",
+"hz": 190.0,
+"trad": "rife",
+"note": "CAFL 'Toothache' set (…, 465, 190, 95, 47.5); CAFL itself says to see a dentist.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "tooth dental teeth jaw pain",
+"cat": "body"
+},
+{
+"id": "solf-528",
+"use": "Transformation & love",
+"hz": 528.0,
+"trad": "solfeggio",
+"note": "Traditionally called the 'love frequency' and associated with transformation (claims of 'DNA repair' are unsupported).",
+"sources": "SOLF_RW; SOLF_ARK; SOLF_SON",
+"caution": "Numerological origin (1970s, published 1999), not ancient; the healing claims are unsupported.",
+"keywords": "solfeggio mi love miracle dna",
+"cat": "mood"
+},
+{
+"id": "tummy-ache",
+"use": "Tummy ache",
+"hz": 3.0,
+"trad": "rife",
+"note": "CAFL 'Abdominal pain' (10000, 3000, 95, 3).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "tummy stomach belly ache abdominal",
+"cat": "body"
+},
+{
+"id": "upset-stomach",
+"use": "Upset stomach",
+"hz": 95.0,
+"trad": "rife",
+"note": "Traditionally associated with stomach complaints: 95 appears in CAFL 'Nausea and cramping', 'Dyspepsia' and 'Stomach disorders'.",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "stomach tummy digestion belly nausea",
+"cat": "body"
+},
+{
+"id": "earth-day-194",
+"use": "Vitality & energy (Earth day)",
+"hz": 194.18,
+"trad": "cosmic",
+"note": "Earth-day tone; Cousto describes it as dynamic, vitalizing and activating.",
+"sources": "COUSTO; COUSTO_T",
+"caution": "Traditional/esoteric attribution; no clinical evidence.",
+"keywords": "earth day energy vitality morning",
+"cat": "cosmic"
+},
+{
+"id": "sr-21",
+"use": "Waking up (Schumann 3rd mode)",
+"hz": 20.8,
+"trad": "schumann",
+"note": "Third Schumann mode, ~20-21 Hz. Beta range, associated with alertness; CAFL 'Brain beta stim' pairs 7.83 with 19.5 and 22. Saroka 2016 saw EEG-Schumann coherence at 19-20 Hz.",
+"sources": "SR_MODES; SAROKA; MARZBANI; CAFL",
+"caution": "Measured mode frequency drifts by about ±0.5 Hz; no tradition ties this mode to a specific use, so the label follows the EEG band it falls in. Brain-Schumann links are correlational.",
+"keywords": "schumann harmonic third mode morning wake alert energy 20",
+"cat": "cosmic"
+},
+{
+"id": "bonding-528",
+"use": "Warmth & bonding (528 study)",
+"hz": 528.0,
+"trad": "music",
+"note": "The same 9-person pilot (Akimoto 2018) also reported higher oxytocin after 528 Hz-tuned music than after 440 Hz.",
+"sources": "AKIMOTO; SOLF_SON",
+"caution": "Pilot study with 9 participants; not replicated.",
+"keywords": "oxytocin bonding love warmth connection 528",
+"cat": "mood"
+},
+{
+"id": "flatulence",
+"use": "Wind (flatulence)",
+"hz": 832.0,
+"trad": "rife",
+"note": "CAFL 'Flatulence' (1550, 880, 832, 802, …).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "gas wind flatulence stomach digestion",
+"cat": "body"
+},
+{
+"id": "sedative",
+"use": "Winding down",
+"hz": 2.5,
+"trad": "rife",
+"note": "CAFL 'Sedative effect' (2.5; reported use includes insomnia).",
+"sources": "CAFL",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"keywords": "sedative calm sleep relax",
+"cat": "sleep"
+}
+];
+const LIBRARY_SOURCES = [
+{
+"key": "CAFL",
+"text": "Consolidated Annotated Frequency List (CAFL), v2023_05_25, compiled by turf@mindspring.com, electroherbalism.com. Lists frequency sets for Rife-type electrical frequency generators. The page itself states: \"None of this information has been approved by the FDA or any medical agency ... not intended to diagnose, treat, or cure disease.\"",
+"url": "https://www.electroherbalism.com/Bioelectronics/FrequenciesandAnecdotes/CAFL.htm"
+},
+{
+"key": "SCHUMANN",
+"text": "Wikipedia, \"Schumann resonances\" (fundamental ~7.83 Hz; modes ~14.1, 20.3, 26.3, 32.5 Hz). Cites NASA and Cole (1965), Radio Science 69D(10).",
+"url": "https://en.wikipedia.org/wiki/Schumann_resonances"
+},
+{
+"key": "SOLF_RW",
+"text": "RationalWiki, \"Solfeggio frequencies\": origin with Joseph Puleo (1970s) and Leonard Horowitz; lists the popular claims per tone; notes the numbers come from numerology, not medieval solfège.",
+"url": "https://rationalwiki.org/wiki/Solfeggio_frequencies"
+},
+{
+"key": "SOLF_ARK",
+"text": "Arkhitec, \"Solfeggio Frequencies — 528 Hz & the Real History\": six tones derived by Puleo from Numbers 7:12–83 by digit reduction, published in Horowitz & Puleo, Healing Codes for the Biological Apocalypse (1999); 174, 285 and 963 Hz are later additions. Lists claimed meanings.",
+"url": "https://arkhitec.com/frequencies/solfeggio/"
+},
+{
+"key": "SOLF_SON",
+"text": "Sonora, \"Solfeggio Frequencies Guide\": the usual nine tones, the six 'original' ones and the three later additions, with evidence notes per tone.",
+"url": "https://sonora.com/learn/solfeggio-frequencies"
+},
+{
+"key": "AKIMOTO",
+"text": "Akimoto K, Hu A, Yamaguchi T, Kobayashi H (2018). Effect of 528 Hz Music on the Endocrine System and Autonomic Nervous System. Health 10(9):1159–1170. doi:10.4236/health.2018.109088. Pilot study, n = 9 healthy adults, 5-minute exposures.",
+"url": "https://www.scirp.org/journal/paperinformation?paperid=87146"
+},
+{
+"key": "CALAMASSI",
+"text": "Calamassi D, Pomponi GP (2019). Music Tuned to 440 Hz Versus 432 Hz and the Health Effects: A Double-blind Cross-over Pilot Study. Explore 15(4):283–290. doi:10.1016/j.explore.2019.04.001. n = 33; slightly lower heart rate with 432 Hz-tuned music; authors call for larger trials.",
+"url": "https://doi.org/10.1016/j.explore.2019.04.001"
+},
+{
+"key": "STATPEARLS",
+"text": "StatPearls, \"Normal EEG Waveforms\" (NCBI Bookshelf NBK539805): delta 0.5–4 Hz, theta 4–7 Hz, alpha 8–12 Hz, sigma 12–16 Hz, beta 13–30 Hz; band edges vary between sources.",
+"url": "https://www.ncbi.nlm.nih.gov/books/NBK539805/"
+},
+{
+"key": "MARZBANI",
+"text": "Marzbani H, Marateb HR, Mansourian M (2016). Neurofeedback: A Comprehensive Review on System Design, Methodology and Clinical Applications. Basic and Clinical Neuroscience 7(2):143–158 (PMC4892319). Table of bands and their commonly described characteristics: delta 1–4, theta 4–8, alpha 8–13 (lower 8–10 'recalling', upper 10–13 'optimize cognitive performance'), SMR 13–15, beta 15–20, high beta 20–32, gamma 32–100 / 40.",
+"url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4892319/"
+},
+{
+"key": "NEUROKIT",
+"text": "NeuroKit2 documentation, \"EEG Power in Frequency Bands\": SMR 13–15 Hz over sensorimotor cortex; notes the ranges are approximate and inconsistent across studies.",
+"url": "https://neuropsychology.github.io/NeuroKit/examples/eeg_power/eeg_power.html"
+},
+{
+"key": "GARCIA",
+"text": "Garcia-Argibay M, Santed MA, Reales JM (2019). Efficacy of binaural auditory beats in cognition, anxiety, and pain perception: a meta-analysis. Psychological Research 83:357–372. doi:10.1007/s00426-018-1066-8. Medium overall effect, with heterogeneous studies.",
+"url": "https://link.springer.com/article/10.1007/s00426-018-1066-8"
+},
+{
+"key": "MARTORELL",
+"text": "Martorell AJ, et al. (2019). Multi-sensory Gamma Stimulation Ameliorates Alzheimer's-Associated Pathology and Improves Cognition. Cell 177(2):256–271. 40 Hz sound/light in mice.",
+"url": "https://www.cell.com/cell/fulltext/S0092-8674(19)30163-1"
+},
+{
+"key": "COUSTO",
+"text": "Hans Cousto, The Cosmic Octave (1978; English ed. 'The Cosmic Octave – Origin of Harmony'). Tuning-fork brochure 'The Cosmic Octave' (planetware.de) lists each tone with its traditional 'effect'; tone values cross-checked with Cousto's tuning tables reproduced at frequencyatlas.com.",
+"url": "https://planetware.de/octave/The_CoOc_Tuning.pdf"
+},
+{
+"key": "COUSTO_T",
+"text": "Frequency Atlas, \"Planet gong tunings\" (reproduces Hans Cousto, Tuning Data / Sun Earth Moon Planets, CC BY-NC-ND 4.0).",
+"url": "https://frequencyatlas.com/tuning-data"
+},
+{
+"key": "COOK",
+"text": "Cook IA, Pajot SK, Leuchter AF (2008). Ancient Architectural Acoustic Resonance Patterns and Regional Brain Activity. Time and Mind 1(1). doi:10.2752/175169608783489099. Pilot EEG study, n = 30, tones 90–130 Hz; 110 Hz shifted prefrontal asymmetry and lowered left-temporal activity.",
+"url": "https://www.tandfonline.com/doi/abs/10.2752/175169608783489099"
+},
+{
+"key": "DEBERTOLIS",
+"text": "Debertolis P, Coimbra F, Eneix L. Archaeoacoustic Analysis of the Ħal Saflieni Hypogeum in Malta (University of Malta repository): reports resonances near 70 Hz and 114 Hz.",
+"url": "https://www.um.edu.mt/library/oar/bitstream/123456789/16630/1/OA%20Archaeoacoustic%20Analysis%20of%20the%20%c4%a6al%20Saflieni%20Hypogeum%20in%20Malta.pdf"
+},
+{
+"key": "SOLF_CHAKRA",
+"text": "Sonora, \"Chakras and the Solfeggio Frequencies: The Traditional Map\": the modern wellness pairing of root 396, sacral 417, solar plexus 528, heart 639, throat 741, third eye 852, crown 963 Hz; notes chakras are a spiritual concept with no measurable anatomy and no controlled evidence for tone matching.",
+"url": "https://sonora.com/learn/solfeggio-frequencies/solfeggio-frequencies-chakras"
+},
+{
+"key": "NOGIER",
+"text": "Nogier R, et al. (2021). History of Auriculotherapy: Additional Information and New Developments (PMC8716479): Paul Nogier's seven frequencies A 2.28, B 4.56, C 9.12, D 18.25, E 36.5, F 73, G 146 Hz, each said to stimulate a body zone (cells, nutrition/digestion, muscles, symmetry/locomotion, spinal cord/pain, subcortex/appetite/endocrine, cortex/psychosomatic). Applied as pulsed light or electrical stimulation on the ear, not as sound.",
+"url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8716479/"
+},
+{
+"key": "AASM",
+"text": "StatPearls, Table 4 \"Sleep Staging and EEG Wave Frequency Based on the Most Recent American Academy of Sleep Medicine Recommendations\" (NBK537023): wake alpha 8-13 Hz eyes closed; N1 theta 4-7 Hz; N2 sleep spindles 11-16 Hz; N3 delta 0.5-2 Hz. StatPearls (NBK539805) adds that spindles (sigma 12-16 Hz; slow 12-14, fast 14-16) mark sleep mechanisms including memory consolidation.",
+"url": "https://www.ncbi.nlm.nih.gov/books/NBK537023/table/article-20917.table2/"
+},
+{
+"key": "SR_MODES",
+"text": "Simões F, Pfaff R, Freudenreich H (NASA Goddard), \"Observation of Schumann Resonances in the Earth's Ionosphere\" (NASA NTRS 20120000051; see Geophys. Res. Lett. 38, L22101, 2011): average measured frequencies of the five lowest modes are about 7.8, 14.3, 20.8, 27.3 and 33.8 Hz; exact values drift with time of day, season and ionospheric conditions (other surveys give 14.1, 20.3, 26.3, 32.5 Hz).",
+"url": "https://ntrs.nasa.gov/api/citations/20120000051/downloads/20120000051.pdf"
+},
+{
+"key": "SAROKA",
+"text": "Saroka KS, Vares DE, Persinger MA (2016). Similar Spectral Power Densities Within the Schumann Resonance and a Large Population of Quantitative Electroencephalographic Profiles: Supportive Evidence for Koenig and Pobachenko. PLoS ONE 11(1):e0146595. 237 resting EEG records: peaks near 7-8, 13-14 and 19-20 Hz in some (not all) people; brief (~300 ms) coherence with measured Schumann signals. Builds on König's 1950s-60s observations. Correlational; does not test listening.",
+"url": "https://doi.org/10.1371/journal.pone.0146595"
+},
+{
+"key": "MCCRATY",
+"text": "McCraty R, Atkinson M, Stolc V, Alabdulgader AA, Vainoras A, Ragulskis M (2017). Synchronization of Human Autonomic Nervous System Rhythms with Geomagnetic Activity in Human Subjects. Int J Environ Res Public Health 14(7):770. doi:10.3390/ijerph14070770. HeartMath / Global Coherence Initiative: 10 people, 31 days; heart-rate variability correlated with Schumann resonance power (r ~ 0.46). A 2020 replication found mostly weak effects after correction.",
+"url": "https://doi.org/10.3390/ijerph14070770"
+},
+{
+"key": "CHERRY",
+"text": "Cherry N (2002). Schumann Resonances, a plausible biophysical mechanism for the human health effects of Solar/Geomagnetic Activity. Natural Hazards 26:279-331. doi:10.1023/A:1015637127504. A hypothesis paper (proposed melatonin/serotonin link); the mechanism has not been confirmed.",
+"url": "https://doi.org/10.1023/A:1015637127504"
+},
+{
+"key": "WEVER",
+"text": "Wever R (1970). The effects of electric fields on circadian rhythmicity in men. Life Sci Space Res 8:177-187 (PMID 11826883). Andechs bunker: shielding from natural fields lengthened the free-running body clock; a weak 10 Hz electric field shortened it again and prevented internal desynchronization.",
+"url": "https://pubmed.ncbi.nlm.nih.gov/11826883/"
+},
+{
+"key": "HUANG",
+"text": "Huang YS, Tang I, Chin WC, et al. (2022). The Subjective and Objective Improvement of Non-Invasive Treatment of Schumann Resonance in Insomnia: A Randomized and Double-Blinded Study. Nature and Science of Sleep 14 (PMID 35707548). n = 40, 4 weeks, bedside device emitting a 7.83 Hz field mixed with theta/delta vs. placebo device; better sleep onset and total sleep time.",
+"url": "https://doi.org/10.2147/NSS.S346941"
+}
+];
