@@ -563,7 +563,7 @@ function onPageChange(prev, next) {
 function updateMediaSession() {
   if (!('mediaSession' in navigator)) return;
   try {
-    navigator.mediaSession.metadata = new MediaMetadata({ title: A.activePresetName || titleFor(A.state, A.activeSource), artist: 'Freqium', album: detailFor(A.state, A.activeSource),
+    navigator.mediaSession.metadata = new MediaMetadata({ title: A.activePresetName || titleFor(A.state, A.activeSource), artist: 'Biotone', album: detailFor(A.state, A.activeSource),
       artwork: [{ src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' }] });
     navigator.mediaSession.playbackState = A.isPlaying ? 'playing' : 'paused';
     navigator.mediaSession.setActionHandler('play', () => { if (!A.isPlaying) play(A.activeSource); });
@@ -653,7 +653,7 @@ function placeSlider(el, v, range) {
 const vt = (id) => { const c = ctrl(id); return `<span data-vt="${id}">${esc(c.text ? c.text(c.get()) : F.hz(c.get()))}</span>`; };
 const lslider = (id, label) => `<div class="lslider"><div class="h"><span class="k">${esc(label)}</span>${vt(id)}</div><div style="margin-top:2px">${sliderEl(id)}</div></div>`;
 const panSlider = (id) => `<div class="lslider"><div class="h"><span class="k">PAN</span>${vt(id)}</div><div class="panrow" style="margin-top:2px"><span class="lr">L</span>${sliderEl(id)}<span class="lr">R</span></div></div>`;
-const ruler = (id) => `<div class="ruler" data-ruler="${id}"><canvas></canvas><div class="hint">drag ← → to tune · slow = fine</div></div>`;
+const ruler = (id) => `<div class="ruler" data-ruler="${id}"><canvas></canvas></div>`;
 const tuning = (id, size) => `<div style="display:flex;flex-direction:column;gap:6px"><div class="bignum" data-act="keypad" data-arg="${id}"><span class="n" style="font-size:${size}px" data-vt="${id}">${F.hz(ctrl(id).get())}</span><span class="u">Hz</span></div>${ruler(id)}</div>`;
 const nudge = (id) => `<div class="nudge"><div class="b" data-nudge="${id}" data-dir="-1" aria-label="Down">${I.down}</div><div class="s" data-act="step" data-arg="${id}">step ${F.step(stepOf[id] || 1)} Hz</div><div class="b" data-nudge="${id}" data-dir="1" aria-label="Up">${I.up}</div></div>`;
 const compact = (id, label) => `<div class="cf"><div style="flex:1" data-act="keypad" data-arg="${id}"><div class="k">${esc(label.toUpperCase())}</div><div class="v"><span data-vt="${id}">${F.hz(ctrl(id).get())}</span> Hz</div></div><div class="b" data-nudge="${id}" data-dir="-1">${I.minus}</div><div class="b" data-nudge="${id}" data-dir="1">${I.plus}</div></div>`;
@@ -673,8 +673,8 @@ const PAGE_RENDER = {
     const st = A.state, m = moodOf(st.moods.selected), lv = moodLevels(st, m.key), playing = isPlayingSource('mood');
     const tiles = MOODS.map((x) => `<button class="tile ${x.key === m.key ? 'sel' : ''}" data-act="mood" data-arg="${x.key}"><div class="ic">${moodIcon[x.key] || I.spark}</div><div style="flex:1;min-width:0"><div class="nm">${x.label}</div><div class="bd">${moodLine(x)}</div></div>${x.key === m.key && playing ? `<div class="mw" style="width:20px;color:var(--accent)">${I.wave}</div>` : ''}</button>`).join('');
     return hdr('Moods', hpBadge(needsHeadphones(A.state, 'mood'))) +
-      `<div style="flex:1;min-height:120px;position:relative" class="orbbox"><canvas data-orb="1" style="position:absolute;inset:0"></canvas></div>
-      <div style="text-align:center"><div style="font-family:var(--rounded);font-size:24px;font-weight:300;line-height:1.2">${m.label}</div><div class="caption" style="margin-top:2px">${moodBand(m)} · ${playing ? 'tap the mood again to stop' : 'tap a mood to play'}</div></div>
+      `<div class="orbflex"><div class="orbstage"><canvas data-orb="1"></canvas></div></div>
+      <div style="text-align:center"><div style="font-family:var(--rounded);font-size:24px;font-weight:300;line-height:1.2">${m.label}</div><div class="caption" style="margin-top:2px">${moodBand(m)}</div></div>
       <div class="moodwin"><div class="grid2">${tiles}</div></div>` +
       lslider('mood.tone', m.pure ? 'TONE' : 'BINAURAL TONE') + lslider('mood.music', 'MUSIC') + bed('mood.amb', lv.ambience, false) +
       (lv.ambience !== 'off' ? lslider('mood.ambLevel', `${NOISE_LABEL[lv.ambience].toUpperCase()} LEVEL`) : '');
@@ -700,14 +700,9 @@ const PAGE_RENDER = {
   },
   schumann() {
     const sc = A.state.schumann, def = scDefault(sc), e = sc.libraryID ? LIBRARY.find((x) => x.id === sc.libraryID) : null;
-    let detail;
-    if (sc.tone != null) detail = sc.shimmer ? 'pure tone + 7.83 shimmer' : 'pure tone · both ears';
-    else if (sc.engine === 'binaural') detail = `L ${F.hz(sc.carrier)} | R ${F.hz(sc.carrier + sc.beat)}`;
-    else if (sc.engine === 'monaural') detail = `${F.hz(sc.carrier)} + ${F.hz(sc.carrier + sc.beat)} Hz`;
-    else detail = `pulsing ${F.hz(sc.carrier)} Hz`;
     const value = def ? '7.83' : F.short(scMain(sc));
-    const ring = `<div class="ringflex"><div class="ringstage"><canvas data-ring="1"></canvas>
-      <div class="ringlabel">${sc.label ? `<div class="ringtag">${esc(sc.label)}</div>` : ''}<div class="ringnum"><span class="vnum${value.length > 5 ? ' long' : ''}" data-vdrag="sch.main" data-vt="sch.main" role="slider" aria-label="Frequency. Drag up or down to tune, tap to type" aria-valuenow="${scMain(sc)}">${value}</span><span class="ringhz">Hz</span></div>${def ? `<div class="caption ringdetail">${detail}</div>` : ''}</div></div></div>${def ? '<div class="vhint" id="vhint">drag the number ↕ to tune · tap to type</div>' : ''}`;
+    const ring = `<div class="ringflex"><div class="ringstage"><canvas data-ring="1"></canvas></div></div>`;
+    const readout = `<div class="ringread">${sc.label ? `<div class="ringtag">${esc(sc.label)}</div>` : ''}<div class="ringnum"><span class="vnum${value.length > 5 ? ' long' : ''}" data-vdrag="sch.main" data-vt="sch.main" role="slider" aria-label="Frequency" aria-valuenow="${scMain(sc)}">${value}</span><span class="ringhz">Hz</span></div></div>`;
     const libRow = def ? '' : `<div class="resrow">${I.books}<span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e ? esc(tradLabel(e)) + ' · traditional use' : 'From the Library'}</span><button class="back783" data-act="reset783">${I.back}Back to 7.83</button></div>`;
     let controls;
     if (sc.tone != null) {
@@ -717,7 +712,7 @@ const PAGE_RENDER = {
     } else {
       controls = pill('sch.engine', Object.keys(ENGINE).map((k) => [k, ENGINE[k].label]), sc.engine) + `<div class="caption">${ENGINE[sc.engine].hint}</div>` + compact('sch.carrier', 'Carrier');
     }
-    return hdr(def ? 'Schumann 7.83' : 'Resonance', hpBadge(needsHeadphones(A.state, 'schumann'))) + libRow + ring +
+    return hdr(def ? 'Schumann 7.83' : 'Resonance', hpBadge(needsHeadphones(A.state, 'schumann'))) + libRow + ring + readout +
       `<div class="sch-controls">` + controls +
       bed('bed', A.state.noise) + bedLevel() + lslider('toneLevel', 'TONE LEVEL') +
       labeledPill('SESSION', 'session', [[0, 'Off'], [15, '15 min'], [30, '30 min'], [60, '1 h'], [480, '8 h']].map(([v, l]) => [String(v), l]), String(A.state.sessionMinutes)) +
@@ -792,8 +787,8 @@ const PAGE_RENDER = {
       labeledPill('FADE', 'fade', [[10, '10 s'], [30, '30 s'], [60, '1 min'], [180, '3 min'], [300, '5 min']].map(([v, l]) => [String(v), l]), String(st.fadeSeconds)) +
       `<div style="height:1px;background:var(--panelHi);margin:2px 0;flex:none"></div>` + lslider('volume', 'VOLUME') + bed('bed', st.noise) + bedLevel() +
       `<div style="display:flex;flex-direction:column;gap:8px"><div class="trow">Keep screen on while playing<div class="toggle ${A.keepAwake ? 'on' : ''}" data-act="awake"></div></div>${INTRO_ENABLED ? '<div class="trow">Welcome intro<button class="a4" data-act="replayintro">Replay intro</button></div>' : ''}<div class="trow">Piano tuning (A4)${pill('a4', [['440', '440 Hz'], ['432', '432 Hz']], String(A.a4))}</div></div>` +
-      `<div class="caption" style="font-size:11px;line-height:1.35">Web version: browsers pause sound when the screen locks or you switch apps, so keep Freqium open (turn on “Keep screen on” for long sessions). Play over other apps and resume-after-calls are only in the iPhone app.</div>` +
-      '<div class="spacer"></div>' + `<div style="font-size:11px;color:var(--muted);line-height:1.3">Freqium is for relaxation and focused listening. It isn't a medical device and doesn't diagnose or treat anything. Keep the volume comfortable; the waveform turns orange, then red, as sound gets loud and high-pitched or close to the limit.</div>`;
+      `<div class="caption" style="font-size:11px;line-height:1.35">Web version: browsers pause sound when the screen locks or you switch apps, so keep Biotone open (turn on “Keep screen on” for long sessions). Play over other apps and resume-after-calls are only in the iPhone app.</div>` +
+      '<div class="spacer"></div>' + `<div style="font-size:11px;color:var(--muted);line-height:1.3">Biotone is for relaxation and focused listening. It isn't a medical device and doesn't diagnose or treat anything. Keep the volume comfortable; the waveform turns orange, then red, as sound gets loud and high-pitched or close to the limit.</div>`;
   },
   library() {
     return `<div class="libtop">${hdr('Library', `<button data-act="libinfo" style="width:30px;height:24px;color:var(--accent);display:flex;justify-content:center" aria-label="About the library and its sources"><span style="width:20px;height:20px;display:block">${I.info}</span></button>`)}
@@ -854,12 +849,23 @@ function updateToolsReadout() { const el = document.getElementById('toolfreq'); 
 
 // ===================================================================== shell rendering
 const $ = (s, r = document) => r.querySelector(s);
+let moodScrollTop = 0;
+let moodScrollLock = null;
 function renderPage(key) {
   const el = document.getElementById('page-' + key); if (!el) return;
   if (key === 'library' && el.querySelector('#libq')) { renderLibList(); return; }
   const top = el.scrollTop;
+  const moodEl = el.querySelector('.moodwin');
+  if (moodEl) moodScrollTop = moodEl.scrollTop;
   el.innerHTML = PAGE_RENDER[key]();
   el.scrollTop = top;
+  const moodNext = el.querySelector('.moodwin');
+  if (moodNext) {
+    const keep = moodScrollLock != null ? moodScrollLock : moodScrollTop;
+    moodNext.scrollTop = keep;
+    moodScrollTop = keep;
+    requestAnimationFrame(() => { if (moodNext.isConnected) moodNext.scrollTop = keep; moodScrollLock = null; });
+  }
   if (key === 'library') renderLibList();
 }
 function renderAll() { for (const p of PAGES) renderPage(p.key); renderMini(); renderDots(); }
@@ -1023,8 +1029,8 @@ function openLibDetail(e) {
 }
 function openLibInfo() {
   openSheet(`<h3>ABOUT THE LIBRARY</h3><div class="disc" style="font-size:14px">${I.caseI}<span style="color:var(--accent);font-weight:600">Traditional and folk uses, not medical treatment. If you have symptoms, see a doctor.</span></div>
-    <div class="txt">Freqium isn't a medical device. The uses listed here are how traditions, charts and frequency lists describe each frequency. They are not treatments, and most have little or no scientific support. Don't use Freqium instead of medical care, and keep the volume comfortable.</div>
-    <div class="txt">How entries play: rates of 40 Hz or less play as a beat (binaural, monaural or isochronic) on the carrier, using the Schumann page's engine switch. Higher frequencies play as a pure tone in both ears. The Rife list (CAFL) was compiled for electrical frequency devices, usually several values per item; Freqium plays one listed value.</div>
+    <div class="txt">Biotone isn't a medical device. The uses listed here are how traditions, charts and frequency lists describe each frequency. They are not treatments, and most have little or no scientific support. Don't use Biotone instead of medical care, and keep the volume comfortable.</div>
+    <div class="txt">How entries play: rates of 40 Hz or less play as a beat (binaural, monaural or isochronic) on the carrier, using the Schumann page's engine switch. Higher frequencies play as a pure tone in both ears. The Rife list (CAFL) was compiled for electrical frequency devices, usually several values per item; Biotone plays one listed value.</div>
     <div class="sec">SOURCES</div>${LIBRARY_SOURCES.map((s) => `<div class="src"><b>${esc(s.key)}</b><br>${esc(s.text)}${s.url ? `<br><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.url)}</a>` : ''}</div>`).join('')}
     <button class="kbtn ok" id="lidone" style="flex:none">Done</button>`, (sh, close) => { sh.querySelector('#lidone').onclick = close; });
 }
@@ -1055,7 +1061,7 @@ function showTip(force) {
   const ud = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M7 7.5L12 3l5 4.5M7 16.5L12 21l5-4.5"/></svg>';
   const lr = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M7.5 7L3 12l4.5 5M16.5 7L21 12l-4.5 5"/></svg>';
   const row = (ic, t) => `<div class="row"><div class="ic">${ic}</div><div>${t}</div></div>`;
-  el.innerHTML = `<div class="box"><div style="text-align:center;font-family:var(--rounded);font-size:26px;font-weight:300">Welcome to Freqium</div>
+  el.innerHTML = `<div class="box"><div style="text-align:center;font-family:var(--rounded);font-size:26px;font-weight:300">Welcome to Biotone</div>
     ${row(ud, 'Swipe up or down to change pages. The dots on the right jump straight to one.')}
     ${row(lr, 'Drag a ruler sideways to tune. Slow drags make finer steps; tap a number to type it.')}
     ${row(I.head, 'Binaural beats need stereo headphones (Moods, Binaural, Schumann). Isochronic and monaural work on speakers.')}
@@ -1174,7 +1180,7 @@ document.addEventListener('pointerdown', (e) => {
   const ru = e.target.closest('[data-ruler]');
   if (ru) {
     e.preventDefault(); drag = { type: 'ruler', el: ru, id: ru.dataset.ruler, x: e.clientX, t: e.timeStamp };
-    ru.setPointerCapture(e.pointerId); ru.querySelector('.hint').classList.add('drag'); return;
+    ru.setPointerCapture(e.pointerId); return;
   }
   const nu = e.target.closest('[data-nudge]');
   if (nu) {
@@ -1209,7 +1215,6 @@ document.addEventListener('pointermove', (e) => {
     const speed = Math.abs(dx) / dt, c = ctrl(drag.id);
     const step = speed < 80 ? 0.01 : speed < 300 ? 0.1 : speed < 900 ? 1 : (c.get() > 2000 ? 25 : 5);
     setCtrl(drag.id, c.get() - dx * step);
-    drag.el.querySelector('.hint').textContent = `${F.step(step)} Hz steps`;
   } else if (drag.type === 'press') {
     if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 10) { clearTimeout(pressT); drag = null; }
   }
@@ -1218,7 +1223,6 @@ function endDrag() {
   clearTimeout(nudgeT); clearTimeout(pressT);
   if (!drag) return;
   const d = drag; drag = null;
-  if (d.type === 'ruler') { const h = d.el.querySelector('.hint'); h.classList.remove('drag'); h.textContent = 'drag ← → to tune · slow = fine'; }
   if (d.type !== 'press') { renderPage(A.page); renderMini(); }
 }
 document.addEventListener('pointerup', endDrag);
@@ -1293,6 +1297,12 @@ function layoutRing(stage) {
     stage._sz = size;
     stage.style.width = size + 'px';
     stage.style.height = size + 'px';
+  }
+  if (flex._sz !== size) {
+    flex._sz = size;
+    flex.style.height = size + 'px';
+    flex.style.minHeight = size + 'px';
+    flex.style.flex = 'none';
   }
 }
 // RMS plus spectrum from the master-output analyser. Smoothed here so color and
@@ -1378,7 +1388,9 @@ function frame(t) {
   }
   const ocv = pageEl.querySelector('[data-orb]');
   if (ocv) {
-    const box = ocv.parentElement, active = isPlayingSource('mood') && live, s = A.stats;
+    const box = ocv.parentElement;
+    layoutRing(box);
+    const active = isPlayingSource('mood') && live, s = A.stats;
     approach(orb, 'amp', Math.max(0.06, active ? Math.min(1, s.mRms * 4.5) : 0), dt, 0.15, 0.8);
     approach(orb, 'low', active ? Math.min(1, s.mLow * 6) : 0, dt, 0.3, 1.0);
     approach(orb, 'high', active ? Math.min(1, s.mHigh * 14) : 0, dt, 0.1, 0.5);
@@ -1499,12 +1511,20 @@ let moodPtr = null;
 document.addEventListener('pointerdown', (e) => {
   const sc = e.target.closest && e.target.closest('.moodwin');
   if (!sc) { moodPtr = null; return; }
+  moodScrollLock = sc.scrollTop;
+  moodScrollTop = sc.scrollTop;
   moodPtr = { x: e.clientX, y: e.clientY, moved: false };
+}, true);
+document.addEventListener('scroll', (e) => {
+  const t = e.target;
+  if (t && t.classList && t.classList.contains('moodwin')) moodScrollTop = t.scrollTop;
 }, true);
 document.addEventListener('pointermove', (e) => {
   if (!moodPtr || moodPtr.moved) return;
   if (Math.abs(e.clientY - moodPtr.y) > 8 || Math.abs(e.clientX - moodPtr.x) > 8) moodPtr.moved = true;
 }, true);
+document.addEventListener('pointerup', () => { if (moodPtr && moodPtr.moved) moodScrollLock = null; }, true);
+document.addEventListener('pointercancel', () => { if (moodPtr && moodPtr.moved) moodScrollLock = null; }, true);
 document.addEventListener('touchstart', (e) => { if (e.target.closest && e.target.closest('[data-vdrag]')) e.preventDefault(); }, { passive: false });
 document.addEventListener('touchmove', (e) => {
   if (e.target.closest && e.target.closest('.moodwin')) { e.stopPropagation(); return; }
@@ -1515,7 +1535,7 @@ document.addEventListener('wheel', (e) => {
 }, { capture: true, passive: true });
 
 // ===================================================================== voice intro (first open)
-const INTRO = {"duration": 18.88, "captions": [{"start": 0.35, "end": 2.14, "text": "Hi, welcome to Freqium."}, {"start": 2.59, "end": 4.08, "text": "This is your space for sound."}, {"start": 4.63, "end": 11.82, "text": "Pick how you want to feel, like calmer, more focused, sleepier, or just in a better mood, tap a button, and listen."}, {"start": 12.32, "end": 14.98, "text": "Headphones make the binaural tones work best."}, {"start": 15.43, "end": 17.32, "text": "Swipe up and down to explore."}, {"start": 17.82, "end": 18.48, "text": "Enjoy."}]};
+const INTRO = {"duration": 18.88, "captions": [{"start": 0.35, "end": 2.14, "text": "Hi, welcome to Biotone."}, {"start": 2.59, "end": 4.08, "text": "This is your space for sound."}, {"start": 4.63, "end": 11.82, "text": "Pick how you want to feel, like calmer, more focused, sleepier, or just in a better mood, tap a button, and listen."}, {"start": 12.32, "end": 14.98, "text": "Headphones make the binaural tones work best."}, {"start": 15.43, "end": 17.32, "text": "Swipe up and down to explore."}, {"start": 17.82, "end": 18.48, "text": "Enjoy."}]};
 const Intro = {
   el: null, audio: null, raf: 0, mode: null, idx: -1, t0: 0, timers: [],
   shouldAuto: () => INTRO_ENABLED && !load(LS.intro, false),
@@ -1538,7 +1558,7 @@ const Intro = {
     this.prepareStage();
     requestAnimationFrame(() => this.prepareStage()); // after first layout
     const el = this.build(`<button class="iskip" data-skip>Skip</button>
-      <div class="icard"><img src="icons/icon-192.png" alt="" width="84" height="84"><div class="ititle">Welcome to Freqium</div>
+      <div class="icard"><img src="icons/icon-192.png" alt="" width="84" height="84"><div class="ititle">Welcome to Biotone</div>
       <div class="isub">A short spoken welcome, about 20 seconds. Sound on; headphones are best.</div>
       <button class="ibegin" id="ibegin">${I.play}Tap to begin</button></div>`);
     el.querySelector('#ibegin').addEventListener('click', (e) => { e.stopPropagation(); this.begin(); });
@@ -1580,7 +1600,7 @@ const Intro = {
     speechSynthesis.cancel();
     const voice = this.bestVoice();
     INTRO.captions.forEach((c, i) => {
-      const u = new SpeechSynthesisUtterance(c.text.replace('Freqium', 'Freequium'));
+      const u = new SpeechSynthesisUtterance(c.text);
       if (voice) u.voice = voice; u.lang = voice ? voice.lang : 'en-US'; u.rate = 0.95; u.pitch = 1;
       u.onstart = () => { this.idx = i; this.showCap(i); this.setProg((i + 0.5) / INTRO.captions.length); };
       if (i === INTRO.captions.length - 1) { u.onend = () => this.finish(); u.onerror = () => this.finish(); }

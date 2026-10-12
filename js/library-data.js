@@ -9,7 +9,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Hyperacidity, stomach' (7.82, 20, 230).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "heartburn acid reflux stomach digestion",
 "cat": "body"
 },
@@ -31,7 +31,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "First value of CAFL 'Anxiety' (1.5, 6.8, 7.8, 95, 10000).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "anxiety worry stress nervous",
 "cat": "wellbeing"
 },
@@ -53,7 +53,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Backache and spasms 1' and 'Backache 1' both include 212.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "back spasm cramp tension",
 "cat": "body"
 },
@@ -64,7 +64,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Backache 2' set, which includes 9.6.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "back pain spine",
 "cat": "body"
 },
@@ -75,7 +75,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Halitosis' (1550, 802, 880, 787, 727, 20).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "breath mouth halitosis",
 "cat": "body"
 },
@@ -108,7 +108,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Comedones' (778).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "blackheads skin pores comedones",
 "cat": "body"
 },
@@ -119,7 +119,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Acne' ('run 564 for 6 min').",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "acne spots blemishes pimples skin",
 "cat": "body"
 },
@@ -130,7 +130,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Stomach gas' (50–59 Hz); a very low tone that phone speakers barely play.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "stomach gas wind bloating digestion",
 "cat": "body"
 },
@@ -152,7 +152,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Bruises' (9.1, 110, 10000).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "bruise knock bump skin",
 "cat": "body"
 },
@@ -196,7 +196,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Calming' (6000); also in 'Relaxation to produce' and 'Sedation and pain relief'. A very high, thin tone: keep the volume low.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "calm calming relax sedate",
 "cat": "wellbeing"
 },
@@ -240,7 +240,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Circulation disturbances' (40, 9.39).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "blood circulation cold hands",
 "cat": "wellbeing"
 },
@@ -262,7 +262,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Intelligence and clarity of thought' (20, 10000).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "clarity clear thinking mind intelligence",
 "cat": "mind"
 },
@@ -328,7 +328,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Constipation' set (…, 444, 440, 422, 20).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "constipation digestion bowel stomach",
 "cat": "body"
 },
@@ -405,7 +405,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Wound healing' set (2720, 880, 787, 727, 220, …).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "cuts scrapes graze skin healing",
 "cat": "body"
 },
@@ -416,7 +416,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Breathing, deep' (1234, 3702, 3672, 7344, 7760).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "breath breathing lungs calm",
 "cat": "wellbeing"
 },
@@ -449,7 +449,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Detox 1' (10000, 3176, 522, 164, 89, 24).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "detox cleanse",
 "cat": "wellbeing"
 },
@@ -471,7 +471,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Vertigo' (60, 5.8, 4).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "vertigo dizzy balance",
 "cat": "body"
 },
@@ -504,7 +504,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Vision poor' and 'Eyesight sharpen' (350, 360, 1830).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "eyes strain screen tired vision",
 "cat": "body"
 },
@@ -526,7 +526,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Facial toning' (1.2).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "face skin beauty toning",
 "cat": "body"
 },
@@ -559,7 +559,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Fatigue general' set, which includes 120.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "tired energy vitality",
 "cat": "wellbeing"
 },
@@ -570,7 +570,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "880 recurs across CAFL 'Cold 1' ('use 800 and 880 for 10 min'), 'Cold 3', 'Cold 4' and several flu sets; for the run-down feeling of an everyday cold.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "cold flu sniffles run down unwell sick under the weather",
 "cat": "wellbeing"
 },
@@ -603,7 +603,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Nerves healing' (200, 10, 7.64).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "nerves frayed on edge stress calm",
 "cat": "wellbeing"
 },
@@ -625,7 +625,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Frozen shoulder' (10000, 880, 802, 787, 766, 727).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "shoulder frozen stiff",
 "cat": "body"
 },
@@ -647,7 +647,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Pain, general' (3000, 2720, 95, 666, 80, 40).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "aches pains sore body",
 "cat": "body"
 },
@@ -680,7 +680,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Hangover' (10000, 522, 146).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "hangover morning after headache nausea",
 "cat": "wellbeing"
 },
@@ -691,7 +691,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Hay fever (only some types)' (880, 787, 727, 20).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "hay fever allergy pollen sneezing seasonal",
 "cat": "body"
 },
@@ -702,7 +702,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "Traditionally associated with headaches: CAFL 'Headaches' (144, 160, 1.2, 520, 10, …) and 'Migraine' (10).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "headache migraine head pain",
 "cat": "body"
 },
@@ -713,7 +713,7 @@ const LIBRARY = [
 "trad": "schumann",
 "note": "CAFL 'Headaches, unknown cause' (10, 4, 5.8, 6.3, 7.83, …) and 'Headaches comp' include 7.83.",
 "sources": "CAFL; SCHUMANN",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "headache migraine head pain schumann",
 "cat": "cosmic"
 },
@@ -724,7 +724,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "Audible alternative: 144 Hz, the first value of the CAFL 'Headaches' set.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "headache migraine head pain",
 "cat": "body"
 },
@@ -746,7 +746,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Hair, human' (646).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "hair scalp beauty",
 "cat": "body"
 },
@@ -779,7 +779,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Hiccups' (20, 10000).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "hiccup",
 "cat": "body"
 },
@@ -790,7 +790,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Hip pain' (880, 787, 727, 20).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "hip joint ache",
 "cat": "body"
 },
@@ -801,7 +801,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Urticaria' set (1800, 880, 787, 727, 522, 146, 4.9).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "hives itchy rash urticaria",
 "cat": "body"
 },
@@ -812,7 +812,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Hoarseness' (880, 760, 727).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "hoarse voice throat singing speaking",
 "cat": "body"
 },
@@ -823,7 +823,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Hormonal imbalances' (5.5).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "hormones balance cycle",
 "cat": "wellbeing"
 },
@@ -834,7 +834,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Hot flashes' (10000, 880, 787, 727).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "hot flash flush menopause heat sweating",
 "cat": "body"
 },
@@ -845,7 +845,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Electrolyte levels' (8.1, 20, 10000). Drink water too.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "hydration water electrolytes thirst",
 "cat": "wellbeing"
 },
@@ -856,7 +856,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Dyspepsia (indigestion)' set, which includes 4.9.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "stomach digestion dyspepsia",
 "cat": "body"
 },
@@ -922,7 +922,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Itching' set (880, 787, 727, 444, 125, …).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "itch itching skin rash",
 "cat": "body"
 },
@@ -944,7 +944,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "First value of CAFL 'Joint pain basic' (160, 500, 1600, …).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "joints knees pain arthritis",
 "cat": "body"
 },
@@ -955,7 +955,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Knee joint pain' set, which includes 28.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "knee joint ache running",
 "cat": "body"
 },
@@ -988,7 +988,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Appetite, lack of' (465, 444, 1865, …).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "appetite hunger eating",
 "cat": "wellbeing"
 },
@@ -999,7 +999,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Adynamia geriatric' (410, 220, 100, 60, 27.5).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "strength weakness elderly older age vitality",
 "cat": "wellbeing"
 },
@@ -1010,7 +1010,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Lumbago' set, which ends with 300.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "lower back lumbago ache",
 "cat": "body"
 },
@@ -1021,7 +1021,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Lymph support' (15.05, 10.36, 3176).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "lymph flow drainage puffy",
 "cat": "wellbeing"
 },
@@ -1043,7 +1043,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Menopause symptoms TR' (880, 787, 727, 5.5).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "menopause hormones hot flush",
 "cat": "body"
 },
@@ -1054,7 +1054,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Cramps, menstrual' (26).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "period cramps pms",
 "cat": "body"
 },
@@ -1076,7 +1076,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Mental concentration' (10000, 7.82): almost the Schumann rate.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "focus concentration study",
 "cat": "mind"
 },
@@ -1098,7 +1098,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Brain beta stim' (7.83, 22, 19.5).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "beta energy alert",
 "cat": "mind"
 },
@@ -1120,7 +1120,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Distortion' and 'Luxation' (9.1, 110): German terms for sprains and dislocations.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence. Get a real injury checked.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence. Get a real injury checked.",
 "keywords": "sprain twist ankle wrist",
 "cat": "body"
 },
@@ -1142,7 +1142,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Motion sickness' set, which includes 125.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "travel car sea nausea",
 "cat": "body"
 },
@@ -1175,7 +1175,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Muscles to relax' and 'Spasms, muscle' (6.8).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "muscle tension spasm body",
 "cat": "body"
 },
@@ -1186,7 +1186,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Muscle tonic' (20, 120, 240, 300, …).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "muscle tone fitness strength workout",
 "cat": "body"
 },
@@ -1197,7 +1197,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "First value of CAFL 'Nausea and cramping' (72, 95, 190, …).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "stomach nausea cramps",
 "cat": "body"
 },
@@ -1208,7 +1208,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Vegetative dystonia' (40): the old term for an unbalanced autonomic nervous system.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "nervous system autonomic balance stress",
 "cat": "wellbeing"
 },
@@ -1219,7 +1219,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Nervousness / agitation' (3, 7.83).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "nervous system calm agitation restless",
 "cat": "wellbeing"
 },
@@ -1252,7 +1252,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Pain relief' and 'Sedation and pain relief' (both begin with 304).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "pain ache sedation",
 "cat": "body"
 },
@@ -1285,7 +1285,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Dog and cat hostility' (3.6), for a calmer home with pets.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "pets cat dog animals home harmony",
 "cat": "wellbeing"
 },
@@ -1296,7 +1296,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Paresthesia' (5.5).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "pins needles tingling numb",
 "cat": "body"
 },
@@ -1318,7 +1318,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Swelling' set, which includes 6.3.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "swelling puffy water retention legs",
 "cat": "body"
 },
@@ -1329,7 +1329,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Healing and regeneration' (2720, 266, 47).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "recovery regeneration healing rest",
 "cat": "wellbeing"
 },
@@ -1395,7 +1395,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Tinnitus' (20, 2720, 728, 784, 880). Keep the volume low.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence. Persistent ringing needs a hearing check.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence. Persistent ringing needs a hearing check.",
 "keywords": "tinnitus ringing ears hearing",
 "cat": "body"
 },
@@ -1450,7 +1450,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Sciatica 1' (254, 464, 465, 866, 15, 25.4).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "sciatica leg back nerve",
 "cat": "body"
 },
@@ -1461,7 +1461,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Electrosmog 1' (99.5).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "screen phone computer device electrosmog wifi tired",
 "cat": "wellbeing"
 },
@@ -1472,7 +1472,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Eyesight, sharpen' (350, 360, 1830).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "eyes vision eyesight screen tired eyes",
 "cat": "body"
 },
@@ -1494,7 +1494,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "First value of CAFL 'Insomnia' (3.59, 3, 7.83, 10, …).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "insomnia sleep night",
 "cat": "sleep"
 },
@@ -1516,7 +1516,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Sneezing' (880, 787, 727, 683, 465, 146).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "sneeze sneezing allergy",
 "cat": "body"
 },
@@ -1549,7 +1549,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Muscular pain and injury' set, which includes 324.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "sore muscles workout gym doms recovery",
 "cat": "body"
 },
@@ -1560,7 +1560,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Sore throat TR' (2720, 1800, 144, 452).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "sore throat scratchy cold",
 "cat": "body"
 },
@@ -1582,7 +1582,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Stammering' (10000, 20, 6000, 7.83).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "stammer stutter speech speaking confidence",
 "cat": "mind"
 },
@@ -1593,7 +1593,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Stiff muscles' (320, 328, 304, …).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "stiff muscles sore workout doms",
 "cat": "body"
 },
@@ -1604,7 +1604,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Stiff neck' (4.9, 6, 9.19).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "neck tension shoulders",
 "cat": "body"
 },
@@ -1615,7 +1615,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Stiff shoulder' (10000, 727, 766, 20).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "shoulder stiff tension desk",
 "cat": "body"
 },
@@ -1659,7 +1659,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Catarrh' (1800, 1713, 1550, …).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "stuffy nose blocked congestion catarrh mucus",
 "cat": "body"
 },
@@ -1670,7 +1670,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Sudor pedis' (148).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "feet sweat sweaty odour",
 "cat": "body"
 },
@@ -1692,7 +1692,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Alopecia' set, which includes 330.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "hair loss thinning bald",
 "cat": "body"
 },
@@ -1747,7 +1747,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Throat tickle, chronic' (120, 666, 690, …).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "throat tickle cough",
 "cat": "body"
 },
@@ -1758,7 +1758,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Fascia' (20).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "fascia tight stretch mobility yoga",
 "cat": "body"
 },
@@ -1769,7 +1769,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Fever, sunstroke' (20, 440, 880). Cool down, drink water; heat stroke is an emergency.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "sun heat summer sunstroke hot",
 "cat": "body"
 },
@@ -1780,7 +1780,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Toothache' set (…, 465, 190, 95, 47.5); CAFL itself says to see a dentist.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "tooth dental teeth jaw pain",
 "cat": "body"
 },
@@ -1802,7 +1802,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Abdominal pain' (10000, 3000, 95, 3).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "tummy stomach belly ache abdominal",
 "cat": "body"
 },
@@ -1813,7 +1813,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "Traditionally associated with stomach complaints: 95 appears in CAFL 'Nausea and cramping', 'Dyspepsia' and 'Stomach disorders'.",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "stomach tummy digestion belly nausea",
 "cat": "body"
 },
@@ -1857,7 +1857,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Flatulence' (1550, 880, 832, 802, …).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "gas wind flatulence stomach digestion",
 "cat": "body"
 },
@@ -1868,7 +1868,7 @@ const LIBRARY = [
 "trad": "rife",
 "note": "CAFL 'Sedative effect' (2.5; reported use includes insomnia).",
 "sources": "CAFL",
-"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Freqium plays one listed value. No accepted evidence.",
+"caution": "CAFL gives a multi-frequency set meant for electrical Rife devices, not for listening; Biotone plays one listed value. No accepted evidence.",
 "keywords": "sedative calm sleep relax",
 "cat": "sleep"
 }

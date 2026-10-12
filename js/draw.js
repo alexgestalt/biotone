@@ -101,7 +101,7 @@ function drawRuler(cv,w,value,lo,hi){
 
 // MoodOrb.draw
 function drawOrb(cv,w,h,f){
- const g=setupCanvas(cv,w,h);const c={x:w/2,y:h/2};const R=Math.min(w,h)*.36;const base=heatColor(f.heat);const e=f.amp;
+ const g=setupCanvas(cv,w,h);const c={x:w/2,y:h/2};const maxR=Math.min(w,h)*.5;const R=Math.max(12,maxR-1);const base=heatColor(f.heat);const e=f.amp;
  const coreR=R*(.95+.25*e+.15*f.bloom);
  const rg=g.createRadialGradient(c.x,c.y,0,c.x,c.y,coreR);
  rg.addColorStop(0,css(base,.28+.35*e+.2*f.bloom));rg.addColorStop(.5,css(base,.07));rg.addColorStop(1,css(base,0));
@@ -119,7 +119,7 @@ function drawOrb(cv,w,h,f){
  rings.forEach((p,i)=>{g.strokeStyle=css(base,alpha(i));g.lineWidth=1.1+.9*e*(1-i/6);g.stroke(p);});
  const hash=x=>{const v=Math.sin(x*12.9898)*43758.5453;return v-Math.floor(v)};
  for(let j=0;j<90;j++){const s1=hash(j*3+1),s2=hash(j*3+2),s3=hash(j*3+3);const t=s1+f.phase*(.05+.06*s2);const life=t-Math.floor(t);
-  const dir=j%2===0?1:-1;const ang=s2*2*Math.PI+f.phase*(.08+.15*s3)*dir+.8*life;const rad=R*(.35+1.15*life)*(1+.04*Math.sin(f.phase*1.3+s3*6));
+  const dir=j%2===0?1:-1;const ang=s2*2*Math.PI+f.phase*(.08+.15*s3)*dir+.8*life;let rad=R*(.35+1.15*life)*(1+.04*Math.sin(f.phase*1.3+s3*6));if(rad>maxR-2)rad=maxR-2;
   const a=Math.sin(Math.PI*life)*(.15+.55*e+.4*f.high+.3*f.bloom);const sz=.8+2.2*s3*(.5+e);
   g.fillStyle=css(base,Math.min(1,a));g.beginPath();g.arc(c.x+rad*Math.cos(ang),c.y+rad*Math.sin(ang),sz/2,0,Math.PI*2);g.fill();}
  const dot=2.5+3.5*e;g.fillStyle=`rgba(255,255,255,${.55+.35*e})`;g.beginPath();g.arc(c.x,c.y,dot,0,Math.PI*2);g.fill();
@@ -485,8 +485,8 @@ function drawOpeningField(cv, w, h, f, dt) {
   g.lineJoin = 'round';
   g.lineCap = 'round';
   const e0 = bands ? bands[0] : 0.2, e1 = bands ? bands[3] : 0.16, e2 = bands ? bands[6] : 0.12;
-  paintPetals(g, R * 0.9, tint, 5, t * 0.05, 0.16, 0, e0, energy, shimmer);
-  paintPetals(g, R * 0.9, tint, 5, t * 0.05 + beatPh * 0.06, 0.2, 0.12, e1, energy, shimmer * 0.7);
+  paintPetals(g, R, tint, 5, t * 0.05, 0.16, 0, e0, energy, shimmer);
+  paintPetals(g, R, tint, 5, t * 0.05 + beatPh * 0.06, 0.2, 0.12, e1, energy, shimmer * 0.7);
   paintPetals(g, R * 0.62, tint, 3, -t * 0.035, 0.12, 0.22, e2, energy, shimmer);
   const n = RINGP.n;
   const motes = 1 + 0.22 * energy;
