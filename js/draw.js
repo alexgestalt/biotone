@@ -415,6 +415,31 @@ function traceSineRose(g, mid, A, cyc, rot, ph) {
   }
   g.closePath();
 }
+// Harmonograph trace: a damped two-pendulum figure, x + iy = D(t) * (a e^{i(t+px)} + b e^{i(r t + py)}),
+// with r a clean negative integer (slightly detuned so the loops precess like a real harmonograph).
+// That gives smooth looping rosettes with (1 - r)-fold symmetry and no cusps (b|r| > a); damping makes
+// the line coil in from the outer extent S toward the centre. rot spins the figure.
+function traceHarmonograph(g, S, r, b, px, py, damp, rot) {
+  const N = 600, T = TAU * 7, a = 1 - b;
+  g.beginPath();
+  for (let i = 0; i <= N; i++) {
+    const tau = (i / N) * T, D = S * Math.exp(-damp * tau);
+    const u1 = tau + px + rot, u2 = r * tau + py + rot;
+    const x = D * (a * Math.cos(u1) + b * Math.cos(u2)), y = D * (a * Math.sin(u1) + b * Math.sin(u2));
+    if (i) g.lineTo(x, y); else g.moveTo(x, y);
+  }
+}
+// Thin glowing line: soft halo underneath, a fine bright core on top. Drawn additively, so crossings brighten.
+function strokeTrace(g, tint, shift, e, energy, shimmer, halo) {
+  const col = PAL[palIndex(tint + shift)];
+  g.strokeStyle = col;
+  g.globalAlpha = (0.08 + 0.16 * shimmer) * (5 / halo) ** 0.5;
+  g.lineWidth = halo;
+  g.stroke();
+  g.globalAlpha = 0.35 + 0.45 * e + 0.15 * energy;
+  g.lineWidth = 1.1 + 1.2 * e;
+  g.stroke();
+}
 function paintPetalPath(g, tint, shift, e, energy, shimmer, halo = 5) {
   g.fillStyle = PAL[palIndex(tint + shift)];
   g.globalAlpha = (0.1 + 0.22 * e) * (0.7 + 0.3 * energy);
@@ -610,21 +635,29 @@ function drawOpeningField(cv, w, h, f, dt) {
   // radial swell. Beat -> spin, pulse cascade and sine density; carrier -> reach and compression.
   const pv = f.pv || { off1: 1 / 3, off2: 2 / 3, depth: 0.8, halo: 0, flow: 1, nat: 0 };
   const swell = 1 + 0.06 * pv.nat * Math.sin(t * 0.6);
-  const lo = 0.06 + 0.16 * eu, hi = (0.56 + 0.38 * eu) * swell;
-  const depth = 0.7 + 0.4 * pv.depth;
-  const mid0 = R * (lo + hi) / 2, A0 = R * (hi - lo) / 2 * depth * (0.92 + 0.12 * s);
+  // Carrier sets the reach (outer extent 45% -> 92% of the field radius, eased) and adds loops; the trace
+  // always spirals in toward the centre, so it spans centre to edge. Tone level -> how far it spirals in
+  // (damping) and brightness. Beat -> spin, pulse cascade and loop density.
+  const S0 = R * (0.45 + 0.47 * eu) * swell;
+  const damp = 0.05 - 0.025 * pv.depth;           // tone level: how far the trace coils in
   const cIn = centerWave(ph) * amp, cMid = centerWave(ph - 0.07) * amp, cOut = centerWave(ph - 0.14) * amp;
-  const kc = (1 + 1.2 * eu) * (0.85 + 0.3 * s); // carrier compresses the sine; faster beats add density
-  const sh = shimmer * (0.75 + 0.35 * pv.depth), halo = 5 + 7 * pv.halo;
-  // Outer: ~5 cycles at low carrier, spins forward, wave travels with it.
-  traceSineRose(g, mid0 * (0.94 + 0.06 * cOut), A0 * (0.94 + 0.06 * cOut), 5 * kc, pr[0], eph);
-  paintPetalPath(g, tint, 0, e0, energy, sh, halo);
-  // Middle: ~4 cycles, counter-rotating, wave against it; phase offset set by the engine.
-  traceSineRose(g, mid0 * 0.9 * (0.94 + 0.06 * cMid), A0 * 0.9 * (0.94 + 0.06 * cMid), 4 * kc, pr[1], TAU * pv.off1 - eph * 1.3);
-  paintPetalPath(g, tint, 0.12, e1, energy, sh * 0.7, halo);
-  // Inner: ~3 cycles, fastest spin, wave against it.
-  traceSineRose(g, mid0 * 0.8 * (0.92 + 0.08 * cIn), A0 * 0.8 * (0.92 + 0.08 * cIn), 3 * kc, pr[2], TAU * pv.off2 - eph * 1.7);
-  paintPetalPath(g, tint, 0.22, e2, energy, sh, halo);
+  const b = 0.32 + 0.12 * eu + 0.04 * s;          // carrier/beat: loop size (always loops, never cusps)
+  const sh = shimmer * (0.75 + 0.35 * pv.depth), halo = 4 + 7 * pv.halo;
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  // Each layer: two copies rotated by half its symmetry angle, so the loops interleave into a mandala.
+  const layer = (S, r, px, py, dmp, rot, shift, e, shm) => {
+    const half = Math.PI / (1 - Math.round(r));
+    for (let c = 0; c < 2; c++) {
+      traceHarmonograph(g, S, r, b, px, py, dmp, rot + c * half);
+      strokeTrace(g, tint, shift, e, energy, shm, halo);
+    }
+  };
+  // Outer: 5-fold (r = -4), spins forward, phase drifts with the wave.
+  layer(S0 * (0.94 + 0.06 * cOut), -4.008, eph * 0.5, eph, damp, pr[0], 0, e0, sh);
+  // Middle: 4-fold (r = -3), counter-rotating, drift reversed; engine sets its phase offset.
+  layer(S0 * 0.88 * (0.94 + 0.06 * cMid), -3.006, TAU * pv.off1 - eph * 0.4, TAU * pv.off1 - eph * 1.3, damp * 1.1, pr[1], 0.12, e1, sh * 0.8);
+  // Inner: 3-fold (r = -2), fastest spin, drift reversed.
+  layer(S0 * 0.74 * (0.92 + 0.08 * cIn), -2.004, TAU * pv.off2 - eph * 0.6, TAU * pv.off2 - eph * 1.7, damp * 1.2, pr[2], 0.22, e2, sh);
   const n = RINGP.n;
   const motes = 1 + 0.22 * energy;
   for (let b = 0; b < VIS_BANDS; b++) {
