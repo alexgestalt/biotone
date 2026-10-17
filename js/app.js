@@ -1343,6 +1343,13 @@ function updateRingAudio(dt) {
   const carrier = sc.tone != null ? sc.tone : sc.carrier;
   updateVisAudio(ringVis, carrier, beat, dt);
 }
+// Expanding pulse-ring speed (radius units per second). Beat present: sqrt scale around 7.83 Hz
+// (≈7.3 s centre to edge). Pure tone: log map 20–2000 Hz onto the same range.
+function pulseSpeedFor(carrier, beat) {
+  if (beat > 0.05) return cl(0.12 * Math.sqrt(beat / SCHUMANN), 0.05, 0.30);
+  const u = cl(Math.log(cl(carrier || 200, 20, 2000) / 20) / Math.log(100), 0, 1);
+  return 0.05 + 0.25 * u;
+}
 // Shared by the Resonance ring and the moods page; each passes its own vis state, carrier and beat.
 function updateVisAudio(ringVis, carrier, beat, dt) {
   const live = Snd.ready && (A.isPlaying || A.toolStarted || A.stats.env > 0.01);
@@ -1366,6 +1373,7 @@ function updateVisAudio(ringVis, carrier, beat, dt) {
     const decay = Math.exp(-dt / 0.7);
     for (let i = 0; i < VIS_BANDS; i++) bands[i] *= decay;
   }
+  ringVis.pulseSpeed = pulseSpeedFor(carrier, beat);
   const rate = beat > 0.05 ? Math.min(beat, 14) : 0;
   ringVis.beatPhase = (ringVis.beatPhase + (rate > 0 ? rate : 1 / 5.5) * dt) % 1;
   approach(ringVis, 'tint', freqTint(carrier, beat, shaped), dt, 0.9, 1.25);
