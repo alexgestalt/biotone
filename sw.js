@@ -1,5 +1,6 @@
-// Offline cache for Freqium web. Bump VERSION when files change.
-const VERSION = 'freqium-web-v20';
+// Offline cache for Biotone web. Bump VERSION when files change.
+const VERSION = 'biotone-web-v1';
+const PREFIX = 'biotone-web-'; // other apps on this github.io origin keep their own caches
 const ASSETS = [
   './', './index.html', './styles.css', './manifest.webmanifest',
   './js/app.js', './js/draw.js', './js/synth.js', './js/library-data.js',
@@ -9,7 +10,7 @@ self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', (e) => {
-  e.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k.startsWith('freqium-web-') && k !== VERSION).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k.startsWith(PREFIX) && k !== VERSION).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
 });
 // Network first (updates show up), cache when offline.
 self.addEventListener('fetch', (e) => {
@@ -19,6 +20,6 @@ self.addEventListener('fetch', (e) => {
     fetch(req, { cache: 'no-cache' }).then((res) => {
       if (res && res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); }
       return res;
-    }).catch(() => caches.match(req, { ignoreSearch: true }).then((r) => r || (req.mode === 'navigate' ? caches.match('./index.html') : undefined)))
+    }).catch(() => caches.match(req, { ignoreSearch: true, cacheName: VERSION }).then((r) => r || (req.mode === 'navigate' ? caches.match('./index.html', { cacheName: VERSION }) : undefined)))
   );
 });

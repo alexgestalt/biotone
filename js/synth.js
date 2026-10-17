@@ -1,4 +1,4 @@
-// Freqium synth: a JavaScript port of the iOS app's framework-free engine
+// Biotone synth: a JavaScript port of the iOS app's framework-free engine
 // (DSP.swift, Nature.swift, MusicEngine.swift, Mood.swift recipes, SynthCore.swift).
 // Runs inside an AudioWorklet (registerProcessor at the bottom). The same file also loads
 // as a plain script/module so it can be tested outside the browser.
@@ -638,7 +638,7 @@ class SynthCore {
 
 // ---------- AudioWorklet wrapper ----------
 if (typeof registerProcessor === 'function') {
-  class FreqiumProcessor extends AudioWorkletProcessor {
+  class BiotoneProcessor extends AudioWorkletProcessor {
     constructor() {
       super();
       this.core = new SynthCore(sampleRate);
@@ -671,7 +671,7 @@ if (typeof registerProcessor === 'function') {
       return true;
     }
   }
-  registerProcessor('freqium-synth', FreqiumProcessor);
+  registerProcessor('biotone-synth', BiotoneProcessor);
 }
 
 if (typeof module !== 'undefined' && module.exports) {
