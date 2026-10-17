@@ -1,4 +1,4 @@
-// Freqium web app: state, audio, pages. Mirrors the SwiftUI app (AppModel, SessionState,
+// Biotone web app: state, audio, pages. Mirrors the SwiftUI app (AppModel, SessionState,
 // Preset, ToolsModel, the page views). Pure DOM + Canvas + Web Audio, no dependencies.
 'use strict';
 
@@ -145,6 +145,7 @@ function needsHeadphones(st, src) {
 }
 
 // ===================================================================== app state
+// Storage keys keep the old 'freqium.' prefix on purpose: same github.io origin, so settings carry over to /biotone/.
 const LS = { state: 'freqium.state.v1', app: 'freqium.app.v1', hearing: 'freqium.hearing.v1', tip: 'freqium.tip.v1', intro: 'freqium.intro.v1' };
 const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } };
 const A = {
@@ -284,7 +285,7 @@ const Snd = {
     try {
       if (!ctx.audioWorklet) throw new Error('no worklet');
       await ctx.audioWorklet.addModule('js/synth.js');
-      this.node = new AudioWorkletNode(ctx, 'freqium-synth', { numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2] });
+      this.node = new AudioWorkletNode(ctx, 'biotone-synth', { numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2] });
       this.node.port.onmessage = (e) => { if (e.data && e.data.type === 'stats') onStats(e.data); };
     } catch (e) {
       // Fallback for browsers without AudioWorklet: the same synth on the main thread.
@@ -1709,5 +1710,5 @@ function init() {
   if (Intro.shouldAuto()) Intro.showCard(); else autoStart();
   onViewport();
 }
-window.__freqium = { Intro, A, Snd, snapshot, libFilter, libSections, goTo, play, stop, ctrl, setCtrl, Tools, STARTERS, save, ringVis, ringParticleCount };
+window.__biotone = window.__freqium = { Intro, A, Snd, snapshot, libFilter, libSections, goTo, play, stop, ctrl, setCtrl, Tools, STARTERS, save, ringVis, ringParticleCount };
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
