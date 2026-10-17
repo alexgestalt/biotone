@@ -59,7 +59,7 @@ const PAGES = [
 ];
 const SOURCE_PAGE = { tone: 'tone', binaural: 'binaural', schumann: 'schumann', pulse: 'pulse', mood: 'moods', mixer: 'mixer' };
 const SCHUMANN = 7.83;
-const APP_BUILD = 'biotone-v4'; // keep equal to the sw.js cache version
+const APP_BUILD = 'biotone-v5'; // keep equal to the sw.js cache version
 
 function makeLayer(kind) {
   const base = { id: uid(), tag: Math.floor(Math.random() * 1e9) + 1000, kind, frequency: 200, beat: 7.83, texture: 'rain', volume: 0.5, pan: 0, muted: false };
@@ -1385,10 +1385,14 @@ function updateVisAudio(ringVis, carrier, beat, dt) {
   ringVis.pulseSpeed = pulseSpeedFor(carrier, beat);
   ringVis.pulsePeriod = pulsePeriodFor(carrier, beat);
   ringVis.pulsePh = ((ringVis.pulsePh || 0) + dt / ringVis.pulsePeriod) % 1;
-  // Petal motion (page 4): turn rate scales with the pulse rate (0.35 rad per pulse period), and petals
-  // slim from round (slow, 26 s) to slender (fast, 2 s). Both are continuous, so a change never jumps.
-  ringVis.petalRot = (ringVis.petalRot || 0) + dt * 0.35 / ringVis.pulsePeriod;
-  const slim = cl(1 - Math.log(ringVis.pulsePeriod / 2) / Math.log(13), 0, 1);
+  // Petal motion (page 4): each layer spins at its own rate per pulse period, so all of them speed up
+  // with the frequency (angles accumulate, never snap): outer slow, middle counter-rotating, inner fastest.
+  const pr = ringVis.petalRots || (ringVis.petalRots = [0, Math.PI / 5, 0]);
+  const per = ringVis.pulsePeriod;
+  pr[0] = (pr[0] + dt * 0.5 / per) % TAU; pr[1] = (pr[1] - dt * 0.8 / per) % TAU; pr[2] = (pr[2] + dt * 1.4 / per) % TAU;
+  ringVis.petalRot = pr[0];
+  // Shape morph: 0 = slow/round, 1 = fast/slender, eased over ~0.6 s.
+  const slim = cl(1 - Math.log(per / 2) / Math.log(13), 0, 1);
   if (ringVis.petalSlim == null) ringVis.petalSlim = slim; else approach(ringVis, 'petalSlim', slim, dt, 0.6, 0.6);
   const rate = beat > 0.05 ? Math.min(beat, 14) : 0;
   ringVis.beatPhase = (ringVis.beatPhase + (rate > 0 ? rate : 1 / 5.5) * dt) % 1;

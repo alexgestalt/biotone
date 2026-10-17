@@ -375,6 +375,33 @@ function tracePetals(g, R, lobes, rot, inner, expo = 0.72) {
   }
   g.closePath();
 }
+// Petal outline blending two lobe counts (mix 0..1), so the petal count can morph without a seam.
+function tracePetalsBlend(g, R, la, lb, mix, rot, inner, expo) {
+  const N = 132;
+  g.beginPath();
+  for (let k = 0; k <= N; k++) {
+    const th = (k / N) * TAU;
+    const ca = Math.cos(la * (th + rot)), cb = Math.cos(lb * (th + rot));
+    const a = ca > 0 ? Math.pow(ca, expo) : 0, b = cb > 0 ? Math.pow(cb, expo) : 0;
+    const lobe = a + (b - a) * mix;
+    const rr = R * (inner + (1 - inner) * lobe);
+    const x = rr * Math.cos(th), y = rr * Math.sin(th);
+    if (k) g.lineTo(x, y); else g.moveTo(x, y);
+  }
+  g.closePath();
+}
+function paintPetalPath(g, tint, shift, e, energy, shimmer) {
+  g.fillStyle = PAL[palIndex(tint + shift)];
+  g.globalAlpha = (0.1 + 0.22 * e) * (0.7 + 0.3 * energy);
+  g.fill();
+  g.strokeStyle = PAL[palIndex(tint + shift)];
+  g.globalAlpha = 0.28 + 0.55 * e;
+  g.lineWidth = 1.6 + 3.2 * e;
+  g.stroke();
+  g.globalAlpha = 0.12 + 0.28 * shimmer;
+  g.lineWidth = 5;
+  g.stroke();
+}
 function paintPetals(g, R, tint, lobes, rot, inner, shift, e, energy, shimmer, expo) {
   tracePetals(g, R, lobes, rot, inner, expo);
   g.fillStyle = PAL[palIndex(tint + shift)];
@@ -532,13 +559,23 @@ function drawOpeningField(cv, w, h, f, dt) {
   g.strokeStyle = col;
   drawCorePulses(g, R, tint, 0.6);
   const e0 = bands ? bands[0] : 0.2, e1 = bands ? bands[3] : 0.16, e2 = bands ? bands[6] : 0.12;
-  // Petals follow the frequency: rotation (petalRot), slenderness (petalSlim) and a bloom on each centre pulse (cb).
-  const rot = f.petalRot != null ? f.petalRot : t * 0.05;
-  const slim = f.petalSlim != null ? f.petalSlim : 0.5;
-  const bloom = 0.9 + 0.1 * cb, expo = 0.42 + 0.6 * slim; // expo: ~0.48 round (2 Hz) .. 0.74 (7.83 Hz) .. ~1.0 slender (40 Hz)
-  paintPetals(g, R * bloom, tint, 5, rot, 0.16, 0, e0, energy, shimmer, expo);
-  paintPetals(g, R * (0.94 + 0.06 * cb), tint, 5, rot + beatPh * 0.06, 0.2, 0.12, e1, energy, shimmer * 0.7, expo);
-  paintPetals(g, R * 0.62 * (0.86 + 0.14 * cb), tint, 3, -rot * 0.7, 0.12, 0.22, e2, energy, shimmer, expo);
+  // Three petal layers, each morphing and spinning with the frequency (angles from f.petalRots, shape from
+  // f.petalSlim: 0 slow/round .. 1 fast/slender). Each layer blooms on the centre pulse a little later than
+  // the one inside it, so a pulse cascades outward through the flower.
+  const pr = f.petalRots || [t * 0.05, t * 0.05 + Math.PI / 5, -t * 0.035];
+  const s = f.petalSlim != null ? f.petalSlim : 0.5;
+  const ph = f.pulsePh || 0, amp = 0.55 + 0.45 * (f.breath || 0.4);
+  const cIn = centerWave(ph) * amp, cMid = centerWave(ph - 0.07) * amp, cOut = centerWave(ph - 0.14) * amp;
+  // Outer: 5 long petals, slow spin, round and full when slow, long and slender when fast.
+  tracePetalsBlend(g, R * (0.9 + 0.1 * cOut), 5, 5, 0, pr[0], 0.16 - 0.06 * s, 0.45 + 0.65 * s);
+  paintPetalPath(g, tint, 0, e0, energy, shimmer);
+  // Middle: 5 petals interleaved with the outer ones, counter-rotating; it morphs the other way
+  // (slender when slow, broad and rounded when fast) so the two layers weave as the frequency moves.
+  tracePetalsBlend(g, R * (0.72 + 0.12 * s + 0.08 * cMid), 5, 5, 0, pr[1], 0.12 + 0.12 * s, 1.05 - 0.5 * s);
+  paintPetalPath(g, tint, 0.12, e1, energy, shimmer * 0.7);
+  // Inner: fastest spin; blends from 3 broad petals (slow) to 6 fine ones (fast).
+  tracePetalsBlend(g, R * 0.62 * (0.84 + 0.16 * cIn), 3, 6, s, pr[2], 0.1 + 0.06 * (1 - s), 0.6 + 0.5 * s);
+  paintPetalPath(g, tint, 0.22, e2, energy, shimmer);
   const n = RINGP.n;
   const motes = 1 + 0.22 * energy;
   for (let b = 0; b < VIS_BANDS; b++) {
