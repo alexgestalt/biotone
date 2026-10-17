@@ -1,24 +1,11 @@
-// Offline cache for Freqium web. Bump VERSION when files change.
-const VERSION = 'freqium-web-v15';
-const ASSETS = [
-  './', './index.html', './styles.css', './manifest.webmanifest',
-  './js/app.js', './js/draw.js', './js/synth.js', './js/library-data.js',
-  './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png', './audio/intro.m4a', './audio/intro.mp3', './audio/intro.json'
-];
-self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
-});
+// Freqium has moved to /biotone/. This worker clears the old caches, unregisters itself and reloads open tabs so they hit the redirect.
+self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => {
-  e.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
-});
-// Network first (updates show up), cache when offline.
-self.addEventListener('fetch', (e) => {
-  const req = e.request;
-  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
-  e.respondWith(
-    fetch(req).then((res) => {
-      if (res && res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); }
-      return res;
-    }).catch(() => caches.match(req, { ignoreSearch: true }).then((r) => r || (req.mode === 'navigate' ? caches.match('./index.html') : undefined)))
-  );
+  e.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter((k) => k.startsWith('freqium-web-')).map((k) => caches.delete(k)));
+    await self.registration.unregister();
+    const tabs = await self.clients.matchAll({ type: 'window' });
+    tabs.forEach((c) => c.navigate(c.url));
+  })());
 });
