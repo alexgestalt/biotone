@@ -1,9 +1,9 @@
 // Offline cache for Freqium web. Bump VERSION when files change.
-const VERSION = 'freqium-web-v16';
+const VERSION = 'freqium-web-v17';
 const ASSETS = [
   './', './index.html', './styles.css', './manifest.webmanifest',
   './js/app.js', './js/draw.js', './js/synth.js', './js/library-data.js',
-  './fonts/Outfit-ExtraLight.woff2', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png', './audio/intro.m4a', './audio/intro.mp3', './audio/intro.json'
+  './icons/header-icon-96.png', './icons/header-icon-144.png', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png', './audio/intro.m4a', './audio/intro.mp3', './audio/intro.json'
 ];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));

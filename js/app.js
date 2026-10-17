@@ -642,7 +642,7 @@ function setCtrl(id, v, opts = {}) {
 
 // ===================================================================== components
 const hpBadge = (on) => (on ? `<div class="badge">${I.head}Headphones</div>` : '');
-const hdr = (t, right = '') => `<div class="hdr"><div class="ttl"><div class="wm" aria-label="Biotone">BIOTONE</div><div class="t">${esc(t.toUpperCase())}</div></div>${right}</div>`;
+const hdr = (t, right = '') => `<div class="hdr"><div class="ttl"><img class="hicon" src="icons/header-icon-96.png" srcset="icons/header-icon-96.png 2x, icons/header-icon-144.png 3x" width="30" height="30" alt="Biotone" decoding="async"><div class="t">${esc(t.toUpperCase())}</div></div>${right}</div>`;
 const pill = (id, opts, sel, cls = '') => `<div class="pill ${cls}" data-pill="${id}">${opts.map(([v, l]) => `<div class="${v === sel ? 'on' : ''}" data-v="${esc(v)}">${esc(l)}</div>`).join('')}</div>`;
 const sliderEl = (id) => { const c = ctrl(id); const t = (c.get() - c.range[0]) / (c.range[1] - c.range[0]); return `<div class="slider" data-slider="${id}"><div class="tr"></div><div class="fl" style="width:calc(13.5px + (100% - 27px)*${t})"></div><div class="th" style="left:calc((100% - 27px)*${t})"></div></div>`; };
 function placeSlider(el, v, range) {
