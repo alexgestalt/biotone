@@ -675,7 +675,8 @@ const PAGE_RENDER = {
     return hdr('Moods', hpBadge(needsHeadphones(A.state, 'mood'))) +
       `<div class="orbflex"><div class="orbstage"><canvas data-orb="1"></canvas></div></div>
       <div style="text-align:center"><div style="font-family:var(--rounded);font-size:24px;font-weight:300;line-height:1.2">${m.label}</div><div class="caption" style="margin-top:2px">${moodBand(m)}</div></div>
-      <div class="moodwin"><div class="grid2">${tiles}</div></div>` +
+      <div class="moodwin"><div class="grid2">${tiles}</div></div>
+      <button class="moremoods" data-act="moremoods">All ${MOODS.length} moods</button>` +
       lslider('mood.tone', m.pure ? 'TONE' : 'BINAURAL TONE') + lslider('mood.music', 'MUSIC') + bed('mood.amb', lv.ambience, false) +
       (lv.ambience !== 'off' ? lslider('mood.ambLevel', `${NOISE_LABEL[lv.ambience].toUpperCase()} LEVEL`) : '');
   },
@@ -1085,6 +1086,18 @@ const ACT = {
     const m = A.state.moods;
     if (m.selected === k && isPlayingSource('mood')) { stop(); return; }
     m.selected = k; A.activePresetName = null; play('mood');
+  },
+  moremoods() {
+    const cur = A.state.moods.selected, playing = isPlayingSource('mood');
+    const tiles = MOODS.map((x) => `<button class="tile ${x.key === cur ? 'sel' : ''}" data-mk="${x.key}"><div class="ic">${moodIcon[x.key] || I.spark}</div><div style="flex:1;min-width:0"><div class="nm">${x.label}</div><div class="bd">${moodLine(x)}</div></div>${x.key === cur && playing ? `<div class="mw" style="width:20px;color:var(--accent)">${I.wave}</div>` : ''}</button>`).join('');
+    openSheet(`<h3>ALL MOODS</h3><div class="grid2 moodsheet">${tiles}</div><button class="kbtn c" id="mmc" style="flex:none">Close</button>`, (sh, close) => {
+      sh.querySelector('.moodsheet').addEventListener('click', (e) => { const b = e.target.closest('[data-mk]'); if (!b) return; close(); ACT.mood(b.dataset.mk); });
+      sh.querySelector('#mmc').onclick = close;
+      // Swipe down from the top of the sheet to close it.
+      let y0 = null;
+      sh.addEventListener('touchstart', (e) => { y0 = sh.scrollTop <= 0 ? e.touches[0].clientY : null; }, { passive: true });
+      sh.addEventListener('touchmove', (e) => { if (y0 != null && e.touches[0].clientY - y0 > 90) { y0 = null; close(); } }, { passive: true });
+    });
   },
   ambtoggle() { if (!activeAmbients().length) { UI.ambOpen = false; renderMini(); return; } UI.ambOpen = !UI.ambOpen; renderMini(); },
   ambstop(id) { stopAmbient(id); },
