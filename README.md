@@ -4,4 +4,4 @@ Biotone is a wellness listening app for tones, binaural beats, the Schumann reso
 
 The installable web app is published with GitHub Pages:
 
-https://alexgestalt.github.io/freqium/
+https://alexgestalt.github.io/biotone/
