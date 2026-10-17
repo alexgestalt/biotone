@@ -237,6 +237,31 @@ function heartWave(time) {
   const slow = 0.5 + 0.5 * Math.sin(time * (TAU / 5.6));
   const h = lub + dub; return 0.45 * slow + 0.55 * (h < 1 ? h : 1);
 }
+// Centre pulse: the same lub-dub shape as heartWave, driven by a phase accumulator (0..1) whose rate
+// follows the frequency (pulsePh, advanced per page in updateVisAudio), so rate changes never jump.
+function centerWave(ph) {
+  ph -= Math.floor(ph);
+  const lub = Math.exp(-((ph - 0.08) * (ph - 0.08)) / 0.0018);
+  const dub = 0.7 * Math.exp(-((ph - 0.22) * (ph - 0.22)) / 0.0022);
+  const slow = 0.5 + 0.5 * Math.sin(ph * TAU);
+  const h = lub + dub; return 0.45 * slow + 0.55 * (h < 1 ? h : 1);
+}
+// Disc fill, inner glow and core dot all pulse from the centre at the frequency-driven rate.
+function paintCenterPulse(g, R, col, cb, energy, petal) {
+  const cg = 0.72 + 0.28 * cb + 0.18 * energy;
+  g.fillStyle = col;
+  g.globalAlpha = 0.09 * cg;
+  g.beginPath(); g.arc(0, 0, R * 0.98, 0, TAU); g.fill();
+  g.globalAlpha = (petal ? 0.04 : 0.05) + 0.07 * cb;
+  g.beginPath(); g.arc(0, 0, R * (0.42 + 0.1 * cb), 0, TAU); g.fill();
+}
+function paintCore(g, hot, cb, energy) {
+  g.fillStyle = hot;
+  g.globalAlpha = 0.12 + 0.22 * cb;
+  g.beginPath(); g.arc(0, 0, 5 + 9 * cb + 3 * energy, 0, TAU); g.fill();
+  g.globalAlpha = 0.45 + 0.5 * energy;
+  g.beginPath(); g.arc(0, 0, 2.2 + 2.4 * energy + 2.4 * cb, 0, TAU); g.fill();
+}
 function ringBudget() { return window.innerWidth < 700 ? 112 : 160; }
 function ensureRingParticles() {
   const n = ringBudget();
@@ -384,17 +409,15 @@ function drawLivingRing(cv, w, h, f, dt) {
   const t = RINGP.time;
   const n1 = noise2(t * 0.05, 1.3) - 0.5;
   const n2 = noise2(2.4, t * 0.037) - 0.5;
+  // Outer ring keeps the slow fixed breath; the centre pulses at the frequency-driven rate.
   const breath = heartWave(t) * (0.55 + 0.45 * (f.breath || 0.4));
+  const cb = centerWave(f.pulsePh || 0) * (0.55 + 0.45 * (f.breath || 0.4));
   const R = fieldRadius(w, h, breath, n1);
   const glow = 0.72 + 0.28 * breath + 0.18 * energy;
   const beatPh = (f.beatPhase || 0) * TAU;
   g.translate(w / 2, h / 2);
   g.globalCompositeOperation = 'source-over';
-  g.fillStyle = col;
-  g.globalAlpha = 0.09 * glow;
-  g.beginPath(); g.arc(0, 0, R * 0.98, 0, TAU); g.fill();
-  g.globalAlpha = 0.07 * glow;
-  g.beginPath(); g.arc(0, 0, R * 0.5, 0, TAU); g.fill();
+  paintCenterPulse(g, R, col, cb, energy, false);
   g.globalCompositeOperation = 'lighter';
   g.strokeStyle = col;
   g.lineJoin = 'round';
@@ -447,9 +470,7 @@ function drawLivingRing(cv, w, h, f, dt) {
     }
   }
   strokeLivingEdge(g, R, col, glow, breath, n1, n2, t);
-  g.fillStyle = hot;
-  g.globalAlpha = 0.45 + 0.5 * energy;
-  g.beginPath(); g.arc(0, 0, 2.2 + 2.4 * energy + 1.2 * breath, 0, TAU); g.fill();
+  paintCore(g, hot, cb, energy);
   g.globalAlpha = 1;
   g.globalCompositeOperation = 'source-over';
 }
@@ -487,16 +508,16 @@ function drawOpeningField(cv, w, h, f, dt) {
   const t = RINGP.time;
   const n1 = noise2(t * 0.05, 1.3) - 0.5;
   const n2 = noise2(2.4, t * 0.037) - 0.5;
+  // Outer ring keeps the slow fixed breath; the centre pulses at the frequency-driven rate.
   const breath = heartWave(t) * (0.55 + 0.45 * (f.breath || 0.4));
+  const cb = centerWave(f.pulsePh || 0) * (0.55 + 0.45 * (f.breath || 0.4));
   const R = fieldRadius(w, h, breath, n1);
   const glow = 0.72 + 0.28 * breath + 0.18 * energy;
   const beatPh = (f.beatPhase || 0) * TAU;
   const shimmer = f.shimmer || 0.4;
   g.translate(w / 2, h / 2);
   g.globalCompositeOperation = 'source-over';
-  g.fillStyle = col;
-  g.globalAlpha = 0.09 * glow;
-  g.beginPath(); g.arc(0, 0, R * 0.98, 0, TAU); g.fill();
+  paintCenterPulse(g, R, col, cb, energy, true);
   g.globalCompositeOperation = 'lighter';
   g.lineJoin = 'round';
   g.lineCap = 'round';
@@ -524,9 +545,7 @@ function drawOpeningField(cv, w, h, f, dt) {
     }
   }
   strokeLivingEdge(g, R, col, glow, breath, n1, n2, t);
-  g.fillStyle = hot;
-  g.globalAlpha = 0.45 + 0.5 * energy;
-  g.beginPath(); g.arc(0, 0, 2.2 + 2.4 * energy + 1.2 * breath, 0, TAU); g.fill();
+  paintCore(g, hot, cb, energy);
   g.globalAlpha = 1;
   g.globalCompositeOperation = 'source-over';
 }
