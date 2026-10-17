@@ -191,6 +191,42 @@ function rgbCss(rgb) {
     hslTo(h, 0.48, 0.88, rgb); PAL_HOT[i] = rgbCss(rgb);
   }
 })();
+// Page 1 palette (v10.2): identical to PAL in the gold low end, then blends (in Oklab, so it never passes
+// through orange/red/pink) toward purple #9b5cff as the tint rises, deepening slightly to #8a4dff at the top.
+// Page 4 keeps PAL / PAL_HOT unchanged.
+const PAL1 = new Array(PAL_N);
+const PAL1_HOT = new Array(PAL_N);
+(function buildPalette1() {
+  const lin = (c) => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  const gam = (c) => (c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055);
+  const toLab = (r, g, b) => {
+    r = lin(r); g = lin(g); b = lin(b);
+    const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+    const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+    const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+    return [0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s, 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s, 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s];
+  };
+  const toRgb = (L, A, B) => {
+    const l = (L + 0.3963377774 * A + 0.2158037573 * B) ** 3, m = (L - 0.1055613458 * A - 0.0638541728 * B) ** 3, s = (L - 0.0894841775 * A - 1.291485548 * B) ** 3;
+    const c = (v) => Math.max(0, Math.min(1, gam(v)));
+    return [c(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s), c(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s), c(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s)];
+  };
+  const mix = (a, b, u) => [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u];
+  const rgb = [0, 0, 0], T0 = 0.1, T1 = 0.55;
+  hslTo(paletteHue(T0), 0.98, 0.58, rgb); const g0 = toLab(rgb[0], rgb[1], rgb[2]);
+  hslTo(paletteHue(T0), 0.48, 0.88, rgb); const h0 = toLab(rgb[0], rgb[1], rgb[2]);
+  const P = toLab(0x9b / 255, 0x5c / 255, 1), P2 = toLab(0x8a / 255, 0x4d / 255, 1), PH = toLab(0xdc / 255, 0xcb / 255, 1);
+  for (let i = 0; i < PAL_N; i++) {
+    const t = i / (PAL_N - 1);
+    if (t <= T0) { PAL1[i] = PAL[i]; PAL1_HOT[i] = PAL_HOT[i]; continue; }
+    let u = Math.min(1, (t - T0) / (T1 - T0)); u = u * u * (3 - 2 * u);
+    let c = mix(g0, P, u);
+    if (t > T1) c = mix(P, P2, (t - T1) / (1 - T1));
+    PAL1[i] = rgbCss(toRgb(c[0], c[1], c[2]));
+    const hc = mix(h0, PH, u);
+    PAL1_HOT[i] = rgbCss(toRgb(hc[0], hc[1], hc[2]));
+  }
+})();
 function palIndex(t) {
   if (t <= 0) return 0;
   if (t >= 1) return PAL_N - 1;
@@ -571,7 +607,7 @@ function traceP1Harmonograph(g, S, fy, b, px, py, damp, rot, rin, ring, lobes) {
   }
 }
 function strokeP1Trace(g, tint, shift, e, energy, bright, halo) {
-  g.strokeStyle = PAL[palIndex(tint + shift)];
+  g.strokeStyle = PAL1[palIndex(tint + shift)];
   g.globalAlpha = (0.08 + 0.16 * bright) * (5 / halo) ** 0.5;
   g.lineWidth = halo;
   g.stroke();
@@ -653,8 +689,10 @@ function drawLivingRing(cv, w, h, f, dt) {
   stepRingField(dt, f.energy || 0, bands, f.pulseSpeed, f.pulsePh);
   const tint = f.tint || 0;
   const energy = f.energy || 0;
-  const col = PAL[palIndex(tint)];
-  const hot = PAL_HOT[palIndex(tint)];
+  // v10.2: everything except the two waveform layers keeps its untinted low-frequency colour (tint 0);
+  // only drawP1Waves shifts with the tint, toward purple (PAL1).
+  const col = PAL[palIndex(0)];
+  const hot = PAL_HOT[palIndex(0)];
   const t = RINGP.time;
   const n1 = noise2(t * 0.05, 1.3) - 0.5;
   const n2 = noise2(2.4, t * 0.037) - 0.5;
@@ -677,19 +715,19 @@ function drawLivingRing(cv, w, h, f, dt) {
     const u = i / (VIS_BANDS - 1);
     const wob = 0.02 * (noise2(i * 1.7, t * 0.04) - 0.5);
     const rad = R * (0.3 + u * 0.52) * (1 + wob + 0.03 * e);
-    g.strokeStyle = PAL[palIndex(tint + u * 0.28)];
+    g.strokeStyle = PAL[palIndex(u * 0.28)];
     g.globalAlpha = (0.14 + 0.62 * e) * (0.7 + 0.3 * energy);
     g.lineWidth = 1.15 + 3.4 * e;
     strokeDisc(g, rad);
   }
-  drawCorePulses(g, R, tint, 1);
+  drawCorePulses(g, R, 0, 1);
   // v10: two free-form harmonograph waveform layers driven by every mood parameter (see drawP1Waves).
   const shimmer = f.shimmer || 0.4;
   drawP1Waves(g, R, f, tint, energy, cb, t, Math.min(0.1, Math.max(0, dt || 0)), bands);
   const n = RINGP.n;
   const motes = 1 + 0.22 * energy;
   for (let b = 0; b < VIS_BANDS; b++) {
-    g.fillStyle = PAL[palIndex(tint + b * 0.04)];
+    g.fillStyle = PAL[palIndex(b * 0.04)];
     for (let i = b; i < n; i += VIS_BANDS) {
       const br = RINGP.bright[i];
       const sz = RINGP.sz[i] * (0.9 + br) * motes;
