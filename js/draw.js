@@ -363,20 +363,20 @@ function fieldRadius(w, h, breath, n1) {
   if (R > maxR - 8) R = maxR - 8;
   return R;
 }
-function tracePetals(g, R, lobes, rot, inner) {
+function tracePetals(g, R, lobes, rot, inner, expo = 0.72) {
   g.beginPath();
   for (let k = 0; k <= EDGE_N; k++) {
     const th = (k / EDGE_N) * TAU;
     const c = Math.cos(lobes * (th + rot));
-    const lobe = c > 0 ? Math.pow(c, 0.72) : 0;
+    const lobe = c > 0 ? Math.pow(c, expo) : 0;
     const rr = R * (inner + (1 - inner) * lobe);
     const x = rr * Math.cos(th), y = rr * Math.sin(th);
     if (k) g.lineTo(x, y); else g.moveTo(x, y);
   }
   g.closePath();
 }
-function paintPetals(g, R, tint, lobes, rot, inner, shift, e, energy, shimmer) {
-  tracePetals(g, R, lobes, rot, inner);
+function paintPetals(g, R, tint, lobes, rot, inner, shift, e, energy, shimmer, expo) {
+  tracePetals(g, R, lobes, rot, inner, expo);
   g.fillStyle = PAL[palIndex(tint + shift)];
   g.globalAlpha = (0.1 + 0.22 * e) * (0.7 + 0.3 * energy);
   g.fill();
@@ -532,9 +532,13 @@ function drawOpeningField(cv, w, h, f, dt) {
   g.strokeStyle = col;
   drawCorePulses(g, R, tint, 0.6);
   const e0 = bands ? bands[0] : 0.2, e1 = bands ? bands[3] : 0.16, e2 = bands ? bands[6] : 0.12;
-  paintPetals(g, R, tint, 5, t * 0.05, 0.16, 0, e0, energy, shimmer);
-  paintPetals(g, R, tint, 5, t * 0.05 + beatPh * 0.06, 0.2, 0.12, e1, energy, shimmer * 0.7);
-  paintPetals(g, R * 0.62, tint, 3, -t * 0.035, 0.12, 0.22, e2, energy, shimmer);
+  // Petals follow the frequency: rotation (petalRot), slenderness (petalSlim) and a bloom on each centre pulse (cb).
+  const rot = f.petalRot != null ? f.petalRot : t * 0.05;
+  const slim = f.petalSlim != null ? f.petalSlim : 0.5;
+  const bloom = 0.9 + 0.1 * cb, expo = 0.42 + 0.6 * slim; // expo: ~0.48 round (2 Hz) .. 0.74 (7.83 Hz) .. ~1.0 slender (40 Hz)
+  paintPetals(g, R * bloom, tint, 5, rot, 0.16, 0, e0, energy, shimmer, expo);
+  paintPetals(g, R * (0.94 + 0.06 * cb), tint, 5, rot + beatPh * 0.06, 0.2, 0.12, e1, energy, shimmer * 0.7, expo);
+  paintPetals(g, R * 0.62 * (0.86 + 0.14 * cb), tint, 3, -rot * 0.7, 0.12, 0.22, e2, energy, shimmer, expo);
   const n = RINGP.n;
   const motes = 1 + 0.22 * energy;
   for (let b = 0; b < VIS_BANDS; b++) {
