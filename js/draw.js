@@ -525,14 +525,17 @@ function drawLivingRing(cv, w, h, f, dt) {
   const p2 = p1 + beatPh;
   // Wide waveform ring (v7.1): fills the space between the centre pulse and the outer edge.
   // Was R*(0.90 +/- ~0.02); now centred at 0.60R with amplitude 0.24-0.30R, so it sweeps ~0.32R..0.88R.
-  // The product of the two tones keeps breathing at the binaural/beat rate (whole wave swells in/out).
-  const amp = 0.24 + 0.06 * shimmer;
+  // Base and depth swell gently with the frequency-tied centre pulse.
+  const amp = (0.24 + 0.06 * shimmer) * (0.9 + 0.1 * cb);
+  const lobeRot = TAU * (f.pulsePh || 0) / 7; // seamless at wrap: 7-fold symmetric
   const base = 0.6 + 0.04 * cb;
   g.beginPath();
   const WN = 240; // more vertices: the deep wave needs them to stay smooth
   for (let k = 0; k < WN; k++) {
     const th = k / WN * TAU;
-    const wave = Math.sin(3.5 * th + p1) * Math.sin(3.5 * th + p2);
+    // Centred 7-lobe sine. The beat no longer drives it directly (at 20-40 Hz beats the deep wave strobed);
+    // it steps one lobe per frequency-tied centre pulse instead, so it turns faster on faster moods.
+    const wave = Math.cos(7 * th + 2 * p1 + lobeRot);
     const rr = R * (base + amp * wave + 0.012 * n2 * Math.sin(3 * th + t * 0.2));
     const x = rr * Math.cos(th), y = rr * Math.sin(th);
     if (k) g.lineTo(x, y); else g.moveTo(x, y);
