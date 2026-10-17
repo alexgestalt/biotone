@@ -508,6 +508,61 @@ function drawCorePulses(g, R, tint, k) {
     strokeDisc(g, R * u);
   }
 }
+function radarState(f) {
+  return f._radar || (f._radar = { a1: 0.6, a2: 2.4, w1: 0, w2: 0, dir: 1 });
+}
+function drawRadarEdge(g, R, f, tint, energy, shimmer, cb, t, dt) {
+  const S = radarState(f);
+  const per = f.pulsePeriod || 6.5;
+  const s = 0.3 + 3.0 / per; // Sleep ~0.45, Meditate ~0.76, Active ~1.3, Spark ~1.66 rad/s (mean, before noise)
+  // Irregular target speeds: slow wandering noise + a quicker jitter; the slow part can dip below zero.
+  const nA = noise2(t * 0.21, 3.7) - 0.5, jA = noise2(t * 1.3, 8.1) - 0.5;
+  const nB = noise2(5.3, t * 0.17) - 0.5, jB = noise2(t * 1.1, 11.9) - 0.5;
+  const tw1 = s * (0.7 + 2.4 * nA + 0.7 * jA);
+  const tw2 = -s * (0.9 + 2.6 * nB + 0.8 * jB);
+  // Velocities ease toward targets (no jumps), angles accumulate.
+  const k = 1 - Math.exp(-dt / 0.35);
+  S.w1 += (tw1 - S.w1) * k; S.w2 += (tw2 - S.w2) * k;
+  S.a1 = (S.a1 + S.w1 * dt) % TAU; S.a2 = (S.a2 + S.w2 * dt) % TAU;
+  // Trail sits behind the arm; its side follows the smoothed direction and shrinks through a reversal.
+  S.dir += (Math.tanh(S.w1 / (0.25 * s)) - S.dir) * (1 - Math.exp(-dt / 0.3));
+  const r1 = R * (0.6 + 0.015 * cb), r2 = R * (0.8 + 0.01 * cb);
+  const c1 = PAL[palIndex(tint + 0.04)], c2 = PAL[palIndex(tint + 0.12)];
+  const lift = 0.75 + 0.25 * energy;
+  // Sweep trail: thin wedges fading away from the arm.
+  const trail = 1.4 * S.dir, N = 28, r0 = R * 0.17, rT = R * 0.86;
+  g.fillStyle = c1;
+  for (let i = 0; i < N; i++) {
+    const u0 = i / N, u1 = (i + 1) / N;
+    g.globalAlpha = 0.34 * Math.pow(1 - u0, 1.3) * lift * (0.35 + 0.65 * Math.abs(S.dir));
+    const th0 = S.a1 - trail * u0, th1 = S.a1 - trail * u1;
+    g.beginPath();
+    g.arc(0, 0, rT, Math.min(th0, th1), Math.max(th0, th1));
+    g.arc(0, 0, r0, Math.max(th0, th1), Math.min(th0, th1), true);
+    g.closePath(); g.fill();
+  }
+  // Sweep arm.
+  const ax = Math.cos(S.a1), ay = Math.sin(S.a1);
+  g.strokeStyle = c1;
+  g.globalAlpha = 0.16 * lift; g.lineWidth = 7;
+  g.beginPath(); g.moveTo(ax * r0, ay * r0); g.lineTo(ax * rT, ay * rT); g.stroke();
+  g.globalAlpha = 0.55 * lift; g.lineWidth = 1.6;
+  g.beginPath(); g.moveTo(ax * r0, ay * r0); g.lineTo(ax * rT, ay * rT); g.stroke();
+  // Two range rings: faint full circle + glowing broken arcs (same soft-line treatment as the pulse rings).
+  const layer = (r, a, col, segs, glow) => {
+    g.strokeStyle = col;
+    g.globalAlpha = 0.1 + 0.08 * shimmer; g.lineWidth = 1.2;
+    strokeDisc(g, r);
+    for (const [off, len] of segs) {
+      g.globalAlpha = (0.12 + 0.12 * shimmer) * glow; g.lineWidth = 7.5;
+      g.beginPath(); g.arc(0, 0, r, a + off, a + off + len); g.stroke();
+      g.globalAlpha = (0.45 + 0.35 * shimmer) * glow; g.lineWidth = 1.8;
+      g.beginPath(); g.arc(0, 0, r, a + off, a + off + len); g.stroke();
+    }
+  };
+  layer(r1, S.a1, c1, [[0.15, 1.5], [2.3, 0.7], [3.6, 1.9]], lift);
+  layer(r2, S.a2, c2, [[0, 0.5], [1.05, 1.2], [2.75, 0.35], [3.5, 0.9], [5.0, 0.6]], lift * 0.9);
+}
 // f: smoothed { breath, energy, tint, beatPhase, shimmer, bands }
 function drawLivingRing(cv, w, h, f, dt) {
   const g = setupCanvas(cv, w, h);
@@ -546,38 +601,12 @@ function drawLivingRing(cv, w, h, f, dt) {
     strokeDisc(g, rad);
   }
   drawCorePulses(g, R, tint, 1);
-  // Two close spatial tones. Their product breathes at the binaural rate.
+  // Radar edge (v8.2): two soft glowing range rings in the same style as the centre pulse rings, each
+  // carrying broken arc segments that spin at their own irregular speed (smooth noise, occasionally
+  // reversing), plus a sweep arm riding the first layer with a fading trail. Speeds come from the
+  // frequency-tied pulse period, never from the beat phase, so fast moods stay smooth (no strobing).
   const shimmer = f.shimmer || 0.4;
-  const p1 = t * 0.17;
-  const p2 = p1 + beatPh;
-  // Wide waveform ring (v7.1): fills the space between the centre pulse and the outer edge.
-  // Was R*(0.90 +/- ~0.02); now centred at 0.60R with amplitude 0.24-0.30R, so it sweeps ~0.32R..0.88R.
-  // Base and depth swell gently with the frequency-tied centre pulse.
-  const amp = (0.24 + 0.06 * shimmer) * (0.9 + 0.1 * cb);
-  const lobeRot = TAU * (f.pulsePh || 0) / 7; // seamless at wrap: 7-fold symmetric
-  const base = 0.6 + 0.04 * cb;
-  g.beginPath();
-  const WN = 240; // more vertices: the deep wave needs them to stay smooth
-  for (let k = 0; k < WN; k++) {
-    const th = k / WN * TAU;
-    // Centred 7-lobe sine. The beat no longer drives it directly (at 20-40 Hz beats the deep wave strobed);
-    // it steps one lobe per frequency-tied centre pulse instead, so it turns faster on faster moods.
-    const wave = Math.cos(7 * th + 2 * p1 + lobeRot);
-    const rr = R * (base + amp * wave + 0.012 * n2 * Math.sin(3 * th + t * 0.2));
-    const x = rr * Math.cos(th), y = rr * Math.sin(th);
-    if (k) g.lineTo(x, y); else g.moveTo(x, y);
-  }
-  g.closePath();
-  g.strokeStyle = col;
-  g.globalAlpha = 0.08 + 0.12 * shimmer;
-  g.lineWidth = 16;
-  g.stroke();
-  g.globalAlpha = 0.22 + 0.38 * shimmer;
-  g.lineWidth = 5.5;
-  g.stroke();
-  g.globalAlpha = 0.55 + 0.35 * shimmer;
-  g.lineWidth = 1.6;
-  g.stroke();
+  drawRadarEdge(g, R, f, tint, energy, shimmer, cb, t, Math.min(0.1, Math.max(0, dt || 0)));
   const n = RINGP.n;
   const motes = 1 + 0.22 * energy;
   for (let b = 0; b < VIS_BANDS; b++) {
