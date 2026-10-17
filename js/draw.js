@@ -755,7 +755,8 @@ function drawOpeningField(cv, w, h, f, dt) {
   ensureRingParticles();
   const bands = f.bands;
   stepRingField(dt, f.energy || 0, bands, f.pulseSpeed, f.pulsePh);
-  const tint = f.tint || 0;
+  // Colour: page 4 is gold only - every element uses the untinted base palette at all frequencies.
+  const tint = 0;
   const energy = f.energy || 0;
   const col = PAL[palIndex(tint)];
   const hot = PAL_HOT[palIndex(tint)];
@@ -781,12 +782,13 @@ function drawOpeningField(cv, w, h, f, dt) {
   // Three petal layers, each morphing and spinning with the frequency (angles from f.petalRots, shape from
   // f.petalSlim: 0 slow/round .. 1 fast/slender). Each layer blooms on the centre pulse a little later than
   // the one inside it, so a pulse cascades outward through the flower.
-  const pr = f.petalRots || [t * 0.05, t * 0.05 + Math.PI / 5, -t * 0.035];
+  const pr = f.p4Rots || f.petalRots || [t * 0.05, t * 0.05 + Math.PI / 5, -t * 0.035];
   const s = f.petalSlim != null ? f.petalSlim : 0.5;
   const ph = f.pulsePh || 0, amp = 0.55 + 0.45 * (f.breath || 0.4);
   // Every layer carries the carrier sine edge with its own phase offset and travel direction (outer wave runs
   // with its spin, middle and inner against theirs), drawn additively so crossings brighten like a kaleidoscope.
-  const eu = f.edgeU != null ? f.edgeU : 0.4, eph = f.edgePh || 0;
+  const eu = f.p4U != null ? f.p4U : (f.edgeU != null ? f.edgeU : 0.4);
+  const P4 = f.p4Ph || [0, 0, 0, 0, 0, 0], DR = f.p4Drift ? f.p4Drift.x : [0, 0, 0];
   // Three deep sine rosettes, r = mid + A sin(k theta + phase). The carrier (edgeU, eased) grows them
   // from the centre outward: 60 Hz troughs ~10% / peaks ~58% of the field radius, 1200 Hz troughs ~25% /
   // peaks ~90%, and compresses the sine (more cycles). Each layer has its own cycle count, spin (v5
@@ -795,29 +797,33 @@ function drawOpeningField(cv, w, h, f, dt) {
   // phase relationship between the layers; noise colour/level -> glow halo; nature -> wave flow and a slow
   // radial swell. Beat -> spin, pulse cascade and sine density; carrier -> reach and compression.
   const pv = f.pv || { off1: 1 / 3, off2: 2 / 3, depth: 0.8, halo: 0, flow: 1, nat: 0 };
-  const swell = 1 + 0.06 * pv.nat * Math.sin(t * 0.6);
+  const swell = 1 - 0.03 * pv.nat * (1 - Math.sin(t * 0.6));   // nature swell, inward only (never clips)
   // v9: loose free-form harmonograph traces whose SHAPE follows the controls, plus a slow living morph.
   //  carrier -> reach, loop ratio, and opening into a waveform ring (inner radius rin grows with carrier);
   //  beat -> spin (per layer, counter-rotating) and loop density; tone level -> loop depth and damping.
-  const S0 = R * (0.5 + 0.42 * eu) * swell;
+  // Size: each layer grows with its own frequency, from small near the centre to the edge. Peak extent of a
+  // trace is ~1.17 S (ring lobes), so S = R * (0.16 + 0.65 u) keeps it inside ~0.95 R at the top.
+  //  layer 0 with the carrier, layer 1 with the main frequency (beat), layer 2 with the mix.
+  const U0 = eu, U1 = f.p4B != null ? f.p4B : 0.5, U2 = 0.5 * (U0 + U1);
+  const sz = (u) => R * (0.16 + 0.65 * u) * swell;
   const open = eu * eu * (3 - 2 * eu);             // smooth 0..1
   const rin = 0.58 * Math.max(0, (open - 0.2) / 0.8);
   const rg = Math.max(0, Math.min(1, (eu - 0.35) / 0.6)), ring = 0.92 * rg * rg * (3 - 2 * rg);
   const lob = 5 + 4 * eu + 2 * s;   // lobes on the waveform rings (carrier + beat)
   const damp = (0.06 - 0.03 * pv.depth) * (1 - 0.85 * open);
   const b = 0.22 + 0.22 * pv.depth;                // tone level: depth of the second pendulum (loop size)
-  const live = (k) => 0.12 * Math.sin(t * 0.045 + k * 2.1) + 0.06 * Math.sin(t * 0.017 + k);
+  const live = (k) => DR[k] + 0.08 * (noise2(t * 0.031 + k * 7.3, k * 3.1) - 0.5);
   const kr = (0.8 + 1.1 * eu) * (0.85 + 0.35 * s);
   const cIn = centerWave(ph) * amp, cMid = centerWave(ph - 0.07) * amp, cOut = centerWave(ph - 0.14) * amp;
   const sh = shimmer * (0.75 + 0.35 * pv.depth), halo = 4 + 7 * pv.halo;
   g.lineJoin = 'round'; g.lineCap = 'round';
   // Outer: spins forward; middle: counter-rotates; inner: fastest. Each has its own ratio and drift.
-  traceFreeHarmonograph(g, S0 * (0.94 + 0.06 * cOut), 1.5 * kr + live(0), b, eph * 0.5, eph, damp, pr[0], rin, ring, lob);
+  traceFreeHarmonograph(g, sz(U0) * (0.94 + 0.06 * cOut), 1.5 * kr + live(0), b, P4[0], P4[1], damp, pr[0], rin, ring, lob);
   strokeTrace(g, tint, 0, e0, energy, sh, halo);
-  traceFreeHarmonograph(g, S0 * 0.9 * (0.94 + 0.06 * cMid), 1.27 * kr + live(1), b * 0.9, TAU * pv.off1 - eph * 0.4, TAU * pv.off1 - eph * 1.3, damp * 1.1, pr[1], rin * 0.85, ring, lob);
-  strokeTrace(g, tint, 0.12, e1, energy, sh * 0.8, halo);
-  traceFreeHarmonograph(g, S0 * 0.8 * (0.92 + 0.08 * cIn), 2.1 * kr + live(2), b * 1.1, TAU * pv.off2 - eph * 0.6, TAU * pv.off2 - eph * 1.7, damp * 1.2, pr[2], rin * 0.7, ring, lob);
-  strokeTrace(g, tint, 0.22, e2, energy, sh, halo);
+  traceFreeHarmonograph(g, sz(U1) * (0.94 + 0.06 * cMid), 1.27 * kr + live(1), b * 0.9, TAU * pv.off1 + P4[2], TAU * pv.off1 + P4[3], damp * 1.1, pr[1], rin * 0.85, ring, lob);
+  strokeTrace(g, tint, 0.04, e1, energy, sh * 0.8, halo);
+  traceFreeHarmonograph(g, sz(U2) * (0.92 + 0.08 * cIn), 2.1 * kr + live(2), b * 1.1, TAU * pv.off2 + P4[4], TAU * pv.off2 + P4[5], damp * 1.2, pr[2], rin * 0.7, ring, lob);
+  strokeTrace(g, tint, 0.08, e2, energy, sh, halo);
   // Starry sonar layer: motes drift outward from the middle at the pulse-ring speed (frequency-tied),
   // flare as a pulse ring passes, fade near the edge, and are reborn near the centre. Drawn after the
   // traces so they are never drowned out.
@@ -827,12 +833,13 @@ function drawOpeningField(cv, w, h, f, dt) {
   for (let b2 = 0; b2 < VIS_BANDS; b2++) {
     g.fillStyle = PAL[palIndex(tint + b2 * 0.04)];
     for (let i = b2; i < n; i += VIS_BANDS) {
+      if (((i / VIS_BANDS) | 0) % 3) continue;   // page 4: sparse field, about a third of the dots
       let u = RINGP.sr[i] + dt * spd * (0.55 + 0.6 * RINGP.seed[i]);
-      if (u > 0.98) { u = 0.06 + 0.06 * RINGP.seed[i]; RINGP.ang[i] = (RINGP.ang[i] + 2.399963) % TAU; }
+      if (u > 0.98) { u = 0.06; RINGP.ang[i] = (RINGP.ang[i] + 2.399963) % TAU; }
       RINGP.sr[i] = u;
       let flare = 0;
       for (let k = 0; k < EMIT.n; k++) if (EMIT.alive[k]) { const dd = Math.abs(EMIT.r[k] - u); if (dd < 0.05) flare = Math.max(flare, 1 - dd / 0.05); }
-      const fade = Math.min(1, u / 0.12) * Math.min(1, (0.98 - u) / 0.15);
+      const fade = Math.max(0, Math.min(1, (u - 0.06) / 0.12)) * Math.min(1, (0.98 - u) / 0.15); // 0 at rebirth and at the edge
       const br = (0.35 + 0.4 * RINGP.bright[i] + 0.6 * flare) * fade;
       const ang = RINGP.ang[i] + t * 0.02 * (i & 1 ? 1 : -1);
       const x = Math.cos(ang) * u * R, y = Math.sin(ang) * u * R;
