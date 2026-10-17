@@ -376,17 +376,28 @@ function tracePetals(g, R, lobes, rot, inner, expo = 0.72) {
   g.closePath();
 }
 // Petal outline blending two lobe counts (mix 0..1), so the petal count can morph without a seam.
-function tracePetalsBlend(g, R, la, lb, mix, rot, inner, expo) {
-  const N = 132;
+// Petal outline blending two lobe counts (mix 0..1), so the petal count can morph without a seam.
+// The edge follows a pure sine (ew: { u, ph, k }): u 0..1 from the carrier compresses it, from a few long,
+// full undulations (low carrier) to many short ones (high carrier), always smooth. The cycle count is a
+// blend of two whole numbers so it changes continuously without a seam; ph makes the wave travel.
+function tracePetalsBlend(g, R, la, lb, mix, rot, inner, expo, ew) {
+  const u = ew ? ew.u : 0, k = ew ? ew.k : 1, ph = ew ? ew.ph : 0;
+  const cyc = la * (1.4 + 6.6 * u) * k, c0 = Math.floor(cyc), cf = cyc - c0, c1 = c0 + 1;
+  const amp = ew ? 0.1 - 0.03 * u : 0;
+  const N = 160 + Math.round(200 * u);
   g.beginPath();
-  for (let k = 0; k <= N; k++) {
-    const th = (k / N) * TAU;
+  for (let i = 0; i <= N; i++) {
+    const th = (i / N) * TAU;
     const ca = Math.cos(la * (th + rot)), cb = Math.cos(lb * (th + rot));
     const a = ca > 0 ? Math.pow(ca, expo) : 0, b = cb > 0 ? Math.pow(cb, expo) : 0;
     const lobe = a + (b - a) * mix;
-    const rr = R * (inner + (1 - inner) * lobe);
+    let rr = R * (inner + (1 - inner) * lobe);
+    if (amp) {
+      const x0 = c0 * (th + rot) + ph, x1 = c1 * (th + rot) + ph;
+      rr *= 1 + amp * (Math.sin(x0) * (1 - cf) + Math.sin(x1) * cf) * Math.sqrt(lobe);
+    }
     const x = rr * Math.cos(th), y = rr * Math.sin(th);
-    if (k) g.lineTo(x, y); else g.moveTo(x, y);
+    if (i) g.lineTo(x, y); else g.moveTo(x, y);
   }
   g.closePath();
 }
@@ -565,16 +576,19 @@ function drawOpeningField(cv, w, h, f, dt) {
   const pr = f.petalRots || [t * 0.05, t * 0.05 + Math.PI / 5, -t * 0.035];
   const s = f.petalSlim != null ? f.petalSlim : 0.5;
   const ph = f.pulsePh || 0, amp = 0.55 + 0.45 * (f.breath || 0.4);
+  // Every layer carries the carrier sine edge with its own phase offset and travel direction (outer wave runs
+  // with its spin, middle and inner against theirs), drawn additively so crossings brighten like a kaleidoscope.
+  const eu = f.edgeU != null ? f.edgeU : 0.4, eph = f.edgePh || 0;
   const cIn = centerWave(ph) * amp, cMid = centerWave(ph - 0.07) * amp, cOut = centerWave(ph - 0.14) * amp;
   // Outer: 5 long petals, slow spin, round and full when slow, long and slender when fast.
-  tracePetalsBlend(g, R * (0.9 + 0.1 * cOut), 5, 5, 0, pr[0], 0.16 - 0.06 * s, 0.45 + 0.65 * s);
+  tracePetalsBlend(g, R * (0.9 + 0.1 * cOut), 5, 5, 0, pr[0], 0.16 - 0.06 * s, 0.45 + 0.65 * s, { u: eu, ph: eph, k: 1 });
   paintPetalPath(g, tint, 0, e0, energy, shimmer);
   // Middle: 5 petals interleaved with the outer ones, counter-rotating; it morphs the other way
   // (slender when slow, broad and rounded when fast) so the two layers weave as the frequency moves.
-  tracePetalsBlend(g, R * (0.72 + 0.12 * s + 0.08 * cMid), 5, 5, 0, pr[1], 0.12 + 0.12 * s, 1.05 - 0.5 * s);
+  tracePetalsBlend(g, R * (0.72 + 0.12 * s + 0.08 * cMid), 5, 5, 0, pr[1], 0.12 + 0.12 * s, 1.05 - 0.5 * s, { u: eu, ph: TAU / 3 - eph * 1.3, k: 0.8 });
   paintPetalPath(g, tint, 0.12, e1, energy, shimmer * 0.7);
   // Inner: fastest spin; blends from 3 broad petals (slow) to 6 fine ones (fast).
-  tracePetalsBlend(g, R * 0.62 * (0.84 + 0.16 * cIn), 3, 6, s, pr[2], 0.1 + 0.06 * (1 - s), 0.6 + 0.5 * s);
+  tracePetalsBlend(g, R * 0.62 * (0.84 + 0.16 * cIn), 3, 6, s, pr[2], 0.1 + 0.06 * (1 - s), 0.6 + 0.5 * s, { u: eu, ph: 2 * TAU / 3 - eph * 1.7, k: 0.6 });
   paintPetalPath(g, tint, 0.22, e2, energy, shimmer);
   const n = RINGP.n;
   const motes = 1 + 0.22 * energy;
