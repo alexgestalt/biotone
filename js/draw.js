@@ -401,7 +401,21 @@ function tracePetalsBlend(g, R, la, lb, mix, rot, inner, expo, ew) {
   }
   g.closePath();
 }
-function paintPetalPath(g, tint, shift, e, energy, shimmer) {
+// Sine rosette: r(theta) = mid + A * sin(c * (theta + rot) + ph). The cycle count c blends two whole
+// numbers so it changes continuously without a seam; it stays a smooth sine curve.
+function traceSineRose(g, mid, A, cyc, rot, ph) {
+  const c0 = Math.floor(cyc), cf = cyc - c0, c1 = c0 + 1, N = 240;
+  g.beginPath();
+  for (let i = 0; i <= N; i++) {
+    const th = (i / N) * TAU;
+    const w = Math.sin(c0 * (th + rot) + ph) * (1 - cf) + Math.sin(c1 * (th + rot) + ph) * cf;
+    const rr = mid + A * w;
+    const x = rr * Math.cos(th), y = rr * Math.sin(th);
+    if (i) g.lineTo(x, y); else g.moveTo(x, y);
+  }
+  g.closePath();
+}
+function paintPetalPath(g, tint, shift, e, energy, shimmer, halo = 5) {
   g.fillStyle = PAL[palIndex(tint + shift)];
   g.globalAlpha = (0.1 + 0.22 * e) * (0.7 + 0.3 * energy);
   g.fill();
@@ -409,8 +423,8 @@ function paintPetalPath(g, tint, shift, e, energy, shimmer) {
   g.globalAlpha = 0.28 + 0.55 * e;
   g.lineWidth = 1.6 + 3.2 * e;
   g.stroke();
-  g.globalAlpha = 0.12 + 0.28 * shimmer;
-  g.lineWidth = 5;
+  g.globalAlpha = (0.12 + 0.28 * shimmer) * (5 / halo) ** 0.5;
+  g.lineWidth = halo;
   g.stroke();
 }
 function paintPetals(g, R, tint, lobes, rot, inner, shift, e, energy, shimmer, expo) {
@@ -579,17 +593,30 @@ function drawOpeningField(cv, w, h, f, dt) {
   // Every layer carries the carrier sine edge with its own phase offset and travel direction (outer wave runs
   // with its spin, middle and inner against theirs), drawn additively so crossings brighten like a kaleidoscope.
   const eu = f.edgeU != null ? f.edgeU : 0.4, eph = f.edgePh || 0;
+  // Three deep sine rosettes, r = mid + A sin(k theta + phase). The carrier (edgeU, eased) grows them
+  // from the centre outward: 60 Hz troughs ~10% / peaks ~58% of the field radius, 1200 Hz troughs ~25% /
+  // peaks ~90%, and compresses the sine (more cycles). Each layer has its own cycle count, spin (v5
+  // beat-driven), wave travel direction and phase, so they overlap like a kaleidoscope; crossings add up.
+  // Control mappings (f.pv, eased in app.js): toneLevel -> depth (peak-to-trough) and brightness; engine ->
+  // phase relationship between the layers; noise colour/level -> glow halo; nature -> wave flow and a slow
+  // radial swell. Beat -> spin, pulse cascade and sine density; carrier -> reach and compression.
+  const pv = f.pv || { off1: 1 / 3, off2: 2 / 3, depth: 0.8, halo: 0, flow: 1, nat: 0 };
+  const swell = 1 + 0.06 * pv.nat * Math.sin(t * 0.6);
+  const lo = 0.06 + 0.16 * eu, hi = (0.56 + 0.38 * eu) * swell;
+  const depth = 0.7 + 0.4 * pv.depth;
+  const mid0 = R * (lo + hi) / 2, A0 = R * (hi - lo) / 2 * depth * (0.92 + 0.12 * s);
   const cIn = centerWave(ph) * amp, cMid = centerWave(ph - 0.07) * amp, cOut = centerWave(ph - 0.14) * amp;
-  // Outer: 5 long petals, slow spin, round and full when slow, long and slender when fast.
-  tracePetalsBlend(g, R * (0.9 + 0.1 * cOut), 5, 5, 0, pr[0], 0.16 - 0.06 * s, 0.45 + 0.65 * s, { u: eu, ph: eph, k: 1 });
-  paintPetalPath(g, tint, 0, e0, energy, shimmer);
-  // Middle: 5 petals interleaved with the outer ones, counter-rotating; it morphs the other way
-  // (slender when slow, broad and rounded when fast) so the two layers weave as the frequency moves.
-  tracePetalsBlend(g, R * (0.72 + 0.12 * s + 0.08 * cMid), 5, 5, 0, pr[1], 0.12 + 0.12 * s, 1.05 - 0.5 * s, { u: eu, ph: TAU / 3 - eph * 1.3, k: 0.8 });
-  paintPetalPath(g, tint, 0.12, e1, energy, shimmer * 0.7);
-  // Inner: fastest spin; blends from 3 broad petals (slow) to 6 fine ones (fast).
-  tracePetalsBlend(g, R * 0.62 * (0.84 + 0.16 * cIn), 3, 6, s, pr[2], 0.1 + 0.06 * (1 - s), 0.6 + 0.5 * s, { u: eu, ph: 2 * TAU / 3 - eph * 1.7, k: 0.6 });
-  paintPetalPath(g, tint, 0.22, e2, energy, shimmer);
+  const kc = (1 + 1.2 * eu) * (0.85 + 0.3 * s); // carrier compresses the sine; faster beats add density
+  const sh = shimmer * (0.75 + 0.35 * pv.depth), halo = 5 + 7 * pv.halo;
+  // Outer: ~5 cycles at low carrier, spins forward, wave travels with it.
+  traceSineRose(g, mid0 * (0.94 + 0.06 * cOut), A0 * (0.94 + 0.06 * cOut), 5 * kc, pr[0], eph);
+  paintPetalPath(g, tint, 0, e0, energy, sh, halo);
+  // Middle: ~4 cycles, counter-rotating, wave against it; phase offset set by the engine.
+  traceSineRose(g, mid0 * 0.9 * (0.94 + 0.06 * cMid), A0 * 0.9 * (0.94 + 0.06 * cMid), 4 * kc, pr[1], TAU * pv.off1 - eph * 1.3);
+  paintPetalPath(g, tint, 0.12, e1, energy, sh * 0.7, halo);
+  // Inner: ~3 cycles, fastest spin, wave against it.
+  traceSineRose(g, mid0 * 0.8 * (0.92 + 0.08 * cIn), A0 * 0.8 * (0.92 + 0.08 * cIn), 3 * kc, pr[2], TAU * pv.off2 - eph * 1.7);
+  paintPetalPath(g, tint, 0.22, e2, energy, sh, halo);
   const n = RINGP.n;
   const motes = 1 + 0.22 * energy;
   for (let b = 0; b < VIS_BANDS; b++) {
