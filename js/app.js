@@ -22,7 +22,7 @@ const r2 = (v) => Math.round(v * 100) / 100;
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 
 // ===================================================================== model data
-const RANGES = { tone: [1, 22000], carrier: [20, 1500], beat: [0, 100], schumannCarrier: [100, 400], resonanceBeat: [0.5, 45], pulseRate: [0.5, 50], pulseCarrier: [40, 1500] };
+const RANGES = { tone: [1, 22000], carrier: [20, 1500], beat: [0, 100], schumannCarrier: [60, 400], resonanceBeat: [0.5, 45], pulseRate: [0.5, 50], pulseCarrier: [40, 1500] };
 const MOODS = [
   { key: 'sleep', label: 'Sleep', carrier: 120, beat: 2, tone: 0.30, music: 0.60 },
   { key: 'rest', label: 'Rest', carrier: 150, beat: 5, tone: 0.32, music: 0.65 },
@@ -59,7 +59,7 @@ const PAGES = [
 ];
 const SOURCE_PAGE = { tone: 'tone', binaural: 'binaural', schumann: 'schumann', pulse: 'pulse', mood: 'moods', mixer: 'mixer' };
 const SCHUMANN = 7.83;
-const APP_BUILD = 'biotone-v10.3'; // keep equal to the sw.js cache version
+const APP_BUILD = 'biotone-v11'; // keep equal to the sw.js cache version
 
 function makeLayer(kind) {
   const base = { id: uid(), tag: Math.floor(Math.random() * 1e9) + 1000, kind, frequency: 200, beat: 7.83, texture: 'rain', volume: 0.5, pan: 0, muted: false };
@@ -1202,7 +1202,10 @@ document.addEventListener('pointerdown', (e) => {
   if (nu) {
     e.preventDefault();
     const id = nu.dataset.nudge, dir = +nu.dataset.dir;
-    const once = () => { const c = ctrl(id); if (!c) return; const s = stepOf[id] || c.step || 1; setCtrl(id, Math.round((c.get() + dir * s) / s) * s); };
+    const t0 = performance.now();
+    // Page-4 carrier spans 60-400 Hz: holding +/- accelerates (1 -> 2 -> 5 Hz steps) so a sweep takes seconds.
+    const accel = () => { if (id !== 'sch.carrier') return 1; const h = performance.now() - t0; return h < 900 ? 1 : h < 1800 ? 2 : 5; };
+    const once = () => { const c = ctrl(id); if (!c) return; const s = (stepOf[id] || c.step || 1) * accel(); setCtrl(id, cl(Math.round((c.get() + dir * s) / s) * s, c.range[0], c.range[1])); };
     once(); drag = { type: 'nudge', id };
     clearTimeout(nudgeT); nudgeT = setTimeout(function rep() { once(); nudgeT = setTimeout(rep, 70); }, 420);
     return;
@@ -1356,6 +1359,36 @@ function updateRingAudio(dt) {
   const pv = ringVis.pv || (ringVis.pv = Object.assign({}, T));
   for (const k in T) approach(pv, k, T[k], dt, 0.6, 0.6);
   ringVis.edgePh = (ringVis.edgePh + dt * (0.25 + 1.1 * ringVis.edgeU) * (pv.flow - 1)) % TAU; // extra flow from nature
+  // Page-4 carrier follower, second-order (two chained ~0.45 s eases) so an abrupt carrier jump starts and
+  // ends its morph softly, with no kink; shape, opening and spin all read p4U.
+  const eu4 = cl(Math.log(cl(carrier || 200, 20, 20000) / 60) / Math.log(400 / 60), 0, 1); // 60 -> 0, 400 Hz (cap) -> 1
+  if (ringVis.p4Ua == null) { ringVis.p4Ua = eu4; ringVis.p4U = eu4; }
+  approach(ringVis, 'p4Ua', eu4, dt, 0.45, 0.45); approach(ringVis, 'p4U', ringVis.p4Ua, dt, 0.45, 0.45);
+  // Trace phases, integrated (phase += speed * dt). Each is used with factor 1 in the draw, so wrapping at
+  // TAU is invisible (v9 multiplied a wrapped edgePh by 0.4-1.7, which snapped the loops at every wrap).
+  const P4R = [0.5, 1, -0.4, -1.3, -0.6, -1.7], sp = (0.25 + 1.1 * ringVis.p4U) * (0.6 + 0.4 * pv.flow);
+  const ph4 = ringVis.p4Ph || (ringVis.p4Ph = [0, 0, 0, 0, 0, 0]);
+  for (let i = 0; i < 6; i++) ph4[i] = (ph4[i] + dt * sp * P4R[i]) % TAU;
+  // Slow non-repeating drift: integrated random walk per layer, smoothed (no fixed period, never loops).
+  const dr = ringVis.p4Drift || (ringVis.p4Drift = { v: [0, 0, 0], x: [0, 0, 0] });
+  for (let i = 0; i < 3; i++) {
+    dr.v[i] += (Math.random() - 0.5) * 0.06 * Math.sqrt(dt) - dr.v[i] * dt * 0.35 - dr.x[i] * dt * 0.02;
+    dr.x[i] = cl(dr.x[i] + dr.v[i] * dt, -0.22, 0.22);
+  }
+  // Main-frequency follower (beat / main Hz set on page 4; 0.5 -> 0, 45 Hz -> 1, log; pure tone -> 0),
+  // second-order eased like p4U.
+  const bu4 = beat > 0.05 ? cl(Math.log(cl(beat, 0.5, 45) / 0.5) / Math.log(90), 0, 1) : 0;
+  if (ringVis.p4Ba == null) { ringVis.p4Ba = bu4; ringVis.p4B = bu4; }
+  approach(ringVis, 'p4Ba', bu4, dt, 0.45, 0.45); approach(ringVis, 'p4B', ringVis.p4Ba, dt, 0.45, 0.45);
+  // Page-4 layer spin, each integrated from its own speed (no shared beat-only rotation any more):
+  //  layer 0 = CARRIER layer, forward, 0.04 rad/s at 60 Hz -> ~0.94 rad/s at 400 Hz;
+  //  layer 1 = MAIN-frequency (beat) layer, counter-rotating, 0.04 rad/s at 0.5 Hz -> ~0.94 rad/s at 45 Hz;
+  //  layer 2 = gentle mix of both, forward, 0.05 -> 0.2 rad/s, so it never masks the other two.
+  const u0 = ringVis.p4U, u1 = ringVis.p4B, u2 = 0.5 * (u0 + u1);
+  const W = [0.04 + 0.9 * Math.pow(u0, 1.2), -(0.04 + 0.9 * Math.pow(u1, 1.2)), 0.05 + 0.15 * u2];
+  const q = ringVis.p4Rots || (ringVis.p4Rots = [0, Math.PI / 5, 0]);
+  for (let i = 0; i < 3; i++) q[i] = (q[i] + dt * W[i]) % TAU;
+  ringVis.p4W = W;
 }
 // Speed of the pulse rings that expand from the centre (radius units per second; a ring travels 0.88).
 // Beat present: power map, Still 1 Hz ~25 s, Sleep 2 Hz ~20 s, Meditate 7.83 Hz ~6.5 s, Active 20 Hz ~3 s, Spark 40 Hz ~2.2 s.
