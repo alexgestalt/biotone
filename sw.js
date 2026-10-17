@@ -1,5 +1,5 @@
 // Offline cache for Freqium web. Bump VERSION when files change.
-const VERSION = 'freqium-web-v11';
+const VERSION = 'freqium-web-v12';
 const ASSETS = [
   './', './index.html', './styles.css', './manifest.webmanifest',
   './js/app.js', './js/draw.js', './js/synth.js', './js/library-data.js',
