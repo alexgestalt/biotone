@@ -498,22 +498,30 @@ function drawLivingRing(cv, w, h, f, dt) {
   const shimmer = f.shimmer || 0.4;
   const p1 = t * 0.17;
   const p2 = p1 + beatPh;
-  const amp = 0.012 + 0.02 * shimmer;
+  // Wide waveform ring (v7.1): fills the space between the centre pulse and the outer edge.
+  // Was R*(0.90 +/- ~0.02); now centred at 0.60R with amplitude 0.24-0.30R, so it sweeps ~0.32R..0.88R.
+  // The product of the two tones keeps breathing at the binaural/beat rate (whole wave swells in/out).
+  const amp = 0.24 + 0.06 * shimmer;
+  const base = 0.6 + 0.04 * cb;
   g.beginPath();
-  for (let k = 0; k < EDGE_N; k++) {
-    const th = k / EDGE_N * TAU;
-    const wave = Math.sin(7 * th + p1) * Math.sin(7 * th + p2);
-    const rr = R * (0.9 + amp * wave + 0.008 * n2 * Math.sin(3 * th + t * 0.2));
+  const WN = 240; // more vertices: the deep wave needs them to stay smooth
+  for (let k = 0; k < WN; k++) {
+    const th = k / WN * TAU;
+    const wave = Math.sin(3.5 * th + p1) * Math.sin(3.5 * th + p2);
+    const rr = R * (base + amp * wave + 0.012 * n2 * Math.sin(3 * th + t * 0.2));
     const x = rr * Math.cos(th), y = rr * Math.sin(th);
     if (k) g.lineTo(x, y); else g.moveTo(x, y);
   }
   g.closePath();
   g.strokeStyle = col;
+  g.globalAlpha = 0.08 + 0.12 * shimmer;
+  g.lineWidth = 16;
+  g.stroke();
   g.globalAlpha = 0.22 + 0.38 * shimmer;
   g.lineWidth = 5.5;
   g.stroke();
   g.globalAlpha = 0.55 + 0.35 * shimmer;
-  g.lineWidth = 1.35;
+  g.lineWidth = 1.6;
   g.stroke();
   const n = RINGP.n;
   const motes = 1 + 0.22 * energy;
