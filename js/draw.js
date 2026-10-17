@@ -429,6 +429,33 @@ function traceHarmonograph(g, S, r, b, px, py, damp, rot) {
     if (i) g.lineTo(x, y); else g.moveTo(x, y);
   }
 }
+// Free-form harmonograph (v9): two loosely coupled pendulums per axis with non-integer, slowly drifting
+// ratios (organic, not a strict mandala). rin opens the figure into a waveform-shaped ring: every point's
+// radius is remapped to rin + (1 - rin) * r, so at high carrier the middle is empty; at rin = 0 the trace
+// coils in to the centre like a pendulum drawing.
+function traceFreeHarmonograph(g, S, fy, b, px, py, damp, rot, rin, ring, lobes) {
+  const N = 900, T = TAU * 6, a = 1 - b, c = Math.cos(rot), s = Math.sin(rot);
+  g.beginPath();
+  for (let i = 0; i <= N; i++) {
+    const tau = (i / N) * T, D = Math.exp(-damp * tau);
+    let x0 = D * (a * Math.sin(tau + px) + b * Math.sin(0.5 * fy * tau + py));
+    let y0 = D * (a * Math.sin(fy * tau + py) + b * Math.sin(0.5 * tau + px + 1.1));
+    if (rin > 0) {
+      const r0 = Math.hypot(x0, y0) + 1e-6, r1 = rin + (1 - rin) * Math.min(r0, 1);
+      x0 *= r1 / r0; y0 *= r1 / r0;
+    }
+    if (ring > 0) {
+      // Waveform ring: each of the 6 turns is a closed sine-edged ring, nested slightly by the damping.
+      const turn = tau / TAU;
+      const rr = (rin + (1 - rin) * (0.62 + 0.38 * Math.exp(-0.9 * damp * tau - 0.07 * turn))) *
+        (1 + (0.05 + 0.1 * b) * Math.sin(lobes * tau + py + 0.9 * turn) + 0.03 * Math.sin((lobes + 2) * tau - px));
+      const xr = rr * Math.cos(tau + px * 0.3), yr = rr * Math.sin(tau + px * 0.3);
+      x0 += (xr - x0) * ring; y0 += (yr - y0) * ring;
+    }
+    const x = S * (x0 * c - y0 * s), y = S * (x0 * s + y0 * c);
+    if (i) g.lineTo(x, y); else g.moveTo(x, y);
+  }
+}
 // Thin glowing line: soft halo underneath, a fine bright core on top. Drawn additively, so crossings brighten.
 function strokeTrace(g, tint, shift, e, energy, shimmer, halo) {
   const col = PAL[palIndex(tint + shift)];
@@ -638,44 +665,51 @@ function drawOpeningField(cv, w, h, f, dt) {
   // radial swell. Beat -> spin, pulse cascade and sine density; carrier -> reach and compression.
   const pv = f.pv || { off1: 1 / 3, off2: 2 / 3, depth: 0.8, halo: 0, flow: 1, nat: 0 };
   const swell = 1 + 0.06 * pv.nat * Math.sin(t * 0.6);
-  // Carrier sets the reach (outer extent 45% -> 92% of the field radius, eased) and adds loops; the trace
-  // always spirals in toward the centre, so it spans centre to edge. Tone level -> how far it spirals in
-  // (damping) and brightness. Beat -> spin, pulse cascade and loop density.
-  const S0 = R * (0.45 + 0.47 * eu) * swell;
-  const damp = 0.05 - 0.025 * pv.depth;           // tone level: how far the trace coils in
+  // v9: loose free-form harmonograph traces whose SHAPE follows the controls, plus a slow living morph.
+  //  carrier -> reach, loop ratio, and opening into a waveform ring (inner radius rin grows with carrier);
+  //  beat -> spin (per layer, counter-rotating) and loop density; tone level -> loop depth and damping.
+  const S0 = R * (0.5 + 0.42 * eu) * swell;
+  const open = eu * eu * (3 - 2 * eu);             // smooth 0..1
+  const rin = 0.58 * Math.max(0, (open - 0.2) / 0.8);
+  const rg = Math.max(0, Math.min(1, (eu - 0.35) / 0.6)), ring = 0.92 * rg * rg * (3 - 2 * rg);
+  const lob = 5 + 4 * eu + 2 * s;   // lobes on the waveform rings (carrier + beat)
+  const damp = (0.06 - 0.03 * pv.depth) * (1 - 0.85 * open);
+  const b = 0.22 + 0.22 * pv.depth;                // tone level: depth of the second pendulum (loop size)
+  const live = (k) => 0.12 * Math.sin(t * 0.045 + k * 2.1) + 0.06 * Math.sin(t * 0.017 + k);
+  const kr = (0.8 + 1.1 * eu) * (0.85 + 0.35 * s);
   const cIn = centerWave(ph) * amp, cMid = centerWave(ph - 0.07) * amp, cOut = centerWave(ph - 0.14) * amp;
-  const b = 0.32 + 0.12 * eu + 0.04 * s;          // carrier/beat: loop size (always loops, never cusps)
   const sh = shimmer * (0.75 + 0.35 * pv.depth), halo = 4 + 7 * pv.halo;
   g.lineJoin = 'round'; g.lineCap = 'round';
-  // Each layer: two copies rotated by half its symmetry angle, so the loops interleave into a mandala.
-  const layer = (S, r, px, py, dmp, rot, shift, e, shm) => {
-    const half = Math.PI / (1 - Math.round(r));
-    for (let c = 0; c < 2; c++) {
-      traceHarmonograph(g, S, r, b, px, py, dmp, rot + c * half);
-      strokeTrace(g, tint, shift, e, energy, shm, halo);
-    }
-  };
-  // Outer: 5-fold (r = -4), spins forward, phase drifts with the wave.
-  layer(S0 * (0.94 + 0.06 * cOut), -4.008, eph * 0.5, eph, damp, pr[0], 0, e0, sh);
-  // Middle: 4-fold (r = -3), counter-rotating, drift reversed; engine sets its phase offset.
-  layer(S0 * 0.88 * (0.94 + 0.06 * cMid), -3.006, TAU * pv.off1 - eph * 0.4, TAU * pv.off1 - eph * 1.3, damp * 1.1, pr[1], 0.12, e1, sh * 0.8);
-  // Inner: 3-fold (r = -2), fastest spin, drift reversed.
-  layer(S0 * 0.74 * (0.92 + 0.08 * cIn), -2.004, TAU * pv.off2 - eph * 0.6, TAU * pv.off2 - eph * 1.7, damp * 1.2, pr[2], 0.22, e2, sh);
+  // Outer: spins forward; middle: counter-rotates; inner: fastest. Each has its own ratio and drift.
+  traceFreeHarmonograph(g, S0 * (0.94 + 0.06 * cOut), 1.5 * kr + live(0), b, eph * 0.5, eph, damp, pr[0], rin, ring, lob);
+  strokeTrace(g, tint, 0, e0, energy, sh, halo);
+  traceFreeHarmonograph(g, S0 * 0.9 * (0.94 + 0.06 * cMid), 1.27 * kr + live(1), b * 0.9, TAU * pv.off1 - eph * 0.4, TAU * pv.off1 - eph * 1.3, damp * 1.1, pr[1], rin * 0.85, ring, lob);
+  strokeTrace(g, tint, 0.12, e1, energy, sh * 0.8, halo);
+  traceFreeHarmonograph(g, S0 * 0.8 * (0.92 + 0.08 * cIn), 2.1 * kr + live(2), b * 1.1, TAU * pv.off2 - eph * 0.6, TAU * pv.off2 - eph * 1.7, damp * 1.2, pr[2], rin * 0.7, ring, lob);
+  strokeTrace(g, tint, 0.22, e2, energy, sh, halo);
+  // Starry sonar layer: motes drift outward from the middle at the pulse-ring speed (frequency-tied),
+  // flare as a pulse ring passes, fade near the edge, and are reborn near the centre. Drawn after the
+  // traces so they are never drowned out.
   const n = RINGP.n;
-  const motes = 1 + 0.22 * energy;
-  for (let b = 0; b < VIS_BANDS; b++) {
-    g.fillStyle = PAL[palIndex(tint + b * 0.04)];
-    for (let i = b; i < n; i += VIS_BANDS) {
-      const br = RINGP.bright[i];
-      const ang = RINGP.ang[i] + t * 0.04;
-      const lobe = 0.38 + 0.62 * Math.abs(Math.cos(3 * (ang + t * 0.03)));
-      const rad = RINGP.rad[i] * lobe;
-      const sz = RINGP.sz[i] * (0.9 + br) * motes;
-      const x = Math.cos(ang) * rad * R, y = Math.sin(ang) * rad * R;
-      g.globalAlpha = 0.05 + 0.18 * br;
-      g.beginPath(); g.arc(x, y, sz * 2.2, 0, TAU); g.fill();
-      g.globalAlpha = 0.22 + 0.7 * br;
-      g.beginPath(); g.arc(x, y, sz * 0.45, 0, TAU); g.fill();
+  if (!RINGP.sr || RINGP.sr.length !== n) { RINGP.sr = new Float32Array(n); for (let i = 0; i < n; i++) RINGP.sr[i] = 0.08 + 0.9 * RINGP.seed[i]; }
+  const spd = (EMIT.spd || 0.12);
+  for (let b2 = 0; b2 < VIS_BANDS; b2++) {
+    g.fillStyle = PAL[palIndex(tint + b2 * 0.04)];
+    for (let i = b2; i < n; i += VIS_BANDS) {
+      let u = RINGP.sr[i] + dt * spd * (0.55 + 0.6 * RINGP.seed[i]);
+      if (u > 0.98) { u = 0.06 + 0.06 * RINGP.seed[i]; RINGP.ang[i] = (RINGP.ang[i] + 2.399963) % TAU; }
+      RINGP.sr[i] = u;
+      let flare = 0;
+      for (let k = 0; k < EMIT.n; k++) if (EMIT.alive[k]) { const dd = Math.abs(EMIT.r[k] - u); if (dd < 0.05) flare = Math.max(flare, 1 - dd / 0.05); }
+      const fade = Math.min(1, u / 0.12) * Math.min(1, (0.98 - u) / 0.15);
+      const br = (0.35 + 0.4 * RINGP.bright[i] + 0.6 * flare) * fade;
+      const ang = RINGP.ang[i] + t * 0.02 * (i & 1 ? 1 : -1);
+      const x = Math.cos(ang) * u * R, y = Math.sin(ang) * u * R;
+      const sz = RINGP.sz[i] * (0.8 + 0.5 * flare);
+      g.globalAlpha = 0.08 + 0.22 * br;
+      g.beginPath(); g.arc(x, y, sz * 2.4, 0, TAU); g.fill();
+      g.globalAlpha = 0.3 + 0.7 * br;
+      g.beginPath(); g.arc(x, y, sz * 0.55, 0, TAU); g.fill();
     }
   }
   strokeLivingEdge(g, R, col, glow, breath, n1, n2, t);
