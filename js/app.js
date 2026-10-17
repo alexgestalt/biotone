@@ -59,7 +59,7 @@ const PAGES = [
 ];
 const SOURCE_PAGE = { tone: 'tone', binaural: 'binaural', schumann: 'schumann', pulse: 'pulse', mood: 'moods', mixer: 'mixer' };
 const SCHUMANN = 7.83;
-const APP_BUILD = 'biotone-v1'; // keep equal to the sw.js cache version
+const APP_BUILD = 'biotone-v2'; // keep equal to the sw.js cache version
 
 function makeLayer(kind) {
   const base = { id: uid(), tag: Math.floor(Math.random() * 1e9) + 1000, kind, frequency: 200, beat: 7.83, texture: 'rain', volume: 0.5, pan: 0, muted: false };
@@ -1353,6 +1353,12 @@ function pulseSpeedFor(carrier, beat) {
   const u = cl(Math.log(cl(carrier || 200, 20, 2000) / 20) / Math.log(100), 0, 1);
   return PULSE_MIN + (PULSE_MAX - PULSE_MIN) * u;
 }
+// Centre pulse period (s) = time a pulse ring takes to cross (0.88 / pulseSpeedFor), clamped 2–26 s.
+// Beat present: 20 * (2 / beat)^0.824 (Still ~25 s, Sleep 20 s, 7.83 Hz ~6.5 s, Active ~3 s, Spark ~2.2 s);
+// pure tone: the same log map of 20–2000 Hz as the pulse rings (432 Hz ~3.2 s).
+function pulsePeriodFor(carrier, beat) {
+  return cl(0.88 / pulseSpeedFor(carrier, beat), 2, 26);
+}
 // Shared by the Resonance ring and the moods page; each passes its own vis state, carrier and beat.
 function updateVisAudio(ringVis, carrier, beat, dt) {
   const live = Snd.ready && (A.isPlaying || A.toolStarted || A.stats.env > 0.01);
@@ -1377,6 +1383,8 @@ function updateVisAudio(ringVis, carrier, beat, dt) {
     for (let i = 0; i < VIS_BANDS; i++) bands[i] *= decay;
   }
   ringVis.pulseSpeed = pulseSpeedFor(carrier, beat);
+  ringVis.pulsePeriod = pulsePeriodFor(carrier, beat);
+  ringVis.pulsePh = ((ringVis.pulsePh || 0) + dt / ringVis.pulsePeriod) % 1;
   const rate = beat > 0.05 ? Math.min(beat, 14) : 0;
   ringVis.beatPhase = (ringVis.beatPhase + (rate > 0 ? rate : 1 / 5.5) * dt) % 1;
   approach(ringVis, 'tint', freqTint(carrier, beat, shaped), dt, 0.9, 1.25);
