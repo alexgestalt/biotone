@@ -1268,11 +1268,15 @@ function initPager() {
 }
 
 // ===================================================================== animation
-const orb = { phase: 0, amp: 0, low: 0, high: 0, bloom: 0, beatPulse: 0, heat: 0, peak: 0, beatPhase: 0, lastSerial: -1 };
 const ringVis = {
   breath: 0.4, energy: 0.22, tint: freqTint(200, SCHUMANN, 0), beatPhase: 0, shimmer: 0.42,
   rmsFast: 0, rmsSlow: 0.02, bands: new Float32Array(VIS_BANDS), bandInst: new Float32Array(VIS_BANDS),
 };
+const moodVis = {
+  breath: 0.4, energy: 0.22, tint: freqTint(120, 2, 0), beatPhase: 0, shimmer: 0.42,
+  rmsFast: 0, rmsSlow: 0.02, bands: new Float32Array(VIS_BANDS), bandInst: new Float32Array(VIS_BANDS),
+};
+const RING_STATE_MOODS = newRingState();
 const approach = (o, k, target, dt, att, rel) => { const tau = target > o[k] ? att : rel; o[k] += (target - o[k]) * (1 - Math.exp(-dt / tau)); };
 const lv = { v: 0 };
 let lastT = 0;
@@ -1307,13 +1311,13 @@ function layoutRing(stage) {
 }
 // RMS plus spectrum from the master-output analyser. Smoothed here so color and
 // size ease, while the beat-rate shimmer stays in the draw.
-function readMasterLevel() {
+function readMasterLevel(vis) {
   const an = Snd.anBreath, time = Snd.breathBuf;
   if (!an || !time) return 0;
   an.getFloatTimeDomainData(time);
   if (Snd.freqBuf && Snd.bandLo) {
     an.getByteFrequencyData(Snd.freqBuf);
-    fillSpectrum(Snd.freqBuf, Snd.bandLo, Snd.bandHi, ringVis.bandInst);
+    fillSpectrum(Snd.freqBuf, Snd.bandLo, Snd.bandHi, vis.bandInst);
   }
   let s = 0;
   const n = time.length;
@@ -1321,8 +1325,15 @@ function readMasterLevel() {
   return Math.sqrt(s / (n >> 1));
 }
 function updateRingAudio(dt) {
+  const sc = A.state.schumann;
+  const beat = sc.tone != null ? (sc.shimmer ? SCHUMANN : 0) : sc.beat;
+  const carrier = sc.tone != null ? sc.tone : sc.carrier;
+  updateVisAudio(ringVis, carrier, beat, dt);
+}
+// Shared by the Resonance ring and the moods page; each passes its own vis state, carrier and beat.
+function updateVisAudio(ringVis, carrier, beat, dt) {
   const live = Snd.ready && (A.isPlaying || A.toolStarted || A.stats.env > 0.01);
-  const rms = live ? readMasterLevel() : 0;
+  const rms = live ? readMasterLevel(ringVis) : 0;
   // Fast envelope catches swells (rain, waves). Slow enough that a 7.83 Hz beat does not pump the disc.
   approach(ringVis, 'rmsFast', rms, dt, 0.2, 0.4);
   approach(ringVis, 'rmsSlow', Math.max(rms, 0.001), dt, 1.5, 1.5);
@@ -1342,11 +1353,8 @@ function updateRingAudio(dt) {
     const decay = Math.exp(-dt / 0.7);
     for (let i = 0; i < VIS_BANDS; i++) bands[i] *= decay;
   }
-  const sc = A.state.schumann;
-  const beat = sc.tone != null ? (sc.shimmer ? SCHUMANN : 0) : sc.beat;
   const rate = beat > 0.05 ? Math.min(beat, 14) : 0;
   ringVis.beatPhase = (ringVis.beatPhase + (rate > 0 ? rate : 1 / 5.5) * dt) % 1;
-  const carrier = sc.tone != null ? sc.tone : sc.carrier;
   approach(ringVis, 'tint', freqTint(carrier, beat, shaped), dt, 0.9, 1.25);
   ringVis.shimmer = live ? (0.4 + 0.6 * Math.max(shaped, 0.2)) : 0.45;
 }
@@ -1390,25 +1398,14 @@ function frame(t) {
   if (ocv) {
     const box = ocv.parentElement;
     layoutRing(box);
-    const active = isPlayingSource('mood') && live, s = A.stats;
-    approach(orb, 'amp', Math.max(0.06, active ? Math.min(1, s.mRms * 4.5) : 0), dt, 0.15, 0.8);
-    approach(orb, 'low', active ? Math.min(1, s.mLow * 6) : 0, dt, 0.3, 1.0);
-    approach(orb, 'high', active ? Math.min(1, s.mHigh * 14) : 0, dt, 0.1, 0.5);
-    if (s.chordSerial !== orb.lastSerial) { if (orb.lastSerial >= 0 && active) orb.bloom = 1; orb.lastSerial = s.chordSerial; }
-    orb.bloom *= Math.exp(-dt / 2.5);
-    orb.phase += dt * (0.18 + 0.5 * orb.amp + (active ? 0.08 : 0));
-    const m = moodOf(A.state.moods.selected), lvl = moodLevels(A.state, m.key);
-    const vb = m.pure ? 0.2 : (m.beat <= 8 ? m.beat : m.beat / Math.ceil(m.beat / 8));
-    orb.beatPhase = (orb.beatPhase + vb * dt) % 1;
-    orb.beatPulse = active ? Math.sin(2 * Math.PI * orb.beatPhase) * 0.010 * (0.4 + lvl.tone) : 0;
-    approach(orb, 'peak', active ? A.stats.peak : 0, dt, 0.08, 0.6);
-    const warmth = 0.4 * cl((orb.peak - 0.3) / 0.5, 0, 1);
-    approach(orb, 'heat', Math.max(heatValue(orb.peak, m.pure ? m.hz : m.carrier), warmth), dt, 0.15, 0.9);
+    const m = moodOf(A.state.moods.selected);
     if (box.clientWidth && box.clientHeight) {
-      const mi = Math.max(0, MOODS.findIndex((q) => q.key === m.key)), hz = m.pure ? m.hz : m.carrier;
-      const x = cl(0.75 * (0.04 + 0.92 * mi / Math.max(1, MOODS.length - 1)) + 0.25 * Math.log(cl(hz || 200, 20, 1000) / 20) / Math.log(50), 0, 1);
-      const ok = typeof drawWaterVis === 'function' && drawWaterVis(ocv, box.clientWidth, box.clientHeight, { x, level: Math.max(orb.amp, orb.peak * 0.8), key: m.key, serial: s.chordSerial }, dt);
-      if (!ok) { ocv.style.visibility = ''; drawOrb(ocv, box.clientWidth, box.clientHeight, orb); }
+      // Same visualizer as the Resonance page, fed by the selected mood.
+      updateVisAudio(moodVis, m.pure ? m.hz : m.carrier, m.pure ? 0 : m.beat, dt);
+      useRingState(RING_STATE_MOODS);
+      if (scDefault(A.state.schumann)) drawOpeningField(ocv, box.clientWidth, box.clientHeight, moodVis, dt);
+      else drawLivingRing(ocv, box.clientWidth, box.clientHeight, moodVis, dt);
+      useRingState(RING_STATE_MAIN);
     }
   }
   const rcv = pageEl.querySelector('[data-ring]');

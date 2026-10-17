@@ -134,8 +134,15 @@ const PAL_N = 96;
 const PAL = new Array(PAL_N);
 const PAL_HOT = new Array(PAL_N);
 const EDGE_N = 80;
-const RINGP = { n: 0, x: null, y: null, ang: null, rad: null, seed: null, sz: null, band: null, bright: null, time: 0 };
-const EMIT = { n: 10, r: null, amp: null, band: null, alive: null, acc: 0 };
+let RINGP = { n: 0, x: null, y: null, ang: null, rad: null, seed: null, sz: null, band: null, bright: null, time: 0 };
+let EMIT = { n: 10, r: null, amp: null, band: null, alive: null, acc: 0 };
+// Each ring canvas keeps its own particle/pulse field so two pages never share or double-step state.
+const RING_STATE_MAIN = { p: RINGP, e: EMIT };
+function newRingState() {
+  return { p: { n: 0, x: null, y: null, ang: null, rad: null, seed: null, sz: null, band: null, bright: null, time: 0 },
+    e: { n: 10, r: null, amp: null, band: null, alive: null, acc: 0 } };
+}
+function useRingState(s) { RINGP = s.p; EMIT = s.e; }
 
 function hash2(ix, iy) {
   let n = Math.imul(ix, 374761393) + Math.imul(iy, 668265263);
