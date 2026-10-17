@@ -135,12 +135,12 @@ const PAL = new Array(PAL_N);
 const PAL_HOT = new Array(PAL_N);
 const EDGE_N = 80;
 let RINGP = { n: 0, x: null, y: null, ang: null, rad: null, seed: null, sz: null, band: null, bright: null, time: 0 };
-let EMIT = { n: 16, r: null, amp: null, band: null, alive: null, acc: 0 };
+let EMIT = { n: 16, r: null, amp: null, band: null, alive: null, acc: 0, ph: -1 };
 // Each ring canvas keeps its own particle/pulse field so two pages never share or double-step state.
 const RING_STATE_MAIN = { p: RINGP, e: EMIT };
 function newRingState() {
   return { p: { n: 0, x: null, y: null, ang: null, rad: null, seed: null, sz: null, band: null, bright: null, time: 0 },
-    e: { n: 16, r: null, amp: null, band: null, alive: null, acc: 0 } };
+    e: { n: 16, r: null, amp: null, band: null, alive: null, acc: 0, ph: -1 } };
 }
 function useRingState(s) { RINGP = s.p; EMIT = s.e; }
 
@@ -296,7 +296,7 @@ function ensureRingParticles() {
     }
   }
 }
-function stepRingField(dt, energy, bands, pulseSpeed) {
+function stepRingField(dt, energy, bands, pulseSpeed, pulsePh) {
   if (!(dt > 0) || !RINGP.x) return;
   const t = RINGP.time, n = RINGP.n;
   const kRad = 1 - Math.exp(-dt / 0.7);
@@ -315,10 +315,18 @@ function stepRingField(dt, energy, bands, pulseSpeed) {
     const bright = 0.16 + 0.84 * e;
     RINGP.bright[i] += (bright - RINGP.bright[i]) * kBr;
   }
-  // Travel time is fixed (~7 s). Loudness only changes how often a ring is born.
-  EMIT.acc += dt * (0.34 + 0.55 * (energy || 0));
-  if (EMIT.acc >= 1) {
-    EMIT.acc -= 1;
+  // A new ring is born at each centre-pulse peak (lub at phase 0.08), so the spawn interval equals the
+  // frequency-driven pulse period. The phase only changes rate on a mood switch, so there is never a burst.
+  let spawn = false;
+  if (pulsePh >= 0) {
+    const PEAK = 0.08, prev = EMIT.ph;
+    if (prev >= 0) spawn = prev <= pulsePh ? (prev < PEAK && pulsePh >= PEAK) : (prev < PEAK || pulsePh >= PEAK);
+    EMIT.ph = pulsePh;
+  } else {
+    EMIT.acc += dt * (0.34 + 0.55 * (energy || 0));
+    if (EMIT.acc >= 1) { EMIT.acc -= 1; spawn = true; }
+  }
+  if (spawn) {
     let slot = -1, far = 0;
     for (let i = 0; i < EMIT.n; i++) {
       if (!EMIT.alive[i]) { slot = i; break; }
@@ -401,7 +409,7 @@ function drawLivingRing(cv, w, h, f, dt) {
   const g = setupCanvas(cv, w, h);
   ensureRingParticles();
   const bands = f.bands;
-  stepRingField(dt, f.energy || 0, bands, f.pulseSpeed);
+  stepRingField(dt, f.energy || 0, bands, f.pulseSpeed, f.pulsePh);
   const tint = f.tint || 0;
   const energy = f.energy || 0;
   const col = PAL[palIndex(tint)];
@@ -500,7 +508,7 @@ function drawOpeningField(cv, w, h, f, dt) {
   const g = setupCanvas(cv, w, h);
   ensureRingParticles();
   const bands = f.bands;
-  stepRingField(dt, f.energy || 0, bands, f.pulseSpeed);
+  stepRingField(dt, f.energy || 0, bands, f.pulseSpeed, f.pulsePh);
   const tint = f.tint || 0;
   const energy = f.energy || 0;
   const col = PAL[palIndex(tint)];
