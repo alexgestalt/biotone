@@ -10,7 +10,11 @@
 .pagearea{position:relative;flex:1;min-height:0;display:flex}
 .pagecol{position:relative;flex:1;min-width:0}
 .page{position:absolute;inset:0;padding:10px 8px 14px 18px;display:flex;flex-direction:column;gap:12px}
+@font-face{font-family:'Outfit';font-weight:200;font-style:normal;font-display:swap;src:url('fonts/Outfit-ExtraLight.woff2') format('woff2')}
 .hdr{display:flex;align-items:center;justify-content:space-between;min-height:22px}
+.hdr .ttl{display:flex;flex-direction:column;gap:1px;min-width:0}
+.hdr .wm{font-family:'Outfit',var(--rounded),system-ui,sans-serif;font-weight:200;font-size:16px;line-height:1.15;letter-spacing:.32em;color:#ffe7a0;white-space:nowrap;padding-top:1px;
+  text-shadow:0 0 .5px #fffbe8,0 0 2px rgba(255,236,170,.95),0 0 5px rgba(242,196,74,.9),0 0 11px rgba(242,190,60,.6),0 0 22px rgba(230,170,40,.35)}
 .hdr .t{font-size:12px;font-weight:700;letter-spacing:2px;color:var(--accent)}
 .badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 9px;border-radius:99px;background:var(--accent);color:#000}
 .badge svg{width:13px;height:13px}
