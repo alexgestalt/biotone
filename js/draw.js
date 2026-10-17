@@ -135,12 +135,12 @@ const PAL = new Array(PAL_N);
 const PAL_HOT = new Array(PAL_N);
 const EDGE_N = 80;
 let RINGP = { n: 0, x: null, y: null, ang: null, rad: null, seed: null, sz: null, band: null, bright: null, time: 0 };
-let EMIT = { n: 10, r: null, amp: null, band: null, alive: null, acc: 0 };
+let EMIT = { n: 16, r: null, amp: null, band: null, alive: null, acc: 0 };
 // Each ring canvas keeps its own particle/pulse field so two pages never share or double-step state.
 const RING_STATE_MAIN = { p: RINGP, e: EMIT };
 function newRingState() {
   return { p: { n: 0, x: null, y: null, ang: null, rad: null, seed: null, sz: null, band: null, bright: null, time: 0 },
-    e: { n: 10, r: null, amp: null, band: null, alive: null, acc: 0 } };
+    e: { n: 16, r: null, amp: null, band: null, alive: null, acc: 0 } };
 }
 function useRingState(s) { RINGP = s.p; EMIT = s.e; }
 
@@ -307,10 +307,11 @@ function stepRingField(dt, energy, bands, pulseSpeed) {
     EMIT.band[slot] = bi;
     EMIT.amp[slot] = 0.4 + 0.6 * (energy > bv ? energy : bv);
   }
-  // Pulse travel speed follows the frequency (set per page in updateVisAudio); eased over ~1 s.
+  // Pulse travel speed follows the frequency (set per page in updateVisAudio); eased over ~0.4 s,
+  // and every ring already in flight changes speed with it.
   const target = pulseSpeed > 0 ? pulseSpeed : 0.12;
   if (!(EMIT.spd > 0)) EMIT.spd = target;
-  EMIT.spd += (target - EMIT.spd) * (1 - Math.exp(-dt / 1.0));
+  EMIT.spd += (target - EMIT.spd) * (1 - Math.exp(-dt / 0.4));
   const step = dt * EMIT.spd;
   for (let i = 0; i < EMIT.n; i++) {
     if (!EMIT.alive[i]) continue;
@@ -354,6 +355,22 @@ function paintPetals(g, R, tint, lobes, rot, inner, shift, e, energy, shimmer) {
   g.lineWidth = 5;
   g.stroke();
 }
+// Pulses born near the core, expanding outward at the frequency-driven speed (EMIT.spd).
+// Loudness only changes how often one is born. k scales their strength (petal mode draws them softer).
+function drawCorePulses(g, R, tint, k) {
+  for (let i = 0; i < EMIT.n; i++) {
+    if (!EMIT.alive[i]) continue;
+    const u = EMIT.r[i];
+    let life = 1 - (u - 0.14) / 0.9;
+    if (life <= 0) continue;
+    if (life > 1) life = 1;
+    const fade = life * (0.35 + 0.65 * life);
+    g.strokeStyle = PAL[palIndex(tint + EMIT.band[i] * 0.035)];
+    g.globalAlpha = (0.12 + 0.5 * EMIT.amp[i]) * fade * k;
+    g.lineWidth = 1.4 + 7 * fade;
+    strokeDisc(g, R * u);
+  }
+}
 // f: smoothed { breath, energy, tint, beatPhase, shimmer, bands }
 function drawLivingRing(cv, w, h, f, dt) {
   const g = setupCanvas(cv, w, h);
@@ -393,19 +410,7 @@ function drawLivingRing(cv, w, h, f, dt) {
     g.lineWidth = 1.15 + 3.4 * e;
     strokeDisc(g, rad);
   }
-  // Pulses born near the core, drifting outward. Speed does not follow loudness.
-  for (let i = 0; i < EMIT.n; i++) {
-    if (!EMIT.alive[i]) continue;
-    const u = EMIT.r[i];
-    let life = 1 - (u - 0.14) / 0.9;
-    if (life <= 0) continue;
-    if (life > 1) life = 1;
-    const fade = life * (0.35 + 0.65 * life);
-    g.strokeStyle = PAL[palIndex(tint + EMIT.band[i] * 0.035)];
-    g.globalAlpha = (0.12 + 0.5 * EMIT.amp[i]) * fade;
-    g.lineWidth = 1.4 + 7 * fade;
-    strokeDisc(g, R * u);
-  }
+  drawCorePulses(g, R, tint, 1);
   // Two close spatial tones. Their product breathes at the binaural rate.
   const shimmer = f.shimmer || 0.4;
   const p1 = t * 0.17;
@@ -495,6 +500,8 @@ function drawOpeningField(cv, w, h, f, dt) {
   g.globalCompositeOperation = 'lighter';
   g.lineJoin = 'round';
   g.lineCap = 'round';
+  g.strokeStyle = col;
+  drawCorePulses(g, R, tint, 0.6);
   const e0 = bands ? bands[0] : 0.2, e1 = bands ? bands[3] : 0.16, e2 = bands ? bands[6] : 0.12;
   paintPetals(g, R, tint, 5, t * 0.05, 0.16, 0, e0, energy, shimmer);
   paintPetals(g, R, tint, 5, t * 0.05 + beatPh * 0.06, 0.2, 0.12, e1, energy, shimmer * 0.7);
