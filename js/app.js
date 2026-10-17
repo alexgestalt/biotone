@@ -59,6 +59,7 @@ const PAGES = [
 ];
 const SOURCE_PAGE = { tone: 'tone', binaural: 'binaural', schumann: 'schumann', pulse: 'pulse', mood: 'moods', mixer: 'mixer' };
 const SCHUMANN = 7.83;
+const APP_BUILD = 'v18'; // keep equal to the sw.js cache version
 
 function makeLayer(kind) {
   const base = { id: uid(), tag: Math.floor(Math.random() * 1e9) + 1000, kind, frequency: 200, beat: 7.83, texture: 'rain', volume: 0.5, pan: 0, muted: false };
@@ -371,7 +372,9 @@ function startTimer() {
   const m = A.state.sessionMinutes;
   A.timerEnd = m > 0 ? Date.now() + m * 60000 : null; A.timerGain = 1;
 }
+let swReloadPending = false;
 function timerTick() {
+  if (swReloadPending && !A.isPlaying && !A.toolStarted && !document.querySelector('.sheet')) { swReloadPending = false; location.reload(); return; }
   if (A.isPlaying && A.timerEnd) {
     const rem = (A.timerEnd - Date.now()) / 1000, fade = A.state.fadeSeconds;
     const g = rem <= 0 ? 0 : rem < fade ? rem / fade : 1;
@@ -789,7 +792,7 @@ const PAGE_RENDER = {
       `<div style="height:1px;background:var(--panelHi);margin:2px 0;flex:none"></div>` + lslider('volume', 'VOLUME') + bed('bed', st.noise) + bedLevel() +
       `<div style="display:flex;flex-direction:column;gap:8px"><div class="trow">Keep screen on while playing<div class="toggle ${A.keepAwake ? 'on' : ''}" data-act="awake"></div></div>${INTRO_ENABLED ? '<div class="trow">Welcome intro<button class="a4" data-act="replayintro">Replay intro</button></div>' : ''}<div class="trow">Piano tuning (A4)${pill('a4', [['440', '440 Hz'], ['432', '432 Hz']], String(A.a4))}</div></div>` +
       `<div class="caption" style="font-size:11px;line-height:1.35">Web version: browsers pause sound when the screen locks or you switch apps, so keep Biotone open (turn on “Keep screen on” for long sessions). Play over other apps and resume-after-calls are only in the iPhone app.</div>` +
-      '<div class="spacer"></div>' + `<div style="font-size:11px;color:var(--muted);line-height:1.3">Biotone is for relaxation and focused listening. It isn't a medical device and doesn't diagnose or treat anything. Keep the volume comfortable; the waveform turns orange, then red, as sound gets loud and high-pitched or close to the limit.</div>`;
+      '<div class="spacer"></div>' + `<div style="font-size:11px;color:var(--muted);line-height:1.3">Biotone is for relaxation and focused listening. It isn't a medical device and doesn't diagnose or treat anything. Keep the volume comfortable; the waveform turns orange, then red, as sound gets loud and high-pitched or close to the limit.</div>` + `<div style="font-size:10px;color:var(--muted);opacity:.55;flex:none">Build ${APP_BUILD}</div>`;
   },
   library() {
     return `<div class="libtop">${hdr('Library', `<button data-act="libinfo" style="width:30px;height:24px;color:var(--accent);display:flex;justify-content:center" aria-label="About the library and its sources"><span style="width:20px;height:20px;display:block">${I.info}</span></button>`)}
@@ -1343,12 +1346,14 @@ function updateRingAudio(dt) {
   const carrier = sc.tone != null ? sc.tone : sc.carrier;
   updateVisAudio(ringVis, carrier, beat, dt);
 }
-// Expanding pulse-ring speed (radius units per second). Beat present: sqrt scale around 7.83 Hz
-// (≈7.3 s centre to edge). Pure tone: log map 20–2000 Hz onto the same range.
+// Speed of the pulse rings that expand from the centre (radius units per second; a ring travels 0.88).
+// Beat present: power map, Still 1 Hz ~25 s, Sleep 2 Hz ~20 s, Meditate 7.83 Hz ~6.5 s, Active 20 Hz ~3 s, Spark 40 Hz ~2.2 s.
+// Pure tone: log map 20–2000 Hz onto the same 0.035–0.40 range (432 Hz ~3.2 s).
+const PULSE_MIN = 0.035, PULSE_MAX = 0.40;
 function pulseSpeedFor(carrier, beat) {
-  if (beat > 0.05) return cl(0.12 * Math.sqrt(beat / SCHUMANN), 0.05, 0.30);
+  if (beat > 0.05) return cl(0.044 * Math.pow(beat / 2, 0.824), PULSE_MIN, PULSE_MAX);
   const u = cl(Math.log(cl(carrier || 200, 20, 2000) / 20) / Math.log(100), 0, 1);
-  return 0.05 + 0.25 * u;
+  return PULSE_MIN + (PULSE_MAX - PULSE_MIN) * u;
 }
 // Shared by the Resonance ring and the moods page; each passes its own vis state, carrier and beat.
 function updateVisAudio(ringVis, carrier, beat, dt) {
@@ -1704,7 +1709,16 @@ function init() {
     updateWakeLock();
     if (!document.hidden && Snd.ctx && Snd.ctx.state !== 'running' && (A.isPlaying || A.toolStarted)) Snd.ctx.resume().catch(() => banner('Tap ▶ to resume audio', 3000));
   });
-  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    // One relaunch gets the newest build: check on launch and whenever the app comes back to the
+    // foreground; when a new worker takes over, reload (deferred while sound is playing).
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((reg) => {
+      reg.update().catch(() => {});
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
+    }).catch(() => {});
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) swReloadPending = true; });
+  }
   updateMediaSession();
   if (Intro.shouldAuto()) Intro.showCard(); else autoStart();
   onViewport();
