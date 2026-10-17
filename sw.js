@@ -1,8 +1,8 @@
 // Offline cache for Freqium web. Bump VERSION when files change.
-const VERSION = 'freqium-web-v13';
+const VERSION = 'freqium-web-v14';
 const ASSETS = [
   './', './index.html', './styles.css', './manifest.webmanifest',
-  './js/app.js', './js/draw.js', './js/synth.js', './js/library-data.js',
+  './js/app.js', './js/debuglog.js', './js/draw.js', './js/synth.js', './js/library-data.js',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png', './audio/intro.m4a', './audio/intro.mp3', './audio/intro.json'
 ];
 self.addEventListener('install', (e) => {

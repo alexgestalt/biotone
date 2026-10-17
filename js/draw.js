@@ -271,7 +271,7 @@ function ensureRingParticles() {
     }
   }
 }
-function stepRingField(dt, energy, bands) {
+function stepRingField(dt, energy, bands, pulseSpeed) {
   if (!(dt > 0) || !RINGP.x) return;
   const t = RINGP.time, n = RINGP.n;
   const kRad = 1 - Math.exp(-dt / 0.7);
@@ -307,7 +307,11 @@ function stepRingField(dt, energy, bands) {
     EMIT.band[slot] = bi;
     EMIT.amp[slot] = 0.4 + 0.6 * (energy > bv ? energy : bv);
   }
-  const step = dt * 0.12;
+  // Pulse travel speed follows the frequency (set per page in updateVisAudio); eased over ~1 s.
+  const target = pulseSpeed > 0 ? pulseSpeed : 0.12;
+  if (!(EMIT.spd > 0)) EMIT.spd = target;
+  EMIT.spd += (target - EMIT.spd) * (1 - Math.exp(-dt / 1.0));
+  const step = dt * EMIT.spd;
   for (let i = 0; i < EMIT.n; i++) {
     if (!EMIT.alive[i]) continue;
     EMIT.r[i] += step;
@@ -355,7 +359,7 @@ function drawLivingRing(cv, w, h, f, dt) {
   const g = setupCanvas(cv, w, h);
   ensureRingParticles();
   const bands = f.bands;
-  stepRingField(dt, f.energy || 0, bands);
+  stepRingField(dt, f.energy || 0, bands, f.pulseSpeed);
   const tint = f.tint || 0;
   const energy = f.energy || 0;
   const col = PAL[palIndex(tint)];
@@ -470,7 +474,7 @@ function drawOpeningField(cv, w, h, f, dt) {
   const g = setupCanvas(cv, w, h);
   ensureRingParticles();
   const bands = f.bands;
-  stepRingField(dt, f.energy || 0, bands);
+  stepRingField(dt, f.energy || 0, bands, f.pulseSpeed);
   const tint = f.tint || 0;
   const energy = f.energy || 0;
   const col = PAL[palIndex(tint)];
