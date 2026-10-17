@@ -59,7 +59,7 @@ const PAGES = [
 ];
 const SOURCE_PAGE = { tone: 'tone', binaural: 'binaural', schumann: 'schumann', pulse: 'pulse', mood: 'moods', mixer: 'mixer' };
 const SCHUMANN = 7.83;
-const APP_BUILD = 'biotone-v5'; // keep equal to the sw.js cache version
+const APP_BUILD = 'biotone-v6'; // keep equal to the sw.js cache version
 
 function makeLayer(kind) {
   const base = { id: uid(), tag: Math.floor(Math.random() * 1e9) + 1000, kind, frequency: 200, beat: 7.83, texture: 'rain', volume: 0.5, pan: 0, muted: false };
@@ -1391,6 +1391,11 @@ function updateVisAudio(ringVis, carrier, beat, dt) {
   const per = ringVis.pulsePeriod;
   pr[0] = (pr[0] + dt * 0.5 / per) % TAU; pr[1] = (pr[1] - dt * 0.8 / per) % TAU; pr[2] = (pr[2] + dt * 1.4 / per) % TAU;
   ringVis.petalRot = pr[0];
+  // Petal edge sine (page 4) follows the carrier: log map 60 Hz -> 0 (few long, full undulations)
+  // .. 1200 Hz -> 1 (many short ones, still a pure sine), eased ~0.6 s; its phase travels along the edge.
+  const eu = cl(Math.log(cl(carrier || 200, 20, 20000) / 60) / Math.log(20), 0, 1);
+  if (ringVis.edgeU == null) ringVis.edgeU = eu; else approach(ringVis, 'edgeU', eu, dt, 0.6, 0.6);
+  ringVis.edgePh = ((ringVis.edgePh || 0) + dt * (0.25 + 1.1 * ringVis.edgeU)) % TAU;
   // Shape morph: 0 = slow/round, 1 = fast/slender, eased over ~0.6 s.
   const slim = cl(1 - Math.log(per / 2) / Math.log(13), 0, 1);
   if (ringVis.petalSlim == null) ringVis.petalSlim = slim; else approach(ringVis, 'petalSlim', slim, dt, 0.6, 0.6);
