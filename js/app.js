@@ -59,7 +59,7 @@ const PAGES = [
 ];
 const SOURCE_PAGE = { tone: 'tone', binaural: 'binaural', schumann: 'schumann', pulse: 'pulse', mood: 'moods', mixer: 'mixer' };
 const SCHUMANN = 7.83;
-const APP_BUILD = 'v19'; // keep equal to the sw.js cache version
+const APP_BUILD = 'v20'; // keep equal to the sw.js cache version
 
 function makeLayer(kind) {
   const base = { id: uid(), tag: Math.floor(Math.random() * 1e9) + 1000, kind, frequency: 200, beat: 7.83, texture: 'rain', volume: 0.5, pan: 0, muted: false };
@@ -558,11 +558,21 @@ function stopTool(silent) {
 }
 // Leaving the Tools page stops test signals (like the app).
 function onPageChange(prev, next) {
+  if (next === 'moods') setTimeout(revealSelectedMood, 150); // after the pager has settled and the page is laid out
   if (prev === 'tools' && next !== 'tools' && (Tools.sweep || Tools.speaker)) Tools.cancel();
   if (prev === 'library') { const i = document.getElementById('libq'); if (i) i.blur(); }
 }
 
 // ---------------------------------------------------------- media session / wake lock
+// Scroll the inline mood window just enough to show the selected tile (page entry and launch only, never on tap).
+function revealSelectedMood() {
+  const win = document.querySelector('#page-moods .moodwin'); if (!win) return;
+  const t = win.querySelector('.tile.sel'); if (!t) return;
+  const wr = win.getBoundingClientRect(), tr = t.getBoundingClientRect();
+  if (tr.top < wr.top) win.scrollTop -= wr.top - tr.top + 6;
+  else if (tr.bottom > wr.bottom) win.scrollTop += tr.bottom - wr.bottom + 6;
+  moodScrollTop = win.scrollTop;
+}
 function updateMediaSession() {
   if (!('mediaSession' in navigator)) return;
   try {
@@ -678,8 +688,7 @@ const PAGE_RENDER = {
     return hdr('Moods', hpBadge(needsHeadphones(A.state, 'mood'))) +
       `<div class="orbflex"><div class="orbstage"><canvas data-orb="1"></canvas></div></div>
       <div style="text-align:center"><div style="font-family:var(--rounded);font-size:24px;font-weight:300;line-height:1.2">${m.label}</div><div class="caption" style="margin-top:2px">${moodBand(m)}</div></div>
-      <div class="moodwin"><div class="grid2">${tiles}</div></div>
-      <button class="moremoods" data-act="moremoods">All ${MOODS.length} moods</button>` +
+      <div class="moodwin"><div class="grid2">${tiles}</div></div>` +
       lslider('mood.tone', m.pure ? 'TONE' : 'BINAURAL TONE') + lslider('mood.music', 'MUSIC') + bed('mood.amb', lv.ambience, false) +
       (lv.ambience !== 'off' ? lslider('mood.ambLevel', `${NOISE_LABEL[lv.ambience].toUpperCase()} LEVEL`) : '');
   },
@@ -1089,18 +1098,6 @@ const ACT = {
     const m = A.state.moods;
     if (m.selected === k && isPlayingSource('mood')) { stop(); return; }
     m.selected = k; A.activePresetName = null; play('mood');
-  },
-  moremoods() {
-    const cur = A.state.moods.selected, playing = isPlayingSource('mood');
-    const tiles = MOODS.map((x) => `<button class="tile ${x.key === cur ? 'sel' : ''}" data-mk="${x.key}"><div class="ic">${moodIcon[x.key] || I.spark}</div><div style="flex:1;min-width:0"><div class="nm">${x.label}</div><div class="bd">${moodLine(x)}</div></div>${x.key === cur && playing ? `<div class="mw" style="width:20px;color:var(--accent)">${I.wave}</div>` : ''}</button>`).join('');
-    openSheet(`<h3>ALL MOODS</h3><div class="grid2 moodsheet">${tiles}</div><button class="kbtn c" id="mmc" style="flex:none">Close</button>`, (sh, close) => {
-      sh.querySelector('.moodsheet').addEventListener('click', (e) => { const b = e.target.closest('[data-mk]'); if (!b) return; close(); ACT.mood(b.dataset.mk); });
-      sh.querySelector('#mmc').onclick = close;
-      // Swipe down from the top of the sheet to close it.
-      let y0 = null;
-      sh.addEventListener('touchstart', (e) => { y0 = sh.scrollTop <= 0 ? e.touches[0].clientY : null; }, { passive: true });
-      sh.addEventListener('touchmove', (e) => { if (y0 != null && e.touches[0].clientY - y0 > 90) { y0 = null; close(); } }, { passive: true });
-    });
   },
   ambtoggle() { if (!activeAmbients().length) { UI.ambOpen = false; renderMini(); return; } UI.ambOpen = !UI.ambOpen; renderMini(); },
   ambstop(id) { stopAmbient(id); },
@@ -1705,6 +1702,7 @@ function init() {
   A.page = 'moods'; renderDots();
   setInterval(timerTick, 250);
   requestAnimationFrame(frame);
+  setTimeout(revealSelectedMood, 300);
   document.addEventListener('visibilitychange', () => {
     updateWakeLock();
     if (!document.hidden && Snd.ctx && Snd.ctx.state !== 'running' && (A.isPlaying || A.toolStarted)) Snd.ctx.resume().catch(() => banner('Tap ▶ to resume audio', 3000));
