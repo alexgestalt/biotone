@@ -59,7 +59,7 @@ const PAGES = [
 ];
 const SOURCE_PAGE = { tone: 'tone', binaural: 'binaural', schumann: 'schumann', pulse: 'pulse', mood: 'moods', mixer: 'mixer' };
 const SCHUMANN = 7.83;
-const APP_BUILD = 'biotone-v6'; // keep equal to the sw.js cache version
+const APP_BUILD = 'biotone-v7'; // keep equal to the sw.js cache version
 
 function makeLayer(kind) {
   const base = { id: uid(), tag: Math.floor(Math.random() * 1e9) + 1000, kind, frequency: 200, beat: 7.83, texture: 'rain', volume: 0.5, pan: 0, muted: false };
@@ -1343,6 +1343,17 @@ function updateRingAudio(dt) {
   const beat = sc.tone != null ? (sc.shimmer ? SCHUMANN : 0) : sc.beat;
   const carrier = sc.tone != null ? sc.tone : sc.carrier;
   updateVisAudio(ringVis, carrier, beat, dt);
+  // Page 4 controls -> rosette shape targets, eased ~0.6 s so nothing snaps.
+  const ENG_OFF = { binaural: [1 / 3, 2 / 3], monaural: [0.5, 0], isochronic: [0.1, 0.2] }; // layer phase (turns)
+  const eng = sc.tone != null ? (sc.shimmer ? 'binaural' : 'monaural') : (ENG_OFF[sc.engine] ? sc.engine : 'binaural');
+  const nz = A.state.noise, lvl = nz !== 'off' ? (A.state.noiseLevel || 0) : 0;
+  const HALO = { off: 0, brown: 0.35, pink: 0.65, white: 1 };              // noise colour -> glow halo width
+  const FLOW = { rain: 1.8, ocean: 0.55, wind: 1.35, stream: 1.15 };        // nature -> wave travel speed
+  const T = { off1: ENG_OFF[eng][0], off2: ENG_OFF[eng][1], depth: A.state.toneLevel != null ? A.state.toneLevel : 0.8,
+    halo: (HALO[nz] != null ? HALO[nz] : 0.5) * (0.4 + 0.6 * lvl), flow: FLOW[nz] || 1, nat: FLOW[nz] ? lvl : 0 };
+  const pv = ringVis.pv || (ringVis.pv = Object.assign({}, T));
+  for (const k in T) approach(pv, k, T[k], dt, 0.6, 0.6);
+  ringVis.edgePh = (ringVis.edgePh + dt * (0.25 + 1.1 * ringVis.edgeU) * (pv.flow - 1)) % TAU; // extra flow from nature
 }
 // Speed of the pulse rings that expand from the centre (radius units per second; a ring travels 0.88).
 // Beat present: power map, Still 1 Hz ~25 s, Sleep 2 Hz ~20 s, Meditate 7.83 Hz ~6.5 s, Active 20 Hz ~3 s, Spark 40 Hz ~2.2 s.
