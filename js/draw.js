@@ -191,42 +191,6 @@ function rgbCss(rgb) {
     hslTo(h, 0.48, 0.88, rgb); PAL_HOT[i] = rgbCss(rgb);
   }
 })();
-// Page 1 palette (v10.2): identical to PAL in the gold low end, then blends (in Oklab, so it never passes
-// through orange/red/pink) toward purple #9b5cff as the tint rises, deepening slightly to #8a4dff at the top.
-// Page 4 keeps PAL / PAL_HOT unchanged.
-const PAL1 = new Array(PAL_N);
-const PAL1_HOT = new Array(PAL_N);
-(function buildPalette1() {
-  const lin = (c) => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
-  const gam = (c) => (c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055);
-  const toLab = (r, g, b) => {
-    r = lin(r); g = lin(g); b = lin(b);
-    const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
-    const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
-    const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
-    return [0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s, 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s, 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s];
-  };
-  const toRgb = (L, A, B) => {
-    const l = (L + 0.3963377774 * A + 0.2158037573 * B) ** 3, m = (L - 0.1055613458 * A - 0.0638541728 * B) ** 3, s = (L - 0.0894841775 * A - 1.291485548 * B) ** 3;
-    const c = (v) => Math.max(0, Math.min(1, gam(v)));
-    return [c(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s), c(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s), c(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s)];
-  };
-  const mix = (a, b, u) => [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u];
-  const rgb = [0, 0, 0], T0 = 0.1, T1 = 0.55;
-  hslTo(paletteHue(T0), 0.98, 0.58, rgb); const g0 = toLab(rgb[0], rgb[1], rgb[2]);
-  hslTo(paletteHue(T0), 0.48, 0.88, rgb); const h0 = toLab(rgb[0], rgb[1], rgb[2]);
-  const P = toLab(0x9b / 255, 0x5c / 255, 1), P2 = toLab(0x8a / 255, 0x4d / 255, 1), PH = toLab(0xdc / 255, 0xcb / 255, 1);
-  for (let i = 0; i < PAL_N; i++) {
-    const t = i / (PAL_N - 1);
-    if (t <= T0) { PAL1[i] = PAL[i]; PAL1_HOT[i] = PAL_HOT[i]; continue; }
-    let u = Math.min(1, (t - T0) / (T1 - T0)); u = u * u * (3 - 2 * u);
-    let c = mix(g0, P, u);
-    if (t > T1) c = mix(P, P2, (t - T1) / (1 - T1));
-    PAL1[i] = rgbCss(toRgb(c[0], c[1], c[2]));
-    const hc = mix(h0, PH, u);
-    PAL1_HOT[i] = rgbCss(toRgb(hc[0], hc[1], hc[2]));
-  }
-})();
 function palIndex(t) {
   if (t <= 0) return 0;
   if (t >= 1) return PAL_N - 1;
@@ -606,8 +570,23 @@ function traceP1Harmonograph(g, S, fy, b, px, py, damp, rot, rin, ring, lobes) {
     if (i) g.lineTo(x, y); else g.moveTo(x, y);
   }
 }
+// Page 1 copy of drawCorePulses, gold only: band colour offsets limited to the gold end of the palette.
+function drawCorePulsesP1(g, R, k) {
+  for (let i = 0; i < EMIT.n; i++) {
+    if (!EMIT.alive[i]) continue;
+    const u = EMIT.r[i];
+    let life = 1 - (u - 0.14) / 0.9;
+    if (life <= 0) continue;
+    if (life > 1) life = 1;
+    const fade = life * (0.35 + 0.65 * life);
+    g.strokeStyle = PAL[palIndex(EMIT.band[i] * 0.012)];
+    g.globalAlpha = (0.12 + 0.5 * EMIT.amp[i]) * fade * k;
+    g.lineWidth = 1.4 + 7 * fade;
+    strokeDisc(g, R * u);
+  }
+}
 function strokeP1Trace(g, tint, shift, e, energy, bright, halo) {
-  g.strokeStyle = PAL1[palIndex(tint + shift)];
+  g.strokeStyle = PAL[palIndex(shift)]; // v10.3: page 1 is gold only, no frequency tint
   g.globalAlpha = (0.08 + 0.16 * bright) * (5 / halo) ** 0.5;
   g.lineWidth = halo;
   g.stroke();
@@ -632,7 +611,8 @@ function drawP1Waves(g, R, f, tint, energy, cb, t, dt, bands) {
   const tl = Math.max(0, Math.min(1, (S.tone - 0.25) / 0.2));             // tone level ~0.25..0.45 -> 0..1
   const ml = Math.max(0, Math.min(1, (S.music - 0.4) / 0.3));             // music level ~0.4..0.7 -> 0..1
   // Speeds: base from the frequency-tied pulse period; each layer has its own ratio and direction.
-  const per = f.pulsePeriod || 6.5, sp = 0.05 + 0.9 / per;
+  // v10.3: also speeds up with the carrier itself (x0.7 at Still .. x2.1 at Spark / pure tones).
+  const per = f.pulsePeriod || 6.5, sp = (0.05 + 0.9 / per) * (0.7 + 1.4 * cu);
   const wob = (k) => 0.35 * (noise2(t * 0.13, 4.1 + k * 7.3) - 0.5); // irregular, smooth speed wander
   // Everything below is integrated per frame (phase += speed * dt) and never wrapped: phA/phB also feed
   // scaled terms (px * 0.5, px * 0.3), where a wrap at TAU would snap the trace. Each rate carries its own
@@ -648,10 +628,15 @@ function drawP1Waves(g, R, f, tint, energy, cb, t, dt, bands) {
   const rin = 0.55 * Math.max(0, (open - 0.2) / 0.8);
   const rg = Math.max(0, Math.min(1, (cu - 0.3) / 0.6)), ring = 0.92 * rg * rg * (3 - 2 * rg);
   const swell = 1 + 0.07 * S.amb * Math.sin(t * (0.4 + 0.5 * S.ambKind));     // nature: slow radial swell
-  const S0 = R * (0.36 + 0.42 * cu) * swell;                                       // reach: centre -> edge
+  // v10.3 reach: small near the centre at low carrier, growing to the outer edge at the top. The
+  // converge/cross swing narrows as the layers open so the top moods sit at the edge; a peak estimate
+  // is capped so the brightest line peaks land at ~0.9-0.95R and nothing clips.
+  const b = 0.2 + 0.24 * tl;                                                      // tone level -> loop depth
+  const S0r = R * (0.3 + 0.74 * cu) * swell;
+  const swing = 0.1 * (1 - 0.6 * open);
+  const S0 = Math.min(S0r, 1.0 * R / (1 + swing)); // measured: bright line peaks land at ~0.93-0.95R
   const lob = 4 + 4 * cu + 3 * bu;                                                // sine lobes on the opened rings
   const damp = (0.065 - 0.03 * tl) * (1 - 0.85 * open);                           // chaos coils at low carrier
-  const b = 0.2 + 0.24 * tl;                                                      // tone level -> loop depth
   const live = (k) => (0.14 * Math.sin(S.liv0 * (1 + 0.37 * k) + k * 2.1) + 0.07 * Math.sin(S.liv1 * (1 + 0.23 * k) + k)) * (1 - 0.6 * open);
   const kr = (0.8 + 1.1 * cu) * (0.85 + 0.35 * bu);
   // Engine: binaural keeps the two layers out of phase (crossing); a pure tone draws them closer in step.
@@ -662,10 +647,10 @@ function drawP1Waves(g, R, f, tint, energy, cb, t, dt, bands) {
   const halo = 4 + 6 * S.amb, bright = 0.45 + 0.4 * tl;
   const eA = bands ? bands[1] : 0.18, eB = bands ? bands[5] : 0.14;
   g.lineJoin = 'round'; g.lineCap = 'round';
-  traceP1Harmonograph(g, S0 * (1 + 0.1 * c) * (0.95 + 0.05 * cA), 1.5 * kr + live(0), b, S.phA * 0.5, S.phA, damp, S.rotA, rin, ring, lob);
+  traceP1Harmonograph(g, S0 * (1 + swing * c) * (0.95 + 0.05 * cA), 1.5 * kr + live(0), b, S.phA * 0.5, S.phA, damp, S.rotA, rin, ring, lob);
   strokeP1Trace(g, tint, 0.02, eA, energy, bright, halo);
-  traceP1Harmonograph(g, S0 * (0.9 - 0.1 * c) * (0.95 + 0.05 * cB), 1.27 * kr + live(1), b * 1.05, off - S.phB * 0.4, off - S.phB, damp * 1.15, S.rotB, rin * 0.85, ring, lob + 1);
-  strokeP1Trace(g, tint, 0.14, eB, energy, bright * 0.9, halo);
+  traceP1Harmonograph(g, S0 * (0.92 - swing * c) * (0.95 + 0.05 * cB), 1.27 * kr + live(1), b * 1.05, off - S.phB * 0.4, off - S.phB, damp * 1.15, S.rotB, rin * 0.85, ring, lob + 1);
+  strokeP1Trace(g, tint, 0.06, eB, energy, bright * 0.9, halo);
 }
 // Page 1: when the particle budget changes (window crosses 700 px), keep the existing dots where they
 // are and only add/drop the tail, instead of re-seeding every dot (which made them all jump).
@@ -689,8 +674,8 @@ function drawLivingRing(cv, w, h, f, dt) {
   stepRingField(dt, f.energy || 0, bands, f.pulseSpeed, f.pulsePh);
   const tint = f.tint || 0;
   const energy = f.energy || 0;
-  // v10.2: everything except the two waveform layers keeps its untinted low-frequency colour (tint 0);
-  // only drawP1Waves shifts with the tint, toward purple (PAL1).
+  // v10.3: page 1 is gold only; nothing follows the frequency tint (all colours use tint 0) and the
+  // per-band colour offsets are kept inside the gold range of the palette (index <= ~0.1, hue >= ~40).
   const col = PAL[palIndex(0)];
   const hot = PAL_HOT[palIndex(0)];
   const t = RINGP.time;
@@ -715,19 +700,19 @@ function drawLivingRing(cv, w, h, f, dt) {
     const u = i / (VIS_BANDS - 1);
     const wob = 0.02 * (noise2(i * 1.7, t * 0.04) - 0.5);
     const rad = R * (0.3 + u * 0.52) * (1 + wob + 0.03 * e);
-    g.strokeStyle = PAL[palIndex(u * 0.28)];
+    g.strokeStyle = PAL[palIndex(u * 0.08)];
     g.globalAlpha = (0.14 + 0.62 * e) * (0.7 + 0.3 * energy);
     g.lineWidth = 1.15 + 3.4 * e;
     strokeDisc(g, rad);
   }
-  drawCorePulses(g, R, 0, 1);
+  drawCorePulsesP1(g, R, 1);
   // v10: two free-form harmonograph waveform layers driven by every mood parameter (see drawP1Waves).
   const shimmer = f.shimmer || 0.4;
   drawP1Waves(g, R, f, tint, energy, cb, t, Math.min(0.1, Math.max(0, dt || 0)), bands);
   const n = RINGP.n;
   const motes = 1 + 0.22 * energy;
   for (let b = 0; b < VIS_BANDS; b++) {
-    g.fillStyle = PAL[palIndex(b * 0.04)];
+    g.fillStyle = PAL[palIndex(b * 0.012)];
     for (let i = b; i < n; i += VIS_BANDS) {
       const br = RINGP.bright[i];
       const sz = RINGP.sz[i] * (0.9 + br) * motes;
