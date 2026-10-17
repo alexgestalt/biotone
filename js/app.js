@@ -59,7 +59,7 @@ const PAGES = [
 ];
 const SOURCE_PAGE = { tone: 'tone', binaural: 'binaural', schumann: 'schumann', pulse: 'pulse', mood: 'moods', mixer: 'mixer' };
 const SCHUMANN = 7.83;
-const APP_BUILD = 'biotone-v3'; // keep equal to the sw.js cache version
+const APP_BUILD = 'biotone-v4'; // keep equal to the sw.js cache version
 
 function makeLayer(kind) {
   const base = { id: uid(), tag: Math.floor(Math.random() * 1e9) + 1000, kind, frequency: 200, beat: 7.83, texture: 'rain', volume: 0.5, pan: 0, muted: false };
@@ -1385,6 +1385,11 @@ function updateVisAudio(ringVis, carrier, beat, dt) {
   ringVis.pulseSpeed = pulseSpeedFor(carrier, beat);
   ringVis.pulsePeriod = pulsePeriodFor(carrier, beat);
   ringVis.pulsePh = ((ringVis.pulsePh || 0) + dt / ringVis.pulsePeriod) % 1;
+  // Petal motion (page 4): turn rate scales with the pulse rate (0.35 rad per pulse period), and petals
+  // slim from round (slow, 26 s) to slender (fast, 2 s). Both are continuous, so a change never jumps.
+  ringVis.petalRot = (ringVis.petalRot || 0) + dt * 0.35 / ringVis.pulsePeriod;
+  const slim = cl(1 - Math.log(ringVis.pulsePeriod / 2) / Math.log(13), 0, 1);
+  if (ringVis.petalSlim == null) ringVis.petalSlim = slim; else approach(ringVis, 'petalSlim', slim, dt, 0.6, 0.6);
   const rate = beat > 0.05 ? Math.min(beat, 14) : 0;
   ringVis.beatPhase = (ringVis.beatPhase + (rate > 0 ? rate : 1 / 5.5) * dt) % 1;
   approach(ringVis, 'tint', freqTint(carrier, beat, shaped), dt, 0.9, 1.25);
@@ -1446,8 +1451,7 @@ function frame(t) {
     updateRingAudio(dt, t);
     const w = stage.clientWidth, h = stage.clientHeight;
     if (w && h) {
-      if (scDefault(A.state.schumann)) drawOpeningField(rcv, w, h, ringVis, dt);
-      else drawLivingRing(rcv, w, h, ringVis, dt);
+      drawOpeningField(rcv, w, h, ringVis, dt); // page 4 is always the petal flower; it follows the frequency
     }
   }
   const hb = pageEl.querySelector('[data-hbar]');
