@@ -246,6 +246,23 @@ function centerWave(ph) {
   const slow = 0.5 + 0.5 * Math.sin(ph * TAU);
   const h = lub + dub; return 0.45 * slow + 0.55 * (h < 1 ? h : 1);
 }
+// Page 1 seamless variants (same lub-dub look). The shared versions measure the lub from the raw 0..1
+// phase, so at each wrap it steps by ~0.03; these use the wrapped distance to the peak, so the curve is
+// continuous across cycles. The outer breath's slow swell also gets a noise-driven phase drift, so the
+// 5.5 s / 5.6 s pair never lines up into a repeating ~5 min cycle. Page 4 keeps the shared ones.
+function seamLubDub(ph) {
+  ph -= Math.floor(ph);
+  let d1 = ph - 0.08; d1 -= Math.round(d1);
+  let d2 = ph - 0.22; d2 -= Math.round(d2);
+  return Math.exp(-(d1 * d1) / 0.0018) + 0.7 * Math.exp(-(d2 * d2) / 0.0022);
+}
+function heartWaveP1(time) {
+  const slow = 0.5 + 0.5 * Math.sin(time * (TAU / 5.6) + 2.4 * (noise2(time * 0.021, 17.3) - 0.5));
+  const h = seamLubDub(time / 5.5); return 0.45 * slow + 0.55 * (h < 1 ? h : 1);
+}
+function centerWaveP1(ph) {
+  const h = seamLubDub(ph); return 0.45 * (0.5 + 0.5 * Math.sin(ph * TAU)) + 0.55 * (h < 1 ? h : 1);
+}
 // Disc fill, inner glow and core dot all pulse from the centre at the frequency-driven rate.
 function paintCenterPulse(g, R, col, cb, energy, petal) {
   const cg = 0.72 + 0.28 * cb + 0.18 * energy;
@@ -508,65 +525,130 @@ function drawCorePulses(g, R, tint, k) {
     strokeDisc(g, R * u);
   }
 }
-function radarState(f) {
-  return f._radar || (f._radar = { a1: 0.6, a2: 2.4, w1: 0, w2: 0, dir: 1 });
+// Page 1 (v10): two free-form harmonograph waveform layers, adapted from page 4 v9 but kept as page 1's
+// own copy (page 4 code is not shared). Every mood parameter shapes them; geometry never reads the beat
+// phase, and every input is eased so mood switches morph instead of snapping.
+function p1MoodParams() {
+  const out = { carrier: 200, beat: 8, pure: false, tone: 0.34, music: 0.55, amb: 0, ambKind: 0, recipe: 0 };
+  try {
+    const m = moodOf(A.state.moods.selected), lv = moodLevels(A.state, m.key);
+    out.pure = !!m.pure;
+    out.carrier = m.pure ? m.hz : m.carrier;
+    out.beat = m.pure ? 0 : m.beat;
+    out.tone = lv.tone != null ? lv.tone : m.tone;
+    out.music = lv.music != null ? lv.music : m.music;
+    out.amb = lv.ambience && lv.ambience !== 'off' ? (lv.ambienceLevel || 0) : 0;
+    let h = 0; const kind = String(lv.ambience || 'off');
+    for (let i = 0; i < kind.length; i++) h = (h * 31 + kind.charCodeAt(i)) % 997;
+    out.ambKind = h / 997;
+    const rk = String(m.recipe || m.key); let r = 0;
+    for (let i = 0; i < rk.length; i++) r = (r * 37 + rk.charCodeAt(i)) % 991;
+    out.recipe = r / 991;
+  } catch (e) { /* keep defaults */ }
+  return out;
 }
-function drawRadarEdge(g, R, f, tint, energy, shimmer, cb, t, dt) {
-  const S = radarState(f);
-  const per = f.pulsePeriod || 6.5;
-  const s = 0.3 + 3.0 / per; // Sleep ~0.45, Meditate ~0.76, Active ~1.3, Spark ~1.66 rad/s (mean, before noise)
-  // Irregular target speeds: slow wandering noise + a quicker jitter; the slow part can dip below zero.
-  const nA = noise2(t * 0.21, 3.7) - 0.5, jA = noise2(t * 1.3, 8.1) - 0.5;
-  const nB = noise2(5.3, t * 0.17) - 0.5, jB = noise2(t * 1.1, 11.9) - 0.5;
-  const tw1 = s * (0.7 + 2.4 * nA + 0.7 * jA);
-  const tw2 = -s * (0.9 + 2.6 * nB + 0.8 * jB);
-  // Velocities ease toward targets (no jumps), angles accumulate.
-  const k = 1 - Math.exp(-dt / 0.35);
-  S.w1 += (tw1 - S.w1) * k; S.w2 += (tw2 - S.w2) * k;
-  S.a1 = (S.a1 + S.w1 * dt) % TAU; S.a2 = (S.a2 + S.w2 * dt) % TAU;
-  // Trail sits behind the arm; its side follows the smoothed direction and shrinks through a reversal.
-  S.dir += (Math.tanh(S.w1 / (0.25 * s)) - S.dir) * (1 - Math.exp(-dt / 0.3));
-  const r1 = R * (0.6 + 0.015 * cb), r2 = R * (0.8 + 0.01 * cb);
-  const c1 = PAL[palIndex(tint + 0.04)], c2 = PAL[palIndex(tint + 0.12)];
-  const lift = 0.75 + 0.25 * energy;
-  // Sweep trail: thin wedges fading away from the arm.
-  const trail = 1.4 * S.dir, N = 28, r0 = R * 0.17, rT = R * 0.86;
-  g.fillStyle = c1;
-  for (let i = 0; i < N; i++) {
-    const u0 = i / N, u1 = (i + 1) / N;
-    g.globalAlpha = 0.34 * Math.pow(1 - u0, 1.3) * lift * (0.35 + 0.65 * Math.abs(S.dir));
-    const th0 = S.a1 - trail * u0, th1 = S.a1 - trail * u1;
-    g.beginPath();
-    g.arc(0, 0, rT, Math.min(th0, th1), Math.max(th0, th1));
-    g.arc(0, 0, r0, Math.max(th0, th1), Math.min(th0, th1), true);
-    g.closePath(); g.fill();
-  }
-  // Sweep arm.
-  const ax = Math.cos(S.a1), ay = Math.sin(S.a1);
-  g.strokeStyle = c1;
-  g.globalAlpha = 0.16 * lift; g.lineWidth = 7;
-  g.beginPath(); g.moveTo(ax * r0, ay * r0); g.lineTo(ax * rT, ay * rT); g.stroke();
-  g.globalAlpha = 0.55 * lift; g.lineWidth = 1.6;
-  g.beginPath(); g.moveTo(ax * r0, ay * r0); g.lineTo(ax * rT, ay * rT); g.stroke();
-  // Two range rings: faint full circle + glowing broken arcs (same soft-line treatment as the pulse rings).
-  const layer = (r, a, col, segs, glow) => {
-    g.strokeStyle = col;
-    g.globalAlpha = 0.1 + 0.08 * shimmer; g.lineWidth = 1.2;
-    strokeDisc(g, r);
-    for (const [off, len] of segs) {
-      g.globalAlpha = (0.12 + 0.12 * shimmer) * glow; g.lineWidth = 7.5;
-      g.beginPath(); g.arc(0, 0, r, a + off, a + off + len); g.stroke();
-      g.globalAlpha = (0.45 + 0.35 * shimmer) * glow; g.lineWidth = 1.8;
-      g.beginPath(); g.arc(0, 0, r, a + off, a + off + len); g.stroke();
+function p1Ease(S, key, v, dt, tau) { S[key] = S[key] == null ? v : S[key] + (v - S[key]) * (1 - Math.exp(-dt / tau)); }
+function traceP1Harmonograph(g, S, fy, b, px, py, damp, rot, rin, ring, lobes) {
+  const N = 900, T = TAU * 6, a = 1 - b, c = Math.cos(rot), s = Math.sin(rot);
+  g.beginPath();
+  for (let i = 0; i <= N; i++) {
+    const tau = (i / N) * T, D = Math.exp(-damp * tau);
+    let x0 = D * (a * Math.sin(tau + px) + b * Math.sin(0.5 * fy * tau + py));
+    let y0 = D * (a * Math.sin(fy * tau + py) + b * Math.sin(0.5 * tau + px + 1.1));
+    if (rin > 0) {
+      const r0 = Math.hypot(x0, y0) + 1e-6, r1 = rin + (1 - rin) * Math.min(r0, 1);
+      x0 *= r1 / r0; y0 *= r1 / r0;
     }
-  };
-  layer(r1, S.a1, c1, [[0.15, 1.5], [2.3, 0.7], [3.6, 1.9]], lift);
-  layer(r2, S.a2, c2, [[0, 0.5], [1.05, 1.2], [2.75, 0.35], [3.5, 0.9], [5.0, 0.6]], lift * 0.9);
+    if (ring > 0) {
+      const turn = tau / TAU;
+      const rr = (rin + (1 - rin) * (0.62 + 0.38 * Math.exp(-0.9 * damp * tau - 0.07 * turn))) *
+        (1 + (0.05 + 0.1 * b) * Math.sin(lobes * tau + py + 0.9 * turn));
+      const xr = rr * Math.cos(tau + px * 0.3), yr = rr * Math.sin(tau + px * 0.3);
+      x0 += (xr - x0) * ring; y0 += (yr - y0) * ring;
+    }
+    const x = S * (x0 * c - y0 * s), y = S * (x0 * s + y0 * c);
+    if (i) g.lineTo(x, y); else g.moveTo(x, y);
+  }
+}
+function strokeP1Trace(g, tint, shift, e, energy, bright, halo) {
+  g.strokeStyle = PAL[palIndex(tint + shift)];
+  g.globalAlpha = (0.08 + 0.16 * bright) * (5 / halo) ** 0.5;
+  g.lineWidth = halo;
+  g.stroke();
+  g.globalAlpha = 0.32 + 0.4 * e + 0.15 * energy + 0.12 * bright;
+  g.lineWidth = 1.1 + 1.2 * e;
+  g.stroke();
+}
+function drawP1Waves(g, R, f, tint, energy, cb, t, dt, bands) {
+  const P = p1MoodParams();
+  const S = f._p1w || (f._p1w = { rotA: 0.4, rotB: 2.2, phA: 0, phB: 1.7, conv: 0 });
+  // carrier -> cu: log map, 100 Hz (Still) = 0 ... 260 Hz = 1; pure tones (396-639 Hz) sit at 1.
+  const cuT = Math.max(0, Math.min(1, Math.log(Math.max(1, P.carrier) / 100) / Math.log(2.6)));
+  p1Ease(S, 'cu', cuT, dt, 0.7);
+  p1Ease(S, 'beat', P.beat, dt, 0.7);
+  p1Ease(S, 'tone', P.tone, dt, 0.5);
+  p1Ease(S, 'music', P.music, dt, 0.5);
+  p1Ease(S, 'amb', P.amb, dt, 0.6);
+  p1Ease(S, 'ambKind', P.ambKind, dt, 0.8);
+  p1Ease(S, 'pure', P.pure ? 1 : 0, dt, 0.6);
+  p1Ease(S, 'recipe', P.recipe, dt, 0.9);
+  const cu = S.cu, bu = Math.min(1, Math.sqrt(Math.max(0, S.beat) / 40)); // beat 0..40 Hz -> 0..1
+  const tl = Math.max(0, Math.min(1, (S.tone - 0.25) / 0.2));             // tone level ~0.25..0.45 -> 0..1
+  const ml = Math.max(0, Math.min(1, (S.music - 0.4) / 0.3));             // music level ~0.4..0.7 -> 0..1
+  // Speeds: base from the frequency-tied pulse period; each layer has its own ratio and direction.
+  const per = f.pulsePeriod || 6.5, sp = 0.05 + 0.9 / per;
+  const wob = (k) => 0.35 * (noise2(t * 0.13, 4.1 + k * 7.3) - 0.5); // irregular, smooth speed wander
+  // Everything below is integrated per frame (phase += speed * dt) and never wrapped: phA/phB also feed
+  // scaled terms (px * 0.5, px * 0.3), where a wrap at TAU would snap the trace. Each rate carries its own
+  // smooth noise wander, so the motion never settles into a repeating cycle.
+  S.rotA += dt * sp * (0.6 + 0.5 * cu + wob(0));                  // spins forward
+  S.rotB -= dt * sp * (0.95 + 0.9 * bu + wob(1));                 // counter-spins, faster with beat
+  S.phA += dt * sp * (0.5 + 0.8 * cu) * (0.7 + 0.6 * ml) * (1 + wob(2));   // trace drift (music -> livelier)
+  S.phB -= dt * sp * (0.8 + 1.1 * cu) * (0.7 + 0.6 * ml) * (1 + wob(3));
+  S.conv += dt * sp * 0.55 * (1 + wob(4));                        // converge/cross
+  S.liv0 = (S.liv0 || 0) + dt * (0.045 + 0.02 * (noise2(t * 0.011, 31.7) - 0.5));
+  S.liv1 = (S.liv1 || 0) + dt * (0.017 + 0.01 * (noise2(t * 0.009, 43.1) - 0.5));
+  const open = cu * cu * (3 - 2 * cu);
+  const rin = 0.55 * Math.max(0, (open - 0.2) / 0.8);
+  const rg = Math.max(0, Math.min(1, (cu - 0.3) / 0.6)), ring = 0.92 * rg * rg * (3 - 2 * rg);
+  const swell = 1 + 0.07 * S.amb * Math.sin(t * (0.4 + 0.5 * S.ambKind));     // nature: slow radial swell
+  const S0 = R * (0.36 + 0.42 * cu) * swell;                                       // reach: centre -> edge
+  const lob = 4 + 4 * cu + 3 * bu;                                                // sine lobes on the opened rings
+  const damp = (0.065 - 0.03 * tl) * (1 - 0.85 * open);                           // chaos coils at low carrier
+  const b = 0.2 + 0.24 * tl;                                                      // tone level -> loop depth
+  const live = (k) => (0.14 * Math.sin(S.liv0 * (1 + 0.37 * k) + k * 2.1) + 0.07 * Math.sin(S.liv1 * (1 + 0.23 * k) + k)) * (1 - 0.6 * open);
+  const kr = (0.8 + 1.1 * cu) * (0.85 + 0.35 * bu);
+  // Engine: binaural keeps the two layers out of phase (crossing); a pure tone draws them closer in step.
+  const off = TAU * (0.5 * (1 - S.pure) + 0.12 * S.pure + 0.25 * S.recipe);
+  const c = Math.sin(S.conv);                                                     // layers move toward/past each other
+  const amp = 0.55 + 0.45 * (f.breath || 0.4);
+  const cA = centerWaveP1(f.pulsePh || 0) * amp, cB = centerWaveP1((f.pulsePh || 0) - 0.08) * amp;
+  const halo = 4 + 6 * S.amb, bright = 0.45 + 0.4 * tl;
+  const eA = bands ? bands[1] : 0.18, eB = bands ? bands[5] : 0.14;
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  traceP1Harmonograph(g, S0 * (1 + 0.1 * c) * (0.95 + 0.05 * cA), 1.5 * kr + live(0), b, S.phA * 0.5, S.phA, damp, S.rotA, rin, ring, lob);
+  strokeP1Trace(g, tint, 0.02, eA, energy, bright, halo);
+  traceP1Harmonograph(g, S0 * (0.9 - 0.1 * c) * (0.95 + 0.05 * cB), 1.27 * kr + live(1), b * 1.05, off - S.phB * 0.4, off - S.phB, damp * 1.15, S.rotB, rin * 0.85, ring, lob + 1);
+  strokeP1Trace(g, tint, 0.14, eB, energy, bright * 0.9, halo);
+}
+// Page 1: when the particle budget changes (window crosses 700 px), keep the existing dots where they
+// are and only add/drop the tail, instead of re-seeding every dot (which made them all jump).
+function ensureRingParticlesP1() {
+  const n = ringBudget();
+  if (RINGP.x && RINGP.n !== n) {
+    const old = RINGP, m = Math.min(old.n, n), keys = ['x', 'y', 'ang', 'rad', 'seed', 'sz', 'band', 'bright'];
+    const prev = {}; for (const k of keys) prev[k] = old[k];
+    RINGP.x = null; ensureRingParticles();           // fresh arrays of the new size, seeded as usual
+    for (const k of keys) RINGP[k].set(prev[k].subarray(0, m));
+    if (RINGP.sr) RINGP.sr = null;
+    return;
+  }
+  ensureRingParticles();
 }
 // f: smoothed { breath, energy, tint, beatPhase, shimmer, bands }
 function drawLivingRing(cv, w, h, f, dt) {
   const g = setupCanvas(cv, w, h);
-  ensureRingParticles();
+  ensureRingParticlesP1();
   const bands = f.bands;
   stepRingField(dt, f.energy || 0, bands, f.pulseSpeed, f.pulsePh);
   const tint = f.tint || 0;
@@ -577,8 +659,8 @@ function drawLivingRing(cv, w, h, f, dt) {
   const n1 = noise2(t * 0.05, 1.3) - 0.5;
   const n2 = noise2(2.4, t * 0.037) - 0.5;
   // Outer ring keeps the slow fixed breath; the centre pulses at the frequency-driven rate.
-  const breath = heartWave(t) * (0.55 + 0.45 * (f.breath || 0.4));
-  const cb = centerWave(f.pulsePh || 0) * (0.55 + 0.45 * (f.breath || 0.4));
+  const breath = heartWaveP1(t) * (0.55 + 0.45 * (f.breath || 0.4));
+  const cb = centerWaveP1(f.pulsePh || 0) * (0.55 + 0.45 * (f.breath || 0.4));
   const R = fieldRadius(w, h, breath, n1);
   const glow = 0.72 + 0.28 * breath + 0.18 * energy;
   const beatPh = (f.beatPhase || 0) * TAU;
@@ -601,12 +683,9 @@ function drawLivingRing(cv, w, h, f, dt) {
     strokeDisc(g, rad);
   }
   drawCorePulses(g, R, tint, 1);
-  // Radar edge (v8.2): two soft glowing range rings in the same style as the centre pulse rings, each
-  // carrying broken arc segments that spin at their own irregular speed (smooth noise, occasionally
-  // reversing), plus a sweep arm riding the first layer with a fading trail. Speeds come from the
-  // frequency-tied pulse period, never from the beat phase, so fast moods stay smooth (no strobing).
+  // v10: two free-form harmonograph waveform layers driven by every mood parameter (see drawP1Waves).
   const shimmer = f.shimmer || 0.4;
-  drawRadarEdge(g, R, f, tint, energy, shimmer, cb, t, Math.min(0.1, Math.max(0, dt || 0)));
+  drawP1Waves(g, R, f, tint, energy, cb, t, Math.min(0.1, Math.max(0, dt || 0)), bands);
   const n = RINGP.n;
   const motes = 1 + 0.22 * energy;
   for (let b = 0; b < VIS_BANDS; b++) {

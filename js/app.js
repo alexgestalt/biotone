@@ -59,7 +59,7 @@ const PAGES = [
 ];
 const SOURCE_PAGE = { tone: 'tone', binaural: 'binaural', schumann: 'schumann', pulse: 'pulse', mood: 'moods', mixer: 'mixer' };
 const SCHUMANN = 7.83;
-const APP_BUILD = 'biotone-v9.1'; // keep equal to the sw.js cache version
+const APP_BUILD = 'biotone-v10'; // keep equal to the sw.js cache version
 
 function makeLayer(kind) {
   const base = { id: uid(), tag: Math.floor(Math.random() * 1e9) + 1000, kind, frequency: 200, beat: 7.83, texture: 'rain', volume: 0.5, pan: 0, muted: false };
@@ -871,7 +871,9 @@ function renderPage(key) {
   const top = el.scrollTop;
   const moodEl = el.querySelector('.moodwin');
   if (moodEl) moodScrollTop = moodEl.scrollTop;
+  const oldOrb = el.querySelector('canvas[data-orb]'); // page 1 visual: carry the live canvas across re-renders
   el.innerHTML = PAGE_RENDER[key]();
+  if (oldOrb) { const fresh = el.querySelector('canvas[data-orb]'); if (fresh) fresh.replaceWith(oldOrb); }
   el.scrollTop = top;
   const moodNext = el.querySelector('.moodwin');
   if (moodNext) {
