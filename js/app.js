@@ -1403,8 +1403,7 @@ function frame(t) {
       // Same visualizer as the Resonance page, fed by the selected mood.
       updateVisAudio(moodVis, m.pure ? m.hz : m.carrier, m.pure ? 0 : m.beat, dt);
       useRingState(RING_STATE_MOODS);
-      if (scDefault(A.state.schumann)) drawOpeningField(ocv, box.clientWidth, box.clientHeight, moodVis, dt);
-      else drawLivingRing(ocv, box.clientWidth, box.clientHeight, moodVis, dt);
+      drawLivingRing(ocv, box.clientWidth, box.clientHeight, moodVis, dt); // ring mode, locked
       useRingState(RING_STATE_MAIN);
     }
   }
