@@ -59,7 +59,7 @@ const PAGES = [
 ];
 const SOURCE_PAGE = { tone: 'tone', binaural: 'binaural', schumann: 'schumann', pulse: 'pulse', mood: 'moods', mixer: 'mixer' };
 const SCHUMANN = 7.83;
-const APP_BUILD = 'biotone-v12.2'; // keep equal to the sw.js cache version
+const APP_BUILD = 'biotone-v12.3'; // keep equal to the sw.js cache version
 
 function makeLayer(kind) {
   const base = { id: uid(), tag: Math.floor(Math.random() * 1e9) + 1000, kind, frequency: 200, beat: 7.83, texture: 'rain', volume: 0.5, pan: 0, muted: false };
@@ -1484,7 +1484,8 @@ function updateRingAudio(dt) {
   const wC = 0.04 + 0.9 * Math.pow(u0, 1.2), wB = 0.05 * Math.pow(24, ringVis.p4S);
   const W = [wC * mv, -wB * mv, (0.04 + 0.1 * wC + 0.12 * wB) * mv];
   const vi = ringVis.vzIn || (ringVis.vzIn = {});                       // reused object: no per-frame garbage
-  vi.cu = u0; vi.bu = u1; vi.buSize = 0.5; // v12.1: beat sets spin only, never size, on page 4 vi.tone = pv.depth; vi.nat = A.state.noise; vi.natLevel = A.state.noise !== 'off' ? (A.state.noiseLevel || 0) : 0; vi.music = vi.natLevel;
+  vi.cu = u0; vi.bu = u1; vi.tone = pv.depth; vi.nat = A.state.noise; vi.natLevel = A.state.noise !== 'off' ? (A.state.noiseLevel || 0) : 0; vi.music = vi.natLevel;
+  vi.buSize = 0.5; // v12.1: beat sets spin only, never size, on page 4. v12.3: the assignments above had been commented out (no extra layers or nature signatures on page 4).
   const q = ringVis.p4Rots || (ringVis.p4Rots = [0, Math.PI / 5, 0]);
   for (let i = 0; i < 3; i++) q[i] = (q[i] + dt * W[i]) % TAU;
   ringVis.p4W = W;
