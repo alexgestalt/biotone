@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<title>Biotone · Visualizer sweep gallery</title>
+<meta name="description" content="Favourite Biotone visualizer settings from the v12 sweep: Moods and Resonance pages, with layers, movement, circles and ambient sound.">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png?v=2">
+<style>
+:root{--accent:#FFC71F;--panel:#161616;--panelHi:#262626;--text:#fff;--muted:#949494;
+--sf:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;color:var(--text);font-family:var(--sf);-webkit-text-size-adjust:100%}
+body{padding:calc(env(safe-area-inset-top,0px) + 14px) calc(env(safe-area-inset-right,0px) + 16px) calc(env(safe-area-inset-bottom,0px) + 32px) calc(env(safe-area-inset-left,0px) + 16px)}
+main{max-width:1080px;margin:0 auto}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:2px;color:var(--accent)}
+.brand img{width:30px;height:30px;border-radius:50%}
+.back{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;padding:8px 14px;border-radius:99px;background:var(--accent);color:#000;text-decoration:none}
+h1{font-size:26px;font-weight:700;line-height:1.2;margin-bottom:6px}
+.lede{color:var(--muted);font-size:14px;line-height:1.45;margin-bottom:20px}
+h2{font-size:12px;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin:28px 0 10px}
+.media{background:var(--panel);border-radius:16px;overflow:hidden}
+video,.sheet{display:block;width:100%;height:auto;background:#000}
+.note{color:var(--muted);font-size:12px;line-height:1.4;margin-top:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.card{background:var(--panel);border-radius:16px;overflow:hidden}
+.card img{display:block;width:100%;height:auto;aspect-ratio:1/1;background:#000}
+figcaption{padding:10px 12px 12px;font-size:13px;line-height:1.4;color:var(--muted)}
+figcaption b{display:block;color:var(--accent);font-size:14px;margin-bottom:2px}
+footer{margin-top:32px;color:var(--muted);font-size:12px;line-height:1.45;text-align:center}
+footer a{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div class="brand"><img src="../icons/header-icon-96.png" alt="">BIOTONE</div>
+    <a class="back" href="../">&#8249; Back to the app</a>
+  </div>
+  <h1>Visualizer sweep</h1>
+  <p class="lede">Favourite looks from a sweep of 27 Visual mix combinations on build v12, across the Moods page (page 1) and the Resonance page (page 4). Open Visual mix in the app to try them for a calm, immersive listening session.</p>
+
+  <h2>Showcase</h2>
+  <div class="media">
+    <video src="media/sweep-showcase.mp4" poster="media/sweep-showcase-poster.jpg" playsinline muted loop controls preload="metadata" width="640" height="700"></video>
+  </div>
+  <p class="note">All nine favourites in about 20 seconds. Video only, without sound.</p>
+
+  <h2>Contact sheet</h2>
+  <div class="media"><img class="sheet" src="media/sweep-winners.webp" width="1200" height="525" alt="Contact sheet of the nine favourite visualizer settings"></div>
+
+  <h2>Page 1 · Moods</h2>
+  <div class="grid">
+      <figure class="card">
+        <img src="media/p1-spark-waterfall.webp" width="480" height="480" loading="lazy" decoding="async" alt="Moods page visualizer, Spark + waterfall setting">
+        <figcaption><b>Spark + waterfall</b><span>Spark mood, layers 4, movement 1.5, circles 8, speed 2, waterfall 0.9</span></figcaption>
+      </figure>
+      <figure class="card">
+        <img src="media/p1-glow-pads.webp" width="480" height="480" loading="lazy" decoding="async" alt="Moods page visualizer, Glow + pads setting">
+        <figcaption><b>Glow + pads</b><span>Glow (528 Hz), layers 2, movement 0.8, circles 5, speed 0.8, pads 0.9</span></figcaption>
+      </figure>
+      <figure class="card">
+        <img src="media/p1-create-pink.webp" width="480" height="480" loading="lazy" decoding="async" alt="Moods page visualizer, Create + pink setting">
+        <figcaption><b>Create + pink</b><span>Create, layers 4, movement 2, circles 12, speed 2.5, pink 1.0</span></figcaption>
+      </figure>
+      <figure class="card">
+        <img src="media/p1-active-wind.webp" width="480" height="480" loading="lazy" decoding="async" alt="Moods page visualizer, Active + wind setting">
+        <figcaption><b>Active + wind</b><span>Active, layers 3, movement 1.6, circles 5, speed 1.3, wind 0.8</span></figcaption>
+      </figure>
+      <figure class="card">
+        <img src="media/p1-ease-white.webp" width="480" height="480" loading="lazy" decoding="async" alt="Moods page visualizer, Ease + white setting">
+        <figcaption><b>Ease + white</b><span>Ease (432 Hz), layers 0, movement 1, circles 2, speed 1, white 1.0</span></figcaption>
+      </figure>
+  </div>
+
+  <h2>Page 4 · Resonance</h2>
+  <div class="grid">
+      <figure class="card">
+        <img src="media/p4-drone.webp" width="480" height="480" loading="lazy" decoding="async" alt="Resonance page visualizer, Drone setting">
+        <figcaption><b>Drone</b><span>carrier 60 Hz, beat 7.83, layers 1, movement 0.5, circles 6, speed 0.7, drone 0.9</span></figcaption>
+      </figure>
+      <figure class="card">
+        <img src="media/p4-waterfall.webp" width="480" height="480" loading="lazy" decoding="async" alt="Resonance page visualizer, Waterfall setting">
+        <figcaption><b>Waterfall</b><span>carrier 320 Hz, beat 10, layers 2, movement 1.2, circles 6, speed 1.5, waterfall 0.8</span></figcaption>
+      </figure>
+      <figure class="card">
+        <img src="media/p4-stream-monaural.webp" width="480" height="480" loading="lazy" decoding="async" alt="Resonance page visualizer, Stream monaural setting">
+        <figcaption><b>Stream monaural</b><span>carrier 240 Hz, beat 12, monaural, stream nature 0.6, ambient off, layers 2, movement 1, circles 6, speed 1</span></figcaption>
+      </figure>
+      <figure class="card">
+        <img src="media/p4-pink-slow.webp" width="480" height="480" loading="lazy" decoding="async" alt="Resonance page visualizer, Pink slow setting">
+        <figcaption><b>Pink slow</b><span>carrier 120 Hz, beat 4, layers 3, movement 0.5, circles 12, speed 0.6, pink 0.6</span></figcaption>
+      </figure>
+  </div>
+
+  <footer>Values match the Visual mix sheet: layers, movement, circles, circle speed, ambient sound and level.<br>Biotone is for relaxation and wellness listening, not a medical device.<br><a href="../">Back to Biotone</a></footer>
+</main>
+</body>
+</html>
