@@ -59,7 +59,7 @@ const PAGES = [
 ];
 const SOURCE_PAGE = { tone: 'tone', binaural: 'binaural', schumann: 'schumann', pulse: 'pulse', mood: 'moods', mixer: 'mixer' };
 const SCHUMANN = 7.83;
-const APP_BUILD = 'biotone-v11'; // keep equal to the sw.js cache version
+const APP_BUILD = 'biotone-v12'; // keep equal to the sw.js cache version
 
 function makeLayer(kind) {
   const base = { id: uid(), tag: Math.floor(Math.random() * 1e9) + 1000, kind, frequency: 200, beat: 7.83, texture: 'rain', volume: 0.5, pan: 0, muted: false };
@@ -611,6 +611,12 @@ function ctrl(id) {
     case 'bin.right': return { get: () => b.right, set: (v) => { b.right = v; }, range: RANGES.carrier, src: 'binaural', title: 'Right ear', piano: true };
     case 'bin.pan': return { get: () => b.pan, set: (v) => { b.pan = v; }, range: [-1, 1], src: 'binaural', text: F.pan, pan: true };
     case 'bin.apr': return { get: () => b.autoPanRate, set: (v) => { b.autoPanRate = v; }, range: [0.02, 0.5], src: 'binaural', text: (v) => `one sweep every ${Math.round(1 / v)} s` };
+    // v12 shared visual mix (js/vizParams.js): the same values drive page 1 and page 4.
+    case 'viz.layers': return { get: () => VP.get('layers'), set: (v) => VP.set('layers', Math.round(v)), range: VIZ_RANGES.layers, src: '*', step: 1, text: (v) => String(Math.round(v)), title: 'Extra layers' };
+    case 'viz.circles': return { get: () => VP.get('circles'), set: (v) => VP.set('circles', Math.round(v)), range: VIZ_RANGES.circles, src: '*', step: 1, text: (v) => String(Math.round(v)), title: 'Circles' };
+    case 'viz.spin': return { get: () => VP.get('spin'), set: (v) => VP.set('spin', Math.round(v * 100) / 100), range: VIZ_RANGES.spin, src: '*', text: (v) => '×' + (+v).toFixed(2) };
+    case 'viz.cspeed': return { get: () => VP.get('cspeed'), set: (v) => VP.set('cspeed', Math.round(v * 100) / 100), range: VIZ_RANGES.cspeed, src: '*', text: (v) => '×' + (+v).toFixed(2) };
+    case 'viz.ambLevel': return { get: () => VP.get('ambLevel'), set: (v) => VP.set('ambLevel', Math.round(v * 100) / 100), range: VIZ_RANGES.ambLevel, src: '*', text: pct };
     case 'sch.carrier': return { get: () => st.schumann.carrier, set: (v) => { st.schumann.carrier = v; }, range: RANGES.schumannCarrier, src: 'schumann', title: 'Carrier', step: 1 };
     case 'sch.main': {
       const sc = st.schumann;
@@ -681,12 +687,35 @@ function playBtn(src) {
 const scope = (h) => `<canvas class="scope" data-scope="${h}" style="height:${h}px"></canvas>`;
 const bedLevel = () => (A.state.noise !== 'off' ? lslider('noiseLevel', isNat(A.state.noise) ? 'NATURE LEVEL' : 'NOISE LEVEL') : '');
 
+// v12 visual mix: a compact panel (sheet) reachable from page 1 and page 4; all values live in VP.
+const mixBtn = () => `<button class="mixbtn" data-act="vizmix" aria-label="Visual mix">${I.sliders || ''}<span>Mix</span></button>`;
+const hdrRight = (badge) => `<div style="display:flex;align-items:center;gap:6px">${mixBtn()}${badge}</div>`;
+const vzStep = (id, label) => `<div class="cf vzs"><div style="flex:1"><div class="k">${esc(label)}</div><div class="v" data-vt="${id}">${esc(ctrl(id).text(ctrl(id).get()))}</div></div><div class="b" data-nudge="${id}" data-dir="-1">${I.minus}</div><div class="b" data-nudge="${id}" data-dir="1">${I.plus}</div></div>`;
+function openVizMix() {
+  const amb = VP.get('amb');
+  const html = `<h3>VISUAL MIX</h3><div class="caption" style="text-align:center;margin-top:-6px">Shared by Moods and Resonance</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${vzStep('viz.layers', 'EXTRA LAYERS')}${vzStep('viz.circles', 'CIRCLES')}</div>
+    ${lslider('viz.spin', 'MOVEMENT')}${lslider('viz.cspeed', 'CIRCLE SPEED')}
+    <div class="lslider"><div class="h"><span class="k">AMBIENT</span></div></div>
+    ${pill('viz.amb', AMB_TYPES.slice(0, 5), amb, 'vzamb')}${pill('viz.amb', AMB_TYPES.slice(5), amb, 'vzamb')}
+    ${lslider('viz.ambLevel', 'AMBIENT LEVEL')}
+    <button class="kbtn ok" id="vzdone" style="flex:none">Done</button>`;
+  openSheet(html, (sh, close) => { sh.parentElement.classList.add('lite'); sh.querySelector('#vzdone').onclick = close; });
+}
+// Keep any open panel in sync with the store (changes can also come from another tab).
+VP.on((k, v) => {
+  if (k === 'amb') for (const p of document.querySelectorAll('[data-pill="viz.amb"] > [data-v]')) p.classList.toggle('on', p.dataset.v === v);
+  const id = 'viz.' + k, c = ctrl(id); if (!c) return;
+  for (const el of document.querySelectorAll(`[data-vt="${id}"]`)) el.textContent = c.text(c.get());
+  for (const el of document.querySelectorAll(`[data-slider="${id}"]`)) placeSlider(el, c.get(), c.range);
+});
+
 // ===================================================================== pages
 const PAGE_RENDER = {
   moods() {
     const st = A.state, m = moodOf(st.moods.selected), lv = moodLevels(st, m.key), playing = isPlayingSource('mood');
     const tiles = MOODS.map((x) => `<button class="tile ${x.key === m.key ? 'sel' : ''}" data-act="mood" data-arg="${x.key}"><div class="ic">${moodIcon[x.key] || I.spark}</div><div style="flex:1;min-width:0"><div class="nm">${x.label}</div><div class="bd">${moodLine(x)}</div></div>${x.key === m.key && playing ? `<div class="mw" style="width:20px;color:var(--accent)">${I.wave}</div>` : ''}</button>`).join('');
-    return hdr('Moods', hpBadge(needsHeadphones(A.state, 'mood'))) +
+    return hdr('Moods', hdrRight(hpBadge(needsHeadphones(A.state, 'mood')))) +
       `<div class="orbflex"><div class="orbstage"><canvas data-orb="1"></canvas></div></div>
       <div style="text-align:center"><div style="font-family:var(--rounded);font-size:24px;font-weight:300;line-height:1.2">${m.label}</div><div class="caption" style="margin-top:2px">${moodBand(m)}</div></div>
       <div class="moodwin"><div class="grid2">${tiles}</div></div>` +
@@ -726,7 +755,7 @@ const PAGE_RENDER = {
     } else {
       controls = pill('sch.engine', Object.keys(ENGINE).map((k) => [k, ENGINE[k].label]), sc.engine) + `<div class="caption">${ENGINE[sc.engine].hint}</div>` + compact('sch.carrier', 'Carrier');
     }
-    return hdr(def ? 'Schumann 7.83' : 'Resonance', hpBadge(needsHeadphones(A.state, 'schumann'))) + libRow + ring + readout +
+    return hdr(def ? 'Schumann 7.83' : 'Resonance', hdrRight(hpBadge(needsHeadphones(A.state, 'schumann')))) + libRow + ring + readout +
       `<div class="sch-controls">` + controls +
       bed('bed', A.state.noise) + bedLevel() + lslider('toneLevel', 'TONE LEVEL') +
       labeledPill('SESSION', 'session', [[0, 'Off'], [15, '15 min'], [30, '30 min'], [60, '1 h'], [480, '8 h']].map(([v, l]) => [String(v), l]), String(A.state.sessionMinutes)) +
@@ -1090,6 +1119,7 @@ function showTip(force) {
 // ===================================================================== actions
 function refreshAfterEdit(page) { renderPage(page || A.page); renderMini(); }
 const ACT = {
+  vizmix: () => openVizMix(),
   play: (src) => playOrStop(src),
   toggle: () => toggle(),
   gosource: () => goTo(A.tool ? 'tools' : SOURCE_PAGE[A.activeSource]),
@@ -1156,6 +1186,7 @@ const ACT = {
   libdone() { const i = $('#libq'); if (i) i.blur(); },
 };
 const PILL = {
+  'viz.amb'(v) { VP.set('amb', v); return 'none'; },
   'tone.wave'(v) { A.state.tone.waveform = v; edited('tone'); },
   'bin.mode'(v) { A.state.binaural.linked = v === 'linked'; edited(null, true); },
   'bin.target'(v) { UI.binTarget[A.state.binaural.linked ? 'linked' : 'free'] = v; },
@@ -1180,7 +1211,7 @@ document.addEventListener('click', (e) => {
   const pillEl = e.target.closest('[data-pill] > [data-v]');
   if (pillEl) {
     const id = pillEl.parentElement.dataset.pill, v = pillEl.dataset.v;
-    if (PILL[id]) { const r = PILL[id](v); if (r === 'all') renderAll(); else refreshAfterEdit(); }
+    if (PILL[id]) { const r = PILL[id](v); if (r === 'all') renderAll(); else if (r !== 'none') refreshAfterEdit(); }
     return;
   }
   const a = e.target.closest('[data-act]');
@@ -1368,7 +1399,10 @@ function updateRingAudio(dt) {
   // TAU is invisible (v9 multiplied a wrapped edgePh by 0.4-1.7, which snapped the loops at every wrap).
   const P4R = [0.5, 1, -0.4, -1.3, -0.6, -1.7], sp = (0.25 + 1.1 * ringVis.p4U) * (0.6 + 0.4 * pv.flow);
   const ph4 = ringVis.p4Ph || (ringVis.p4Ph = [0, 0, 0, 0, 0, 0]);
-  for (let i = 0; i < 6; i++) ph4[i] = (ph4[i] + dt * sp * P4R[i]) % TAU;
+  const mvp = 0.4 + 0.6 * (ringVis.spinE != null ? ringVis.spinE : 1);
+  // v12: bounded at 20*PI, not TAU: the trace also uses 0.3 * phase (ring angle), and 0.3 * 20*PI = 6*PI is a
+  // whole number of turns, so the wrap is invisible for every term (wrapping at TAU snapped the loops).
+  for (let i = 0; i < 6; i++) ph4[i] = (ph4[i] + dt * sp * mvp * P4R[i]) % (20 * Math.PI);
   // Slow non-repeating drift: integrated random walk per layer, smoothed (no fixed period, never loops).
   const dr = ringVis.p4Drift || (ringVis.p4Drift = { v: [0, 0, 0], x: [0, 0, 0] });
   for (let i = 0; i < 3; i++) {
@@ -1385,7 +1419,12 @@ function updateRingAudio(dt) {
   //  layer 1 = MAIN-frequency (beat) layer, counter-rotating, 0.04 rad/s at 0.5 Hz -> ~0.94 rad/s at 45 Hz;
   //  layer 2 = gentle mix of both, forward, 0.05 -> 0.2 rad/s, so it never masks the other two.
   const u0 = ringVis.p4U, u1 = ringVis.p4B, u2 = 0.5 * (u0 + u1);
-  const W = [0.04 + 0.9 * Math.pow(u0, 1.2), -(0.04 + 0.9 * Math.pow(u1, 1.2)), 0.05 + 0.15 * u2];
+  if (ringVis.spinE == null) ringVis.spinE = VP.get('spin');
+  approach(ringVis, 'spinE', VP.get('spin'), dt, 0.6, 0.6);           // shared Movement (0..2), eased
+  const mv = ringVis.spinE;
+  const W = [(0.04 + 0.9 * Math.pow(u0, 1.2)) * mv, -(0.04 + 0.9 * Math.pow(u1, 1.2)) * mv, (0.05 + 0.15 * u2) * mv];
+  const vi = ringVis.vzIn || (ringVis.vzIn = {});                       // reused object: no per-frame garbage
+  vi.cu = u0; vi.bu = u1; vi.tone = pv.depth; vi.nat = A.state.noise; vi.natLevel = A.state.noise !== 'off' ? (A.state.noiseLevel || 0) : 0; vi.music = vi.natLevel;
   const q = ringVis.p4Rots || (ringVis.p4Rots = [0, Math.PI / 5, 0]);
   for (let i = 0; i < 3; i++) q[i] = (q[i] + dt * W[i]) % TAU;
   ringVis.p4W = W;
@@ -1453,7 +1492,7 @@ function updateVisAudio(ringVis, carrier, beat, dt) {
 function frame(t) {
   requestAnimationFrame(frame);
   if (document.hidden) return;
-  const dt = lastT ? Math.min(0.1, (t - lastT) / 1000) : 1 / 60; lastT = t;
+  const dt = lastT ? Math.min(0.05, (t - lastT) / 1000) : 1 / 60; lastT = t; // v12: clamp 50 ms (a stall never turns into a big jump)
   const live = Snd.ready && (A.isPlaying || A.toolStarted || A.stats.env > 0);
   approach(lv, 'v', live ? A.stats.peak : 0, dt, 0.08, 0.6);
   A.level = lv.v;
@@ -1486,20 +1525,36 @@ function frame(t) {
     const c = ctrl(ru.dataset.ruler); const cv = ru.querySelector('canvas'); const w = ru.clientWidth;
     if (c && w) drawRuler(cv, w, c.get(), c.range[0], c.range[1]);
   }
-  const ocv = pageEl.querySelector('[data-orb]');
+  // Ambient bed: level/type follow the shared mix; its analyser feeds both visualizers.
+  Amb.tick(dt, A.isPlaying && !A.tool, (A.timerGain != null ? A.timerGain : 1) * (A.soft || 1));
+  // Visual pages: draw page 1 and page 4 whenever any part of them is on screen (also mid-swipe), so a
+  // page never freezes while it slides in or out. Reads (rects) first, then writes, to avoid layout thrash.
+  const vh = window.innerHeight || 844;
+  const pM = document.getElementById('page-moods'), pS = document.getElementById('page-schumann');
+  const onM = pM && (A.page === 'moods' || (() => { const r = pM.getBoundingClientRect(); return r.bottom > 0 && r.top < vh; })());
+  const onS = pS && (A.page === 'schumann' || (() => { const r = pS.getBoundingClientRect(); return r.bottom > 0 && r.top < vh; })());
+  const ocv = onM ? pM.querySelector('[data-orb]') : null;
   if (ocv) {
     const box = ocv.parentElement;
     layoutRing(box);
-    const m = moodOf(A.state.moods.selected);
+    const m = moodOf(A.state.moods.selected), lvm = moodLevels(A.state, m.key);
     if (box.clientWidth && box.clientHeight) {
       // Same visualizer as the Resonance page, fed by the selected mood.
       updateVisAudio(moodVis, m.pure ? m.hz : m.carrier, m.pure ? 0 : m.beat, dt);
+      const car = m.pure ? m.hz : m.carrier, bt = m.pure ? 0 : m.beat;
+      if (moodVis.spinE == null) moodVis.spinE = VP.get('spin');
+      approach(moodVis, 'spinE', VP.get('spin'), dt, 0.6, 0.6);
+      const vi = moodVis.vzIn || (moodVis.vzIn = {});
+      vi.cu = cl(Math.log(Math.max(1, car) / 100) / Math.log(2.6), 0, 1);
+      vi.bu = bt > 0.05 ? cl(Math.log(cl(bt, 0.5, 45) / 0.5) / Math.log(90), 0, 1) : 0;
+      vi.tone = cl(((lvm.tone != null ? lvm.tone : m.tone) - 0.2) / 0.3, 0, 1); vi.music = cl(lvm.music != null ? lvm.music : m.music, 0, 1);
+      vi.nat = lvm.ambience || 'off'; vi.natLevel = lvm.ambience && lvm.ambience !== 'off' ? (lvm.ambienceLevel || 0) : 0;
       useRingState(RING_STATE_MOODS);
       drawLivingRing(ocv, box.clientWidth, box.clientHeight, moodVis, dt); // ring mode, always
       useRingState(RING_STATE_MAIN);
     }
   }
-  const rcv = pageEl.querySelector('[data-ring]');
+  const rcv = onS ? pS.querySelector('[data-ring]') : null;
   if (rcv) {
     const stage = rcv.parentElement;
     layoutRing(stage);

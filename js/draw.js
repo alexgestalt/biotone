@@ -231,20 +231,17 @@ function fillSpectrum(freq, loArr, hiArr, out) {
 }
 // Lub-dub inside a 5.5 s cycle, plus a slower swell. Never a fast blink.
 function heartWave(time) {
-  const ph = time / 5.5 - Math.floor(time / 5.5);
-  const lub = Math.exp(-((ph - 0.08) * (ph - 0.08)) / 0.0018);
-  const dub = 0.7 * Math.exp(-((ph - 0.22) * (ph - 0.22)) / 0.0022);
-  const slow = 0.5 + 0.5 * Math.sin(time * (TAU / 5.6));
-  const h = lub + dub; return 0.45 * slow + 0.55 * (h < 1 ? h : 1);
+  // v12: smooth, seamless outer breath (no lub-dub spikes, no wrap step): a slow sine whose phase wanders
+  // with smooth noise, plus a slower incommensurate swell, so it never repeats or twitches.
+  return 0.5 + 0.32 * Math.sin(time * (TAU / 5.5) + 2.4 * (noise2(time * 0.021, 17.3) - 0.5)) + 0.13 * Math.sin(time * (TAU / 9.7) + 1.1);
 }
 // Centre pulse: the same lub-dub shape as heartWave, driven by a phase accumulator (0..1) whose rate
 // follows the frequency (pulsePh, advanced per page in updateVisAudio), so rate changes never jump.
 function centerWave(ph) {
-  ph -= Math.floor(ph);
-  const lub = Math.exp(-((ph - 0.08) * (ph - 0.08)) / 0.0018);
-  const dub = 0.7 * Math.exp(-((ph - 0.22) * (ph - 0.22)) / 0.0022);
-  const slow = 0.5 + 0.5 * Math.sin(ph * TAU);
-  const h = lub + dub; return 0.45 * slow + 0.55 * (h < 1 ? h : 1);
+  // v12: smooth pulse peaking at phase 0.08 (where a ring is born). A raised cosine to the power 1.6 is
+  // periodic and C1-continuous, so it never steps at the wrap and never twitches, even at fast beats.
+  const s = 0.5 + 0.5 * Math.cos(TAU * (ph - 0.08));
+  return 0.12 + 0.88 * Math.pow(s, 1.6);
 }
 // Page 1 seamless variants (same lub-dub look). The shared versions measure the lub from the raw 0..1
 // phase, so at each wrap it steps by ~0.03; these use the wrapped distance to the peak, so the curve is
@@ -256,13 +253,8 @@ function seamLubDub(ph) {
   let d2 = ph - 0.22; d2 -= Math.round(d2);
   return Math.exp(-(d1 * d1) / 0.0018) + 0.7 * Math.exp(-(d2 * d2) / 0.0022);
 }
-function heartWaveP1(time) {
-  const slow = 0.5 + 0.5 * Math.sin(time * (TAU / 5.6) + 2.4 * (noise2(time * 0.021, 17.3) - 0.5));
-  const h = seamLubDub(time / 5.5); return 0.45 * slow + 0.55 * (h < 1 ? h : 1);
-}
-function centerWaveP1(ph) {
-  const h = seamLubDub(ph); return 0.45 * (0.5 + 0.5 * Math.sin(ph * TAU)) + 0.55 * (h < 1 ? h : 1);
-}
+function heartWaveP1(time) { return heartWave(time); }   // v12: same smooth seamless breath as page 4
+function centerWaveP1(ph) { return centerWave(ph); }      // v12: smooth pulse (no lub-dub spike)
 // Disc fill, inner glow and core dot all pulse from the centre at the frequency-driven rate.
 function paintCenterPulse(g, R, col, cb, energy, petal) {
   const cg = 0.72 + 0.28 * cb + 0.18 * energy;
@@ -518,7 +510,8 @@ function drawCorePulses(g, R, tint, k) {
     let life = 1 - (u - 0.14) / 0.9;
     if (life <= 0) continue;
     if (life > 1) life = 1;
-    const fade = life * (0.35 + 0.65 * life);
+    let born = (u - 0.13) / 0.14; born = born <= 0 ? 0 : born >= 1 ? 1 : born * born * (3 - 2 * born);
+    const fade = life * (0.35 + 0.65 * life) * born;   // v12: fade in at birth (a new ring used to pop in)
     g.strokeStyle = PAL[palIndex(tint + EMIT.band[i] * 0.035)];
     g.globalAlpha = (0.12 + 0.5 * EMIT.amp[i]) * fade * k;
     g.lineWidth = 1.4 + 7 * fade;
@@ -578,7 +571,8 @@ function drawCorePulsesP1(g, R, k) {
     let life = 1 - (u - 0.14) / 0.9;
     if (life <= 0) continue;
     if (life > 1) life = 1;
-    const fade = life * (0.35 + 0.65 * life);
+    let born = (u - 0.13) / 0.14; born = born <= 0 ? 0 : born >= 1 ? 1 : born * born * (3 - 2 * born);
+    const fade = life * (0.35 + 0.65 * life) * born;   // v12: fade in at birth
     g.strokeStyle = PAL[palIndex(EMIT.band[i] * 0.012)];
     g.globalAlpha = (0.12 + 0.5 * EMIT.amp[i]) * fade * k;
     g.lineWidth = 1.4 + 7 * fade;
@@ -612,7 +606,7 @@ function drawP1Waves(g, R, f, tint, energy, cb, t, dt, bands) {
   const ml = Math.max(0, Math.min(1, (S.music - 0.4) / 0.3));             // music level ~0.4..0.7 -> 0..1
   // Speeds: base from the frequency-tied pulse period; each layer has its own ratio and direction.
   // v10.3: also speeds up with the carrier itself (x0.7 at Still .. x2.1 at Spark / pure tones).
-  const per = f.pulsePeriod || 6.5, sp = (0.05 + 0.9 / per) * (0.7 + 1.4 * cu);
+  const per = f.pulsePeriod || 6.5, sp = (0.05 + 0.9 / per) * (0.7 + 1.4 * cu) * (f.spinE != null ? f.spinE : 1); // v12: shared Movement
   const wob = (k) => 0.35 * (noise2(t * 0.13, 4.1 + k * 7.3) - 0.5); // irregular, smooth speed wander
   // Everything below is integrated per frame (phase += speed * dt) and never wrapped: phA/phB also feed
   // scaled terms (px * 0.5, px * 0.3), where a wrap at TAU would snap the trace. Each rate carries its own
@@ -632,12 +626,13 @@ function drawP1Waves(g, R, f, tint, energy, cb, t, dt, bands) {
   // converge/cross swing narrows as the layers open so the top moods sit at the edge; a peak estimate
   // is capped so the brightest line peaks land at ~0.9-0.95R and nothing clips.
   const b = 0.2 + 0.24 * tl;                                                      // tone level -> loop depth
-  const S0r = R * (0.3 + 0.74 * cu) * swell;
+  const S0r = R * (0.3 + 0.74 * cu) * swell * (f._vz ? f._vz.swell * f._vz.tide : 1);
   const swing = 0.1 * (1 - 0.6 * open);
   const S0 = Math.min(S0r, 1.0 * R / (1 + swing)); // measured: bright line peaks land at ~0.93-0.95R
   const lob = 4 + 4 * cu + 3 * bu;                                                // sine lobes on the opened rings
   const damp = (0.065 - 0.03 * tl) * (1 - 0.85 * open);                           // chaos coils at low carrier
-  const live = (k) => (0.14 * Math.sin(S.liv0 * (1 + 0.37 * k) + k * 2.1) + 0.07 * Math.sin(S.liv1 * (1 + 0.23 * k) + k)) * (1 - 0.6 * open);
+  const jit = f._vz ? f._vz.jit : 0;
+  const live = (k) => (0.14 * Math.sin(S.liv0 * (1 + 0.37 * k) + k * 2.1) + 0.07 * Math.sin(S.liv1 * (1 + 0.23 * k) + k)) * (1 - 0.6 * open) + jit * (noise2(t * 0.9 + k * 3.3, 6.6) - 0.5);
   const kr = (0.8 + 1.1 * cu) * (0.85 + 0.35 * bu);
   // Engine: binaural keeps the two layers out of phase (crossing); a pure tone draws them closer in step.
   const off = TAU * (0.5 * (1 - S.pure) + 0.12 * S.pure + 0.25 * S.recipe);
@@ -706,9 +701,19 @@ function drawLivingRing(cv, w, h, f, dt) {
     strokeDisc(g, rad);
   }
   drawCorePulsesP1(g, R, 1);
+  // v12 shared mix layers (circles, ambient signatures, extra layers): see js/vizx.js.
+  const VZ = f._vz || (f._vz = vzState());
+  const vin = f.vzIn || { cu: 0.5, bu: 0.5, tone: 0.5, music: 0.5, nat: 'off', natLevel: 0 };
+  const VC = f._vzc || (f._vzc = {});
+  VC.dt = Math.min(0.05, Math.max(0, dt || 0)); VC.t = t; VC.cu = vin.cu; VC.bu = vin.bu; VC.pulseSpeed = f.pulseSpeed; VC.energy = energy;
+  VC.tone = vin.tone; VC.music = vin.music; VC.nat = vin.nat; VC.natLevel = vin.natLevel;
+  vzPrepare(VZ, VC);
+  vzDrawBack(g, R, VZ, VC);
+  g.globalCompositeOperation = 'lighter';
   // v10: two free-form harmonograph waveform layers driven by every mood parameter (see drawP1Waves).
   const shimmer = f.shimmer || 0.4;
-  drawP1Waves(g, R, f, tint, energy, cb, t, Math.min(0.1, Math.max(0, dt || 0)), bands);
+  drawP1Waves(g, R, f, tint, energy, cb, t, Math.min(0.05, Math.max(0, dt || 0)), bands);
+  vzDrawLayers(g, R, VZ, VC);
   const n = RINGP.n;
   const motes = 1 + 0.22 * energy;
   for (let b = 0; b < VIS_BANDS; b++) {
@@ -723,6 +728,8 @@ function drawLivingRing(cv, w, h, f, dt) {
       g.beginPath(); g.arc(x, y, sz * 0.5, 0, TAU); g.fill();
     }
   }
+  vzDrawFront(g, R, VZ, VC);
+  g.globalCompositeOperation = 'lighter';
   strokeLivingEdge(g, R, col, glow, breath, n1, n2, t);
   paintCore(g, hot, cb, energy);
   g.globalAlpha = 1;
@@ -778,6 +785,14 @@ function drawOpeningField(cv, w, h, f, dt) {
   g.lineCap = 'round';
   g.strokeStyle = col;
   drawCorePulses(g, R, tint, 0.6);
+  // v12 shared mix layers (circles, ambient signatures, extra layers): see js/vizx.js.
+  const VZ = f._vz || (f._vz = vzState());
+  const vin = f.vzIn || { cu: 0.5, bu: 0.5, tone: 0.8, music: 0, nat: 'off', natLevel: 0 };
+  const VC = f._vzc || (f._vzc = {});
+  VC.dt = Math.min(0.05, Math.max(0, dt || 0)); VC.t = t; VC.cu = vin.cu; VC.bu = vin.bu; VC.pulseSpeed = f.pulseSpeed; VC.energy = energy;
+  VC.tone = vin.tone; VC.music = vin.music; VC.nat = vin.nat; VC.natLevel = vin.natLevel;
+  vzPrepare(VZ, VC);
+  vzDrawBack(g, R, VZ, VC);
   const e0 = bands ? bands[0] : 0.2, e1 = bands ? bands[3] : 0.16, e2 = bands ? bands[6] : 0.12;
   // Three petal layers, each morphing and spinning with the frequency (angles from f.petalRots, shape from
   // f.petalSlim: 0 slow/round .. 1 fast/slender). Each layer blooms on the centre pulse a little later than
@@ -805,25 +820,26 @@ function drawOpeningField(cv, w, h, f, dt) {
   // trace is ~1.17 S (ring lobes), so S = R * (0.16 + 0.65 u) keeps it inside ~0.95 R at the top.
   //  layer 0 with the carrier, layer 1 with the main frequency (beat), layer 2 with the mix.
   const U0 = eu, U1 = f.p4B != null ? f.p4B : 0.5, U2 = 0.5 * (U0 + U1);
-  const sz = (u) => R * (0.16 + 0.65 * u) * swell;
+  const sz = (u) => R * (0.16 + 0.65 * u) * swell * VZ.swell * VZ.tide;
   const open = eu * eu * (3 - 2 * eu);             // smooth 0..1
   const rin = 0.58 * Math.max(0, (open - 0.2) / 0.8);
   const rg = Math.max(0, Math.min(1, (eu - 0.35) / 0.6)), ring = 0.92 * rg * rg * (3 - 2 * rg);
   const lob = 5 + 4 * eu + 2 * s;   // lobes on the waveform rings (carrier + beat)
   const damp = (0.06 - 0.03 * pv.depth) * (1 - 0.85 * open);
   const b = 0.22 + 0.22 * pv.depth;                // tone level: depth of the second pendulum (loop size)
-  const live = (k) => DR[k] + 0.08 * (noise2(t * 0.031 + k * 7.3, k * 3.1) - 0.5);
+  const live = (k) => DR[k] + 0.08 * (noise2(t * 0.031 + k * 7.3, k * 3.1) - 0.5) + VZ.jit * (noise2(t * 0.9 + k * 3.3, 5.5) - 0.5);
   const kr = (0.8 + 1.1 * eu) * (0.85 + 0.35 * s);
   const cIn = centerWave(ph) * amp, cMid = centerWave(ph - 0.07) * amp, cOut = centerWave(ph - 0.14) * amp;
   const sh = shimmer * (0.75 + 0.35 * pv.depth), halo = 4 + 7 * pv.halo;
   g.lineJoin = 'round'; g.lineCap = 'round';
   // Outer: spins forward; middle: counter-rotates; inner: fastest. Each has its own ratio and drift.
-  traceFreeHarmonograph(g, sz(U0) * (0.94 + 0.06 * cOut), 1.5 * kr + live(0), b, P4[0], P4[1], damp, pr[0], rin, ring, lob);
+  traceFreeHarmonograph(g, sz(U0) * (0.97 + 0.03 * cOut), 1.5 * kr + live(0), b, P4[0], P4[1], damp, pr[0], rin, ring, lob);
   strokeTrace(g, tint, 0, e0, energy, sh, halo);
-  traceFreeHarmonograph(g, sz(U1) * (0.94 + 0.06 * cMid), 1.27 * kr + live(1), b * 0.9, TAU * pv.off1 + P4[2], TAU * pv.off1 + P4[3], damp * 1.1, pr[1], rin * 0.85, ring, lob);
+  traceFreeHarmonograph(g, sz(U1) * (0.97 + 0.03 * cMid), 1.27 * kr + live(1), b * 0.9, TAU * pv.off1 + P4[2], TAU * pv.off1 + P4[3], damp * 1.1, pr[1], rin * 0.85, ring, lob);
   strokeTrace(g, tint, 0.04, e1, energy, sh * 0.8, halo);
-  traceFreeHarmonograph(g, sz(U2) * (0.92 + 0.08 * cIn), 2.1 * kr + live(2), b * 1.1, TAU * pv.off2 + P4[4], TAU * pv.off2 + P4[5], damp * 1.2, pr[2], rin * 0.7, ring, lob);
+  traceFreeHarmonograph(g, sz(U2) * (0.96 + 0.04 * cIn), 2.1 * kr + live(2), b * 1.1, TAU * pv.off2 + P4[4], TAU * pv.off2 + P4[5], damp * 1.2, pr[2], rin * 0.7, ring, lob);
   strokeTrace(g, tint, 0.08, e2, energy, sh, halo);
+  vzDrawLayers(g, R, VZ, VC);
   // Starry sonar layer: motes drift outward from the middle at the pulse-ring speed (frequency-tied),
   // flare as a pulse ring passes, fade near the edge, and are reborn near the centre. Drawn after the
   // traces so they are never drowned out.
@@ -850,6 +866,8 @@ function drawOpeningField(cv, w, h, f, dt) {
       g.beginPath(); g.arc(x, y, sz * 0.55, 0, TAU); g.fill();
     }
   }
+  vzDrawFront(g, R, VZ, VC);
+  g.globalCompositeOperation = 'lighter';
   strokeLivingEdge(g, R, col, glow, breath, n1, n2, t);
   paintCore(g, hot, cb, energy);
   g.globalAlpha = 1;
