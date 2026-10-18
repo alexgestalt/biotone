@@ -466,13 +466,15 @@ function traceFreeHarmonograph(g, S, fy, b, px, py, damp, rot, rin, ring, lobes)
   }
 }
 // Thin glowing line: soft halo underneath, a fine bright core on top. Drawn additively, so crossings brighten.
+// v12.1: TRACE_DIM < 1 while a subtle ambient signature is showing (set per frame by the page renderer).
+let TRACE_DIM = 1;
 function strokeTrace(g, tint, shift, e, energy, shimmer, halo) {
   const col = PAL[palIndex(tint + shift)];
   g.strokeStyle = col;
-  g.globalAlpha = (0.08 + 0.16 * shimmer) * (5 / halo) ** 0.5;
+  g.globalAlpha = (0.08 + 0.16 * shimmer) * (5 / halo) ** 0.5 * TRACE_DIM;
   g.lineWidth = halo;
   g.stroke();
-  g.globalAlpha = 0.35 + 0.45 * e + 0.15 * energy;
+  g.globalAlpha = (0.35 + 0.45 * e + 0.15 * energy) * TRACE_DIM;
   g.lineWidth = 1.1 + 1.2 * e;
   g.stroke();
 }
@@ -581,10 +583,10 @@ function drawCorePulsesP1(g, R, k) {
 }
 function strokeP1Trace(g, tint, shift, e, energy, bright, halo) {
   g.strokeStyle = PAL[palIndex(shift)]; // v10.3: page 1 is gold only, no frequency tint
-  g.globalAlpha = (0.08 + 0.16 * bright) * (5 / halo) ** 0.5;
+  g.globalAlpha = (0.08 + 0.16 * bright) * (5 / halo) ** 0.5 * TRACE_DIM;
   g.lineWidth = halo;
   g.stroke();
-  g.globalAlpha = 0.32 + 0.4 * e + 0.15 * energy + 0.12 * bright;
+  g.globalAlpha = (0.32 + 0.4 * e + 0.15 * energy + 0.12 * bright) * TRACE_DIM;
   g.lineWidth = 1.1 + 1.2 * e;
   g.stroke();
 }
@@ -706,13 +708,15 @@ function drawLivingRing(cv, w, h, f, dt) {
   const vin = f.vzIn || { cu: 0.5, bu: 0.5, tone: 0.5, music: 0.5, nat: 'off', natLevel: 0 };
   const VC = f._vzc || (f._vzc = {});
   VC.dt = Math.min(0.05, Math.max(0, dt || 0)); VC.t = t; VC.cu = vin.cu; VC.bu = vin.bu; VC.pulseSpeed = f.pulseSpeed; VC.energy = energy;
-  VC.tone = vin.tone; VC.music = vin.music; VC.nat = vin.nat; VC.natLevel = vin.natLevel;
+  VC.tone = vin.tone; VC.music = vin.music; VC.nat = vin.nat; VC.natLevel = vin.natLevel; VC.buSize = null;
   vzPrepare(VZ, VC);
   vzDrawBack(g, R, VZ, VC);
   g.globalCompositeOperation = 'lighter';
   // v10: two free-form harmonograph waveform layers driven by every mood parameter (see drawP1Waves).
   const shimmer = f.shimmer || 0.4;
+  TRACE_DIM = VZ.dimC;
   drawP1Waves(g, R, f, tint, energy, cb, t, Math.min(0.05, Math.max(0, dt || 0)), bands);
+  TRACE_DIM = 1;
   vzDrawLayers(g, R, VZ, VC);
   const n = RINGP.n;
   const motes = 1 + 0.22 * energy;
@@ -790,7 +794,7 @@ function drawOpeningField(cv, w, h, f, dt) {
   const vin = f.vzIn || { cu: 0.5, bu: 0.5, tone: 0.8, music: 0, nat: 'off', natLevel: 0 };
   const VC = f._vzc || (f._vzc = {});
   VC.dt = Math.min(0.05, Math.max(0, dt || 0)); VC.t = t; VC.cu = vin.cu; VC.bu = vin.bu; VC.pulseSpeed = f.pulseSpeed; VC.energy = energy;
-  VC.tone = vin.tone; VC.music = vin.music; VC.nat = vin.nat; VC.natLevel = vin.natLevel;
+  VC.tone = vin.tone; VC.music = vin.music; VC.nat = vin.nat; VC.natLevel = vin.natLevel; VC.buSize = vin.buSize;
   vzPrepare(VZ, VC);
   vzDrawBack(g, R, VZ, VC);
   const e0 = bands ? bands[0] : 0.2, e1 = bands ? bands[3] : 0.16, e2 = bands ? bands[6] : 0.12;
@@ -819,7 +823,9 @@ function drawOpeningField(cv, w, h, f, dt) {
   // Size: each layer grows with its own frequency, from small near the centre to the edge. Peak extent of a
   // trace is ~1.17 S (ring lobes), so S = R * (0.16 + 0.65 u) keeps it inside ~0.95 R at the top.
   //  layer 0 with the carrier, layer 1 with the main frequency (beat), layer 2 with the mix.
-  const U0 = eu, U1 = f.p4B != null ? f.p4B : 0.5, U2 = 0.5 * (U0 + U1);
+  // v12.1: only the carrier layer changes size; the beat-led and mixed layers keep a constant size (the beat
+  // now drives their spin, see updateRingAudio).
+  const U0 = eu, U1 = 0.5, U2 = 0.45;
   const sz = (u) => R * (0.16 + 0.65 * u) * swell * VZ.swell * VZ.tide;
   const open = eu * eu * (3 - 2 * eu);             // smooth 0..1
   const rin = 0.58 * Math.max(0, (open - 0.2) / 0.8);
@@ -833,12 +839,14 @@ function drawOpeningField(cv, w, h, f, dt) {
   const sh = shimmer * (0.75 + 0.35 * pv.depth), halo = 4 + 7 * pv.halo;
   g.lineJoin = 'round'; g.lineCap = 'round';
   // Outer: spins forward; middle: counter-rotates; inner: fastest. Each has its own ratio and drift.
+  TRACE_DIM = VZ.dimC;
   traceFreeHarmonograph(g, sz(U0) * (0.97 + 0.03 * cOut), 1.5 * kr + live(0), b, P4[0], P4[1], damp, pr[0], rin, ring, lob);
   strokeTrace(g, tint, 0, e0, energy, sh, halo);
   traceFreeHarmonograph(g, sz(U1) * (0.97 + 0.03 * cMid), 1.27 * kr + live(1), b * 0.9, TAU * pv.off1 + P4[2], TAU * pv.off1 + P4[3], damp * 1.1, pr[1], rin * 0.85, ring, lob);
   strokeTrace(g, tint, 0.04, e1, energy, sh * 0.8, halo);
   traceFreeHarmonograph(g, sz(U2) * (0.96 + 0.04 * cIn), 2.1 * kr + live(2), b * 1.1, TAU * pv.off2 + P4[4], TAU * pv.off2 + P4[5], damp * 1.2, pr[2], rin * 0.7, ring, lob);
   strokeTrace(g, tint, 0.08, e2, energy, sh, halo);
+  TRACE_DIM = 1;
   vzDrawLayers(g, R, VZ, VC);
   // Starry sonar layer: motes drift outward from the middle at the pulse-ring speed (frequency-tied),
   // flare as a pulse ring passes, fade near the edge, and are reborn near the centre. Drawn after the

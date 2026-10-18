@@ -59,7 +59,7 @@ const PAGES = [
 ];
 const SOURCE_PAGE = { tone: 'tone', binaural: 'binaural', schumann: 'schumann', pulse: 'pulse', mood: 'moods', mixer: 'mixer' };
 const SCHUMANN = 7.83;
-const APP_BUILD = 'biotone-v12'; // keep equal to the sw.js cache version
+const APP_BUILD = 'biotone-v12.1'; // keep equal to the sw.js cache version
 
 function makeLayer(kind) {
   const base = { id: uid(), tag: Math.floor(Math.random() * 1e9) + 1000, kind, frequency: 200, beat: 7.83, texture: 'rain', volume: 0.5, pan: 0, muted: false };
@@ -693,7 +693,10 @@ const hdrRight = (badge) => `<div style="display:flex;align-items:center;gap:6px
 const vzStep = (id, label) => `<div class="cf vzs"><div style="flex:1"><div class="k">${esc(label)}</div><div class="v" data-vt="${id}">${esc(ctrl(id).text(ctrl(id).get()))}</div></div><div class="b" data-nudge="${id}" data-dir="-1">${I.minus}</div><div class="b" data-nudge="${id}" data-dir="1">${I.plus}</div></div>`;
 function openVizMix() {
   const amb = VP.get('amb');
+  const pr = VZM.preset || 'custom';
   const html = `<h3>VISUAL MIX</h3><div class="caption" style="text-align:center;margin-top:-6px">Shared by Moods and Resonance</div>
+    <div class="lslider"><div class="h"><span class="k">PRESETS</span></div></div>
+    ${pill('viz.preset', VIZ_PRESET_ROWS[0], pr, 'vzamb vzpre')}${pill('viz.preset', VIZ_PRESET_ROWS[1], pr, 'vzamb vzpre')}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${vzStep('viz.layers', 'EXTRA LAYERS')}${vzStep('viz.circles', 'CIRCLES')}</div>
     ${lslider('viz.spin', 'MOVEMENT')}${lslider('viz.cspeed', 'CIRCLE SPEED')}
     <div class="lslider"><div class="h"><span class="k">AMBIENT</span></div></div>
@@ -702,6 +705,55 @@ function openVizMix() {
     <button class="kbtn ok" id="vzdone" style="flex:none">Done</button>`;
   openSheet(html, (sh, close) => { sh.parentElement.classList.add('lite'); sh.querySelector('#vzdone').onclick = close; });
 }
+// v12.1 one-tap presets (the v12 sweep winners), shared by both pages. Each sets its sound source values
+// (mood, or carrier/beat/engine/bed) plus the visual mix; every value is eased by the renderers, so a
+// preset glides in. 'Custom' returns to the user's own mix (snapshot taken when leaving it); any manual
+// change to the mix while a preset is active makes that the new Custom.
+const VIZ_PRESETS = {
+  spark: { mood: 'spark', vp: { layers: 4, spin: 1.5, circles: 8, cspeed: 2, amb: 'waterfall', ambLevel: 0.9 } },
+  glow: { mood: 'glow', vp: { layers: 2, spin: 0.8, circles: 5, cspeed: 0.8, amb: 'pads', ambLevel: 0.9 } },
+  create: { mood: 'create', vp: { layers: 4, spin: 2, circles: 12, cspeed: 2.5, amb: 'pink', ambLevel: 1 } },
+  active: { mood: 'active', vp: { layers: 3, spin: 1.6, circles: 5, cspeed: 1.3, amb: 'wind', ambLevel: 0.8 } },
+  ease: { mood: 'ease', vp: { layers: 0, spin: 1, circles: 2, cspeed: 1, amb: 'white', ambLevel: 1 } },
+  drone: { sch: { carrier: 60, beat: SCHUMANN, engine: 'binaural' }, bed: ['off', null], vp: { layers: 1, spin: 0.5, circles: 6, cspeed: 0.7, amb: 'drone', ambLevel: 0.9 } },
+  falls: { sch: { carrier: 320, beat: 10, engine: 'binaural' }, bed: ['off', null], vp: { layers: 2, spin: 1.2, circles: 6, cspeed: 1.5, amb: 'waterfall', ambLevel: 0.8 } },
+  stream: { sch: { carrier: 240, beat: 12, engine: 'monaural' }, bed: ['stream', 0.6], vp: { layers: 2, spin: 1, circles: 6, cspeed: 1, amb: 'off', ambLevel: 0.4 } },
+  pinkslow: { sch: { carrier: 120, beat: 4, engine: 'binaural' }, bed: ['off', null], vp: { layers: 3, spin: 0.5, circles: 12, cspeed: 0.6, amb: 'pink', ambLevel: 0.6 } },
+};
+const VIZ_PRESET_ROWS = [[['custom', 'Custom'], ['spark', 'Spark'], ['glow', 'Glow'], ['create', 'Create'], ['active', 'Active']],
+  [['ease', 'Ease'], ['drone', 'Drone'], ['falls', 'Waterfall'], ['stream', 'Stream'], ['pinkslow', 'Pink slow']]];
+const VZM = (() => { try { const o = JSON.parse(localStorage.getItem('freqium.vizp') || 'null'); if (o && typeof o === 'object') return { preset: VIZ_PRESETS[o.preset] ? o.preset : '', custom: o.custom || null }; } catch (e) {} return { preset: '', custom: null }; })();
+let vzmApplying = false;
+function vzmSave() { try { localStorage.setItem('freqium.vizp', JSON.stringify(VZM)); } catch (e) {} }
+function vzmSnapshot() {
+  const st = A.state, sc = st.schumann;
+  return { vp: Object.assign({}, VP.v), mood: st.moods.selected, sch: { carrier: sc.carrier, beat: sc.beat, engine: sc.engine }, bed: [st.noise, st.noiseLevel] };
+}
+function vzmPills() { const p = VZM.preset || 'custom'; for (const el of document.querySelectorAll('[data-pill="viz.preset"] > [data-v]')) el.classList.toggle('on', el.dataset.v === p); }
+function vzmApplyValues(P) {
+  const st = A.state; let mood = false, sch = false, bed = false;
+  vzmApplying = true;
+  try {
+    for (const k in P.vp) VP.set(k, P.vp[k]);
+    if (P.mood && MOODS.some((m) => m.key === P.mood) && st.moods.selected !== P.mood) { st.moods.selected = P.mood; mood = true; }
+    if (P.sch) { const sc = st.schumann; if (sc.tone != null) { sc.tone = null; } Object.assign(sc, P.sch); sc.label = null; sc.libraryID = null; sch = true; }
+    if (P.bed) { if (P.bed[0] != null && st.noise !== P.bed[0]) { st.noise = P.bed[0]; bed = true; } if (P.bed[1] != null && st.noiseLevel !== P.bed[1]) { st.noiseLevel = P.bed[1]; bed = true; } }
+  } finally { vzmApplying = false; }
+  if (A.isPlaying && !A.tool && ((mood && A.activeSource === 'mood') || (sch && A.activeSource === 'schumann') || (bed && A.activeSource !== 'mood'))) edited(A.activeSource);
+  else if (mood || sch || bed) save();
+  if (mood || sch || bed) { for (const k of ['moods', 'schumann']) renderPage(k); renderMini(); }
+}
+function applyVizPreset(key) {
+  if (key === 'custom') {
+    if (VZM.preset && VZM.custom) vzmApplyValues(VZM.custom);
+    VZM.preset = ''; vzmSave(); vzmPills(); return;
+  }
+  const P = VIZ_PRESETS[key]; if (!P) return;
+  if (!VZM.preset) VZM.custom = vzmSnapshot();   // leaving the user's own mix: remember it
+  VZM.preset = key; vzmSave();
+  vzmApplyValues(P); vzmPills();
+}
+VP.on(() => { if (!vzmApplying && VZM.preset) { VZM.preset = ''; VZM.custom = vzmSnapshot(); vzmSave(); vzmPills(); } });
 // Keep any open panel in sync with the store (changes can also come from another tab).
 VP.on((k, v) => {
   if (k === 'amb') for (const p of document.querySelectorAll('[data-pill="viz.amb"] > [data-v]')) p.classList.toggle('on', p.dataset.v === v);
@@ -1187,6 +1239,7 @@ const ACT = {
 };
 const PILL = {
   'viz.amb'(v) { VP.set('amb', v); return 'none'; },
+  'viz.preset'(v) { applyVizPreset(v); return 'none'; },
   'tone.wave'(v) { A.state.tone.waveform = v; edited('tone'); },
   'bin.mode'(v) { A.state.binaural.linked = v === 'linked'; edited(null, true); },
   'bin.target'(v) { UI.binTarget[A.state.binaural.linked ? 'linked' : 'free'] = v; },
@@ -1416,15 +1469,22 @@ function updateRingAudio(dt) {
   approach(ringVis, 'p4Ba', bu4, dt, 0.45, 0.45); approach(ringVis, 'p4B', ringVis.p4Ba, dt, 0.45, 0.45);
   // Page-4 layer spin, each integrated from its own speed (no shared beat-only rotation any more):
   //  layer 0 = CARRIER layer, forward, 0.04 rad/s at 60 Hz -> ~0.94 rad/s at 400 Hz;
-  //  layer 1 = MAIN-frequency (beat) layer, counter-rotating, 0.04 rad/s at 0.5 Hz -> ~0.94 rad/s at 45 Hz;
-  //  layer 2 = gentle mix of both, forward, 0.05 -> 0.2 rad/s, so it never masks the other two.
+  //  layer 1 = MAIN-frequency (beat) layer, counter-rotating, ~0.05 rad/s at 1 Hz -> ~1.2 rad/s at 45 Hz;
+  //  layer 2 = gentle mix of both, forward, ~0.05 -> ~0.28 rad/s, so it never masks the other two.
   const u0 = ringVis.p4U, u1 = ringVis.p4B, u2 = 0.5 * (u0 + u1);
   if (ringVis.spinE == null) ringVis.spinE = VP.get('spin');
   approach(ringVis, 'spinE', VP.get('spin'), dt, 0.6, 0.6);           // shared Movement (0..2), eased
   const mv = ringVis.spinE;
-  const W = [(0.04 + 0.9 * Math.pow(u0, 1.2)) * mv, -(0.04 + 0.9 * Math.pow(u1, 1.2)) * mv, (0.05 + 0.15 * u2) * mv];
+  // v12.1: the main frequency (beat) no longer changes any layer size; it drives SPIN instead. Beat-led
+  // layer: log-log map, ~0.05 rad/s at 1 Hz -> ~1.2 rad/s at 45 Hz (x24), second-order eased (no snap).
+  // The mixed layer's spin scales with both rates (gentle, ~0.05 -> ~0.28 rad/s). Directions unchanged.
+  const bs4 = beat > 0.05 ? cl(Math.log(cl(beat, 1, 45)) / Math.log(45), 0, 1) : 0;
+  if (ringVis.p4Sa == null) { ringVis.p4Sa = bs4; ringVis.p4S = bs4; }
+  approach(ringVis, 'p4Sa', bs4, dt, 0.45, 0.45); approach(ringVis, 'p4S', ringVis.p4Sa, dt, 0.45, 0.45);
+  const wC = 0.04 + 0.9 * Math.pow(u0, 1.2), wB = 0.05 * Math.pow(24, ringVis.p4S);
+  const W = [wC * mv, -wB * mv, (0.04 + 0.1 * wC + 0.12 * wB) * mv];
   const vi = ringVis.vzIn || (ringVis.vzIn = {});                       // reused object: no per-frame garbage
-  vi.cu = u0; vi.bu = u1; vi.tone = pv.depth; vi.nat = A.state.noise; vi.natLevel = A.state.noise !== 'off' ? (A.state.noiseLevel || 0) : 0; vi.music = vi.natLevel;
+  vi.cu = u0; vi.bu = u1; vi.buSize = 0.5; // v12.1: beat sets spin only, never size, on page 4 vi.tone = pv.depth; vi.nat = A.state.noise; vi.natLevel = A.state.noise !== 'off' ? (A.state.noiseLevel || 0) : 0; vi.music = vi.natLevel;
   const q = ringVis.p4Rots || (ringVis.p4Rots = [0, Math.PI / 5, 0]);
   for (let i = 0; i < 3; i++) q[i] = (q[i] + dt * W[i]) % TAU;
   ringVis.p4W = W;
