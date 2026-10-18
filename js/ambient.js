@@ -116,10 +116,10 @@ const Amb = {
       for (let i = 1; i < 12; i++) lo += this.fbuf[i]; for (let i = nb >> 3; i < nb >> 1; i++) hi += this.fbuf[i];
       lo /= 11 * 255; hi /= ((nb >> 1) - (nb >> 3)) * 255;
       const norm = Math.min(1.5, rms / 0.12);
-      this.level += (norm - this.level) * (1 - Math.exp(-dt / (norm > this.level ? 0.08 : 0.35)));
+      this.level += (norm - this.level) * (1 - Math.exp(-dt / (norm > this.level ? 0.12 : 0.35)));
       this.slow += (this.level - this.slow) * (1 - Math.exp(-dt / 1.6));
       const on = Math.max(0, this.level - this.slow * 1.05);
-      this.onset += (on - this.onset) * (1 - Math.exp(-dt / (on > this.onset ? 0.05 : 0.3)));
+      this.onset += (on - this.onset) * (1 - Math.exp(-dt / (on > this.onset ? 0.1 : 0.3)));
       this.low += (lo - this.low) * (1 - Math.exp(-dt / 0.2));
       this.high += (hi - this.high) * (1 - Math.exp(-dt / 0.2));
     } else {

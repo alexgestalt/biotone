@@ -6,15 +6,18 @@ function vzState() {
   const pool = (n) => ({ n, r: new Float32Array(n), a: new Float32Array(n), x: new Float32Array(n), y: new Float32Array(n), on: new Uint8Array(n), acc: 0 });
   const S = { e: {}, ph: new Float64Array(16), main: pool(VZ_POOL.main), fine: pool(VZ_POOL.fine), casc: pool(VZ_POOL.casc), drop: pool(VZ_POOL.drop),
     xl: { rot: new Float64Array(4), px: new Float64Array(4), py: new Float64Array(4) },
-    tw: { x: new Float32Array(40), y: new Float32Array(40), p: new Float32Array(40), s: new Float32Array(40) },
+    tw: { x: new Float32Array(VZ_TW), y: new Float32Array(VZ_TW), p: new Float32Array(VZ_TW), s: new Float32Array(VZ_TW) },
     st: { x: new Float32Array(8), y: new Float32Array(80), v: new Float32Array(80) },
     wd: { r: new Float32Array(14), a: new Float64Array(14), s: new Float32Array(14) }, nw: {}, seed: 1 };
-  for (let i = 0; i < 40; i++) { S.tw.x[i] = vzRnd(S) * 2 - 1; S.tw.y[i] = vzRnd(S) * 2 - 1; S.tw.p[i] = vzRnd(S); S.tw.s[i] = 0.15 + 0.35 * vzRnd(S); }
+  for (let i = 0; i < VZ_TW; i++) { vzTwPlace(S, i); S.tw.p[i] = vzRnd(S); S.tw.s[i] = 0.15 + 0.35 * vzRnd(S); }
   for (let k = 0; k < 8; k++) S.st.x[k] = -0.7 + 1.4 * (k + 0.5) / 8 + 0.06 * (vzRnd(S) - 0.5);
   for (let i = 0; i < 80; i++) { S.st.y[i] = vzRnd(S) * 2 - 1; S.st.v[i] = 0.7 + 0.6 * vzRnd(S); }
   for (let i = 0; i < 14; i++) { S.wd.r[i] = 0.22 + 0.7 * vzRnd(S); S.wd.a[i] = vzRnd(S) * TAU; S.wd.s[i] = 0.6 + 0.8 * vzRnd(S); }
   return S;
 }
+// v12.1 white sparkles live in the outer band (0.55-0.9 R), clear of the centre loops.
+const VZ_TW = 120;
+function vzTwPlace(S, i) { const a = vzRnd(S) * TAU, r = Math.sqrt(0.3025 + vzRnd(S) * (0.81 - 0.3025)); S.tw.x[i] = Math.cos(a) * r; S.tw.y[i] = Math.sin(a) * r; }
 function vzRnd(S) { S.seed = (S.seed * 16807) % 2147483647; return S.seed / 2147483647; }
 function vzEase(S, k, v, dt, tau) { const c = S.e[k]; S.e[k] = c == null ? v : c + (v - c) * (1 - Math.exp(-dt / tau)); return S.e[k]; }
 function vzSpawn(P, r, a, x, y) {
@@ -46,7 +49,12 @@ function vzPrepare(S, C) {
   S.ph[0] += dt * TAU * (0.07 + 0.05 * Amb.low);           // brown swell
   S.ph[1] += dt * TAU * (0.09 + 0.03 * lvl);               // ocean tide
   for (let i = 0; i < 2; i++) if (S.ph[i] > 1e4) S.ph[i] -= TAU * Math.floor(S.ph[i] / TAU); // bounded, exact per-term
-  S.swell = 1 + 0.07 * sig.brown * Math.sin(S.ph[0]);
+  S.swell = 1 + 0.12 * sig.brown * Math.sin(S.ph[0]);
+  // v12.1 make room: the subtle signatures (brown, white, drone, pads) dim the centre loops by up to 35%,
+  // scaled by the strongest one's strength, eased so the dimming glides with the cross-fade.
+  const sub = Math.min(1, Math.max(sig.brown, sig.white, sig.drone, sig.pads) / 0.8);
+  S.dimC = 1 - 0.35 * E('sub', sub, 0.6);
+
   S.tide = 1 + 0.08 * sig.ocean * Math.sin(S.ph[1]);
   S.jit = 0.06 * on + 0.03 * sig.wind;                      // ambient onsets -> layer jitter
   S.bright = 1 + 0.55 * on + 0.15 * lvl;                    // ambient -> brightness pulses
@@ -83,13 +91,24 @@ function vzDrawBack(g, R, S, C) {
     const u = F.r[i]; g.globalAlpha = Math.pow(Math.sin(Math.PI * u), 1.2) * 0.38 * F.a[i] * Math.min(1, sig.pink + 0.05);
     g.lineWidth = 0.8; g.beginPath(); g.arc(0, 0, R * 0.95 * u, 0, TAU); g.stroke();
   });
+  // ph[2]/ph[3] are used with non-integer multipliers, so they are never wrapped (float64 stays exact for years).
+}
+// v12.1 subtle signatures (brown swells, ocean tide, drone rings, pads aurora), drawn after the loops in
+// the outer band so they read clearly; called from vzDrawFront.
+function vzDrawSubtle(g, R, S, C) {
+  const dt = C.dt, K = S.k, sig = S.sig;
+  const PALG = (u) => PAL[palIndex(u)];
+  g.globalCompositeOperation = 'lighter';
   // Brown: slow heavy swells (two soft glows breathing in counter-phase).
   if (sig.brown > 0.005) {
     g.fillStyle = PALG(0.04);
+    g.strokeStyle = PALG(0.03);
     for (let j = 0; j < 2; j++) {
-      const s = Math.sin(S.ph[0] + j * Math.PI);
-      g.globalAlpha = 0.11 * sig.brown * (0.6 + 0.4 * s);
-      g.beginPath(); g.arc(0, 0, R * (0.5 + 0.22 * s + 0.12 * j), 0, TAU); g.fill();
+      const s = Math.sin(S.ph[0] + j * Math.PI), rr = R * (0.6 + 0.16 * s + 0.1 * j);
+      g.globalAlpha = 0.2 * sig.brown * (0.6 + 0.4 * s);
+      g.beginPath(); g.arc(0, 0, rr, 0, TAU); g.fill();
+      g.globalAlpha = Math.min(1, 0.45 * sig.brown) * (0.55 + 0.45 * s); g.lineWidth = 1.6;   // bright swell edge
+      g.beginPath(); g.arc(0, 0, rr, 0, TAU); g.stroke();
     }
   }
   // Ocean: tidal breathing, a broad band that rolls in and out.
@@ -104,8 +123,8 @@ function vzDrawBack(g, R, S, C) {
     S.ph[2] += dt * (0.6 + 0.8 * K.lvl);
     g.strokeStyle = PALG(0.06);
     for (let j = 0; j < 7; j++) {
-      g.globalAlpha = sig.drone * (0.1 + 0.12 * (0.5 + 0.5 * Math.sin(S.ph[2] * (1 + 0.13 * j) + j)));
-      g.lineWidth = 1.1; g.beginPath(); g.arc(0, 0, R * (0.18 + 0.11 * j), 0, TAU); g.stroke();
+      g.globalAlpha = Math.min(1, sig.drone) * (0.16 + 0.24 * (0.5 + 0.5 * Math.sin(S.ph[2] * (1 + 0.13 * j) + j)));
+      g.lineWidth = 1.5; g.beginPath(); g.arc(0, 0, R * (0.55 + 0.06 * j), 0, TAU); g.stroke();
     }
   }
   // Pads: soft aurora lobes slowly turning.
@@ -114,11 +133,13 @@ function vzDrawBack(g, R, S, C) {
     g.strokeStyle = PALG(0.05); g.lineCap = 'round';
     for (let j = 0; j < 3; j++) {
       const a0 = S.ph[3] + j * TAU / 3, br = 0.5 + 0.5 * Math.sin(S.ph[3] * 1.7 + j * 2);
-      g.globalAlpha = sig.pads * (0.09 + 0.1 * br); g.lineWidth = 26;
-      g.beginPath(); g.arc(0, 0, R * (0.62 + 0.08 * Math.sin(a0 * 2)), a0, a0 + 1.3); g.stroke();
+      const pr = R * (0.78 + 0.05 * Math.sin(a0 * 2));
+      g.globalAlpha = Math.min(1, sig.pads) * (0.18 + 0.2 * br); g.lineWidth = 22;
+      g.beginPath(); g.arc(0, 0, pr, a0, a0 + 1.3); g.stroke();
+      g.globalAlpha = Math.min(1, sig.pads) * (0.3 + 0.3 * br); g.lineWidth = 1.4;   // fine crest line
+      g.beginPath(); g.arc(0, 0, pr + 11, a0 + 0.1, a0 + 1.2); g.stroke();
     }
   }
-  // ph[2]/ph[3] are used with non-integer multipliers, so they are never wrapped (float64 stays exact for years).
 }
 // Extra harmonograph layers (layer count), alternating carrier- and beat-led, faded in/out by the count.
 function vzDrawLayers(g, R, S, C) {
@@ -138,19 +159,21 @@ function vzDrawLayers(g, R, S, C) {
     if (Math.abs(X.py[i]) > 1e4) X.py[i] -= TAU * Math.trunc(X.py[i] / TAU);
     const w = Math.max(0, Math.min(1, K.lay - i));
     if (w < 0.004) continue;
-    const size = R * (0.2 + 0.6 * u) * S.swell * S.tide;
+    const uS = C.buSize != null ? MIX[i][0] * K.cu + MIX[i][1] * C.buSize : u;   // page 4: beat sets spin, not size
+    const size = R * (0.2 + 0.6 * uS) * S.swell * S.tide;
     const fy = FY[i] * (0.8 + 1.1 * K.cu) + 0.08 * (noise2(t * 0.03 + i * 5.1, 7.7 + i) - 0.5) + S.jit * (noise2(t * 0.9 + i * 3.3, 2.2) - 0.5);
     const b = 0.24 + 0.2 * K.tone;
     traceFreeHarmonograph(g, size, fy, b, X.px[i], X.py[i], (0.05 - 0.02 * K.tone) * (1 - 0.8 * rg), X.rot[i], rin0 * (0.9 - 0.15 * i), ring, 5 + 4 * K.cu + i);
     g.strokeStyle = PAL[palIndex(0.03 * i)];
-    g.globalAlpha = w * (0.07 + 0.08 * K.music) * S.bright; g.lineWidth = 4; g.stroke();
-    g.globalAlpha = w * (0.22 + 0.18 * K.music + 0.15 * K.energy) * S.bright; g.lineWidth = 1; g.stroke();
+    g.globalAlpha = w * (0.07 + 0.08 * K.music) * S.bright * S.dimC; g.lineWidth = 4; g.stroke();
+    g.globalAlpha = w * (0.22 + 0.18 * K.music + 0.15 * K.energy) * S.bright * S.dimC; g.lineWidth = 1; g.stroke();
   }
 }
 // Front pass: waterfall cascade + falling streams, rain ripples, wind sweeps, white sparkle.
 function vzDrawFront(g, R, S, C) {
   const dt = C.dt, K = S.k, sig = S.sig;
   const PALG = (u) => PAL[palIndex(u)];
+  vzDrawSubtle(g, R, S, C);
   const v = vzPulseSpeed(C, S);
   // Waterfall: a cascading train of fine gold circles that accelerate outward...
   const Q = S.casc;
@@ -203,12 +226,12 @@ function vzDrawFront(g, R, S, C) {
   // White: shimmering sparkle grain; a sparkle only moves while it is fully dark.
   if (sig.white > 0.005) {
     const T = S.tw; g.fillStyle = PAL_HOT[palIndex(0.02)];
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < VZ_TW; i++) {
       T.p[i] += dt * T.s[i] * (1 + 1.5 * Amb.high);
-      if (T.p[i] >= 1) { T.p[i] -= 1; T.x[i] = vzRnd(S) * 2 - 1; T.y[i] = vzRnd(S) * 2 - 1; }
-      const x = T.x[i], y = T.y[i]; if (x * x + y * y > 0.8) continue;
+      if (T.p[i] >= 1) { T.p[i] -= 1; vzTwPlace(S, i); }   // moves only while fully dark
+      const x = T.x[i], y = T.y[i];
       const s = Math.sin(Math.PI * T.p[i]), a = s * s * s * s;
-      g.globalAlpha = Math.min(1, sig.white) * a; g.beginPath(); g.arc(x * R, y * R, 0.8 + 1.2 * a, 0, TAU); g.fill();
+      g.globalAlpha = Math.min(1, 1.2 * sig.white) * a; g.beginPath(); g.arc(x * R, y * R, 1.6 + 2.4 * a, 0, TAU); g.fill();
     }
   }
 }
