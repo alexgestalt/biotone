@@ -20,6 +20,8 @@ const VZ_TW = 120;
 function vzTwPlace(S, i) { const a = vzRnd(S) * TAU, r = Math.sqrt(0.3025 + vzRnd(S) * (0.81 - 0.3025)); S.tw.x[i] = Math.cos(a) * r; S.tw.y[i] = Math.sin(a) * r; }
 function vzRnd(S) { S.seed = (S.seed * 16807) % 2147483647; return S.seed / 2147483647; }
 function vzEase(S, k, v, dt, tau) { const c = S.e[k]; S.e[k] = c == null ? v : c + (v - c) * (1 - Math.exp(-dt / tau)); return S.e[k]; }
+// Second-order (two stages of tau/2): starts from zero speed, for values that shape the loops.
+function vzEase2(S, k, v, dt, tau) { const k2 = k + '$', c = S.e[k], a = 1 - Math.exp(-dt / (0.5 * tau)); if (c == null) { S.e[k] = S.e[k2] = v; return v; } S.e[k2] += (v - S.e[k2]) * a; S.e[k] = c + (S.e[k2] - c) * a; return S.e[k]; }
 function vzSpawn(P, r, a, x, y) {
   let slot = -1; for (let i = 0; i < P.n; i++) if (!P.on[i]) { slot = i; break; }
   if (slot < 0) return;            // pool full: skip (never recycle a visible ring, that would pop)
@@ -35,8 +37,9 @@ function vzPrepare(S, C) {
   const E = (k, v, tau) => vzEase(S, k, v, dt, tau);
   const lay = E('layers', VP.get('layers'), 0.8), spin = E('spin', VP.get('spin'), 0.6);
   const circ = E('circles', VP.get('circles'), 0.6), csp = E('cspeed', VP.get('cspeed'), 0.6), al = E('ambLevel', VP.get('ambLevel'), 0.4);
-  const cu = E('cu', C.cu, 0.5), bu = E('bu', C.bu, 0.5), energy = E('energy', C.energy || 0, 0.3);
-  const tone = E('tone', C.tone, 0.5), music = E('music', C.music, 0.5);
+  const E2 = (k, v, tau) => vzEase2(S, k, v, dt, tau);
+  const cu = E2('cu', C.cu, 0.6), bu = E2('bu', C.bu, 0.6), energy = E('energy', C.energy || 0, 0.3);
+  const tone = E2('tone', C.tone, 0.6), music = E2('music', C.music, 0.6);
   const lvl = Amb.level, on = Amb.onset;
   const sig = S.sig || (S.sig = {});
   for (const k of VZ_SIGS) {
@@ -56,8 +59,12 @@ function vzPrepare(S, C) {
   S.dimC = 1 - 0.35 * E('sub', sub, 0.6);
 
   S.tide = 1 + 0.08 * sig.ocean * Math.sin(S.ph[1]);
-  S.jit = 0.06 * on + 0.03 * sig.wind;                      // ambient onsets -> layer jitter
-  S.bright = 1 + 0.55 * on + 0.15 * lvl;                    // ambient -> brightness pulses
+  // Ambient onsets -> layer jitter. v12.2: eased (0.5 s): the jitter feeds the loop frequency ratio, where
+  // even a small step moves the far end of a trace a lot, so it must never change within one frame.
+  S.jit = E('jit', 0.06 * on + 0.03 * sig.wind, 0.5);
+  // Ambient -> brightness pulses. v12.2: second-order eased and gentler: it multiplies the dense extra
+  // layers, so a sudden ambient onset (e.g. a sound starting) brightened the whole disc in one frame.
+  S.bright = E2('bright', 1 + 0.3 * on + 0.15 * lvl, 0.35);
   Object.assign(S.k || (S.k = {}), { lay, spin, circ, csp, al, cu, bu, energy, tone, music, lvl, on });
   return S;
 }

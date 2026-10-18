@@ -59,7 +59,7 @@ const PAGES = [
 ];
 const SOURCE_PAGE = { tone: 'tone', binaural: 'binaural', schumann: 'schumann', pulse: 'pulse', mood: 'moods', mixer: 'mixer' };
 const SCHUMANN = 7.83;
-const APP_BUILD = 'biotone-v12.1'; // keep equal to the sw.js cache version
+const APP_BUILD = 'biotone-v12.2'; // keep equal to the sw.js cache version
 
 function makeLayer(kind) {
   const base = { id: uid(), tag: Math.floor(Math.random() * 1e9) + 1000, kind, frequency: 200, beat: 7.83, texture: 'rain', volume: 0.5, pan: 0, muted: false };
@@ -1543,7 +1543,9 @@ function updateVisAudio(ringVis, carrier, beat, dt) {
   ringVis.edgePh = ((ringVis.edgePh || 0) + dt * (0.25 + 1.1 * ringVis.edgeU)) % TAU;
   // Shape morph: 0 = slow/round, 1 = fast/slender, eased over ~0.6 s.
   const slim = cl(1 - Math.log(per / 2) / Math.log(13), 0, 1);
-  if (ringVis.petalSlim == null) ringVis.petalSlim = slim; else approach(ringVis, 'petalSlim', slim, dt, 0.6, 0.6);
+  // v12.2: second-order (it sets the page-4 loop ratio and lobe count), so a beat change starts from zero speed.
+  if (ringVis.petalSlim == null) { ringVis.petalSlim = slim; ringVis.petalSlimA = slim; }
+  approach(ringVis, 'petalSlimA', slim, dt, 0.3, 0.3); approach(ringVis, 'petalSlim', ringVis.petalSlimA, dt, 0.3, 0.3);
   const rate = beat > 0.05 ? Math.min(beat, 14) : 0;
   ringVis.beatPhase = (ringVis.beatPhase + (rate > 0 ? rate : 1 / 5.5) * dt) % 1;
   approach(ringVis, 'tint', freqTint(carrier, beat, shaped), dt, 0.9, 1.25);

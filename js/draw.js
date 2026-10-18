@@ -542,7 +542,15 @@ function p1MoodParams() {
   } catch (e) { /* keep defaults */ }
   return out;
 }
-function p1Ease(S, key, v, dt, tau) { S[key] = S[key] == null ? v : S[key] + (v - S[key]) * (1 - Math.exp(-dt / tau)); }
+// v12.2: second-order easing (two chained stages of tau/2). These values set loop ratios and lobe counts,
+// where the far end of a trace is very sensitive; a first-order ease starts at full speed in one frame,
+// which showed as a one-frame jolt when a mood or preset changed. Two stages start from zero speed.
+function p1Ease(S, key, v, dt, tau) {
+  const k2 = key + '$', a = 1 - Math.exp(-dt / (0.5 * tau));
+  if (S[key] == null) { S[key] = v; S[k2] = v; return; }
+  if (S[k2] == null) S[k2] = S[key];
+  S[k2] += (v - S[k2]) * a; S[key] += (S[k2] - S[key]) * a;
+}
 function traceP1Harmonograph(g, S, fy, b, px, py, damp, rot, rin, ring, lobes) {
   const N = 900, T = TAU * 6, a = 1 - b, c = Math.cos(rot), s = Math.sin(rot);
   g.beginPath();
