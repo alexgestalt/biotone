@@ -1,5 +1,5 @@
 // Offline cache for Biotone web. Bump VERSION when files change.
-const VERSION = 'biotone-web-v12-3';
+const VERSION = 'biotone-web-v12-4';
 const PREFIX = 'biotone-web-'; // other apps on this github.io origin keep their own caches
 const ASSETS = [
   './', './index.html', './styles.css', './manifest.webmanifest',
