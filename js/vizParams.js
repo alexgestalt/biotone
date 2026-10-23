@@ -1,6 +1,7 @@
 // Shared visual-mix parameters for page 1 (Moods) and page 4 (Resonance). One store, persisted in
 // localStorage, read live by both renderers every frame; a change on either page shows on both.
-const VIZ_DEFAULTS = { layers: 1, spin: 1, circles: 4, cspeed: 1, amb: 'off', ambLevel: 0.4 };
+const VIZ_DEFAULTS = { layers: 1, spin: 1, circles: 4, cspeed: 1, amb: 'off', ambLevel: 0.4, style: 'rings' };
+const VIZ_STYLES = [['rings', 'Rings'], ['cymatics', 'Cymatics'], ['liquid', 'Liquid']];
 const VIZ_RANGES = { layers: [0, 4], spin: [0, 2], circles: [0, 12], cspeed: [0.25, 3], ambLevel: [0, 1] };
 const AMB_TYPES = [['off', 'Off'], ['pink', 'Pink'], ['brown', 'Brown'], ['white', 'White'], ['waterfall', 'Waterfall'],
   ['rain', 'Rain'], ['ocean', 'Ocean'], ['wind', 'Wind'], ['drone', 'Drone'], ['pads', 'Pads']];
@@ -19,6 +20,7 @@ const VP = {
     for (const k in VIZ_RANGES) { const [a, b] = VIZ_RANGES[k]; let x = +this.v[k]; if (!isFinite(x)) x = VIZ_DEFAULTS[k]; this.v[k] = Math.min(b, Math.max(a, x)); }
     this.v.layers = Math.round(this.v.layers); this.v.circles = Math.round(this.v.circles);
     if (!AMB_TYPES.some(([k]) => k === this.v.amb)) this.v.amb = 'off';
+    if (!VIZ_STYLES.some(([k]) => k === this.v.style)) this.v.style = 'rings';
   },
   get(k) { return this.v[k]; },
   set(k, val) {

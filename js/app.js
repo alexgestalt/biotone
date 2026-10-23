@@ -59,7 +59,7 @@ const PAGES = [
 ];
 const SOURCE_PAGE = { tone: 'tone', binaural: 'binaural', schumann: 'schumann', pulse: 'pulse', mood: 'moods', mixer: 'mixer' };
 const SCHUMANN = 7.83;
-const APP_BUILD = 'biotone-v12.4'; // keep equal to the sw.js cache version
+const APP_BUILD = 'biotone-v13'; // keep equal to the sw.js cache version
 
 function makeLayer(kind) {
   const base = { id: uid(), tag: Math.floor(Math.random() * 1e9) + 1000, kind, frequency: 200, beat: 7.83, texture: 'rain', volume: 0.5, pan: 0, muted: false };
@@ -695,6 +695,8 @@ function openVizMix() {
   const amb = VP.get('amb');
   const pr = VZM.preset || 'custom';
   const html = `<h3>VISUAL MIX</h3><div class="caption" style="text-align:center;margin-top:-6px">Shared by Moods and Resonance</div>
+    <div class="lslider"><div class="h"><span class="k">STYLE</span></div></div>
+    ${pill('viz.style', VIZ_STYLES, VP.get('style'), 'vzamb')}
     <div class="lslider"><div class="h"><span class="k">PRESETS</span></div></div>
     ${pill('viz.preset', VIZ_PRESET_ROWS[0], pr, 'vzamb vzpre')}${pill('viz.preset', VIZ_PRESET_ROWS[1], pr, 'vzamb vzpre')}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${vzStep('viz.layers', 'EXTRA LAYERS')}${vzStep('viz.circles', 'CIRCLES')}</div>
@@ -753,9 +755,10 @@ function applyVizPreset(key) {
   VZM.preset = key; vzmSave();
   vzmApplyValues(P); vzmPills();
 }
-VP.on(() => { if (!vzmApplying && VZM.preset) { VZM.preset = ''; VZM.custom = vzmSnapshot(); vzmSave(); vzmPills(); } });
+VP.on((k) => { if (k !== 'style' && !vzmApplying && VZM.preset) { VZM.preset = ''; VZM.custom = vzmSnapshot(); vzmSave(); vzmPills(); } });
 // Keep any open panel in sync with the store (changes can also come from another tab).
 VP.on((k, v) => {
+  if (k === 'style') for (const p of document.querySelectorAll('[data-pill="viz.style"] > [data-v]')) p.classList.toggle('on', p.dataset.v === v);
   if (k === 'amb') for (const p of document.querySelectorAll('[data-pill="viz.amb"] > [data-v]')) p.classList.toggle('on', p.dataset.v === v);
   const id = 'viz.' + k, c = ctrl(id); if (!c) return;
   for (const el of document.querySelectorAll(`[data-vt="${id}"]`)) el.textContent = c.text(c.get());
@@ -1239,6 +1242,7 @@ const ACT = {
 };
 const PILL = {
   'viz.amb'(v) { VP.set('amb', v); return 'none'; },
+  'viz.style'(v) { VP.set('style', v); return 'none'; },
   'viz.preset'(v) { applyVizPreset(v); return 'none'; },
   'tone.wave'(v) { A.state.tone.waveform = v; edited('tone'); },
   'bin.mode'(v) { A.state.binaural.linked = v === 'linked'; edited(null, true); },
@@ -1613,7 +1617,7 @@ function frame(t) {
       vi.tone = cl(((lvm.tone != null ? lvm.tone : m.tone) - 0.2) / 0.3, 0, 1); vi.music = cl(lvm.music != null ? lvm.music : m.music, 0, 1);
       vi.nat = lvm.ambience || 'off'; vi.natLevel = lvm.ambience && lvm.ambience !== 'off' ? (lvm.ambienceLevel || 0) : 0;
       useRingState(RING_STATE_MOODS);
-      drawLivingRing(ocv, box.clientWidth, box.clientHeight, moodVis, dt); // ring mode, always
+      if (!drawVizStyle(VP.get('style'), ocv, box.clientWidth, box.clientHeight, moodVis, dt)) drawLivingRing(ocv, box.clientWidth, box.clientHeight, moodVis, dt); // v13: selectable style, rings by default
       useRingState(RING_STATE_MAIN);
     }
   }
@@ -1624,7 +1628,7 @@ function frame(t) {
     updateRingAudio(dt, t);
     const w = stage.clientWidth, h = stage.clientHeight;
     if (w && h) {
-      drawOpeningField(rcv, w, h, ringVis, dt); // page 4 is always the petal flower; it follows the frequency
+      if (!drawVizStyle(VP.get('style'), rcv, w, h, ringVis, dt)) drawOpeningField(rcv, w, h, ringVis, dt); // v13 style; page 4 is always the petal flower; it follows the frequency
     }
   }
   const hb = pageEl.querySelector('[data-hbar]');
