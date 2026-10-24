@@ -44,7 +44,7 @@ function vsFrame(g, w, h, S) {
 // against each other at the beat rate (faded out above ~12 Hz, where the eye would only see the average).
 // Grains are kicked in proportion to the local amplitude, so they random-walk off antinodes and pile up on
 // the nodal lines; plus a small drift down the energy gradient.
-const CYM = { n: 3600, x: null, y: null, G: 112, I: null, gx: null, gy: null, ang: null, rad: null, w1: null, w2: null };
+const CYM = { n: 12000, x: null, y: null, G: 112, I: null, gx: null, gy: null, ang: null, rad: null, w1: null, w2: null };
 const CYM_Q = 80; // modal quality factor of a sanded aluminium plate (order of magnitude)
 function cymGain(f, fm) { const r = f / fm; return 1 / Math.sqrt((1 - r * r) * (1 - r * r) + (r / CYM_Q) * (r / CYM_Q)); }
 function cymProfile(m, r) { const P = m[3], u = Math.min(1, r) * (P.length - 1), i = Math.min(P.length - 2, u | 0), t = u - i; return P[i] + (P[i + 1] - P[i]) * t; }
@@ -63,65 +63,77 @@ function cymSample(A, x, y) { // bilinear sample of a grid field at plate coords
   const i = Math.max(0, Math.min(G - 2, u | 0)), j = Math.max(0, Math.min(G - 2, v | 0)), fu = u - i, fv = v - j, k = j * G + i;
   return (A[k] * (1 - fu) + A[k + 1] * fu) * (1 - fv) + (A[k + G] * (1 - fu) + A[k + G + 1] * fu) * fv;
 }
+// v14.3 Chladni figure selection, sound-first. Mode (n, s) of a free-edge circular plate:
+//   n nodal diameters (2n rays / star points) <- MAIN frequency (beat, 1-45 Hz), distinct steps;
+//   s nodal circles (rings, fineness)         <- carrier (60-400 Hz), distinct steps.
+// W(r, th) = J_n(lambda r) cos(n th), lambda placed between the s-th and (s+1)-th zero of J_n so the figure has
+// exactly s interior nodal circles. Each step is a plateau; neighbours morph (smoothstep over the middle 30%).
+// Intensity is a sum of squared modes, so every figure is centred and mirror-symmetric. Low beats pulse the drive.
+const CYM_NB = [[1, 2], [1.7, 3], [3, 4], [4, 5], [7, 6], [11, 7], [16, 8], [22, 9], [30, 10], [42, 12]];
+const CYM_SC = [[60, 0], [100, 1], [170, 2], [330, 3]];
+const CYM_PC = {};
+function cymJ(n, x) { let t = 0; const K = 64; for (let i = 0; i < K; i++) { const u = (i + 0.5) / K * Math.PI; t += Math.cos(n * u - x * Math.sin(u)); } return t / K; }
+function cymProf(n, s) { // radial profile, 161 samples, max |W| = 1 (cached)
+  const key = n + ',' + s; if (CYM_PC[key]) return CYM_PC[key];
+  const z = []; const x0 = Math.max(0.5, n * 0.9); let pv = cymJ(n, x0);
+  for (let x = x0 + 0.05; z.length < s + 2 && x < 90; x += 0.05) { const v = cymJ(n, x); if (pv * v < 0) z.push(x); pv = v; }
+  const lam = s === 0 ? 0.82 * z[0] : z[s - 1] + 0.72 * (z[s] - z[s - 1]);
+  const P = new Float32Array(161); let mx = 1e-9;
+  for (let i = 0; i <= 160; i++) { P[i] = cymJ(n, lam * i / 160); mx = Math.max(mx, Math.abs(P[i])); }
+  for (let i = 0; i <= 160; i++) P[i] /= mx;
+  return (CYM_PC[key] = P);
+}
+function cymStep(T, v) { // [[lo index, hi index, weight of hi]] on a log ladder with 30% morph band
+  const lv = Math.log(v); let i = 0; while (i < T.length - 2 && Math.log(T[i + 1][0]) < lv) i++;
+  const t = Math.max(0, Math.min(1, (lv - Math.log(T[i][0])) / (Math.log(T[i + 1][0]) - Math.log(T[i][0]))));
+  const sm = t < 0.35 ? 0 : t > 0.65 ? 1 : (() => { const q = (t - 0.35) / 0.3; return q * q * (3 - 2 * q); })();
+  return [T[i][1], T[i + 1][1], sm];
+}
 function drawCymatics(cv, w, h, f, dt) {
   const g = setupCanvas(cv, w, h);
   const { S, dt: d } = vsInputs(f, dt);
   if (!CYM.x) cymInit();
-  // v14.1 Chladni figure selection. The app's carrier range (60-400 Hz) is mapped onto the plate's mode ladder:
-  // f_plate = 86.3 * (f / 60)^(1 / 0.68), so 60-400 Hz sweeps the 16 lowest modes, (2,0) ... (0,3). Each mode is a
-  // plateau (a distinct nodal figure: n diameters x s circles); between neighbours the figure morphs over the middle
-  // 30% of the interval. Intensity is a sum of squared modes (|W|^2), so every figure is mirror-symmetric and
-  // point-symmetric about the centre. The beat adds an inner figure (symmetry order 2/3/4/6/8 rising with the beat)
-  // and pulses the drive.
-  const M = CYM_MODES, fl = Math.log(86.3 * Math.pow(Math.max(30, S.car) / 60, 1 / 0.68));
-  let ia = 0; while (ia < M.length - 2 && Math.log(M[ia + 1][2]) < fl) ia++;
-  const la = Math.log(M[ia][2]), lb = Math.log(M[ia + 1][2]);
-  const tt = Math.max(0, Math.min(1, (fl - la) / (lb - la))), sm = tt < 0.35 ? 0 : tt > 0.65 ? 1 : (() => { const q = (tt - 0.35) / 0.3; return q * q * (3 - 2 * q); })();
-  const BO = [[0.5, 2], [2, 3], [6, 4], [15, 6], [40, 8]], lbt = Math.log(Math.max(0.5, Math.min(40, S.bt || 0.5)));
-  let ib = 0; while (ib < BO.length - 2 && Math.log(BO[ib + 1][0]) < lbt) ib++;
-  const tb = Math.max(0, Math.min(1, (lbt - Math.log(BO[ib][0])) / (Math.log(BO[ib + 1][0]) - Math.log(BO[ib][0]))));
-  const two = S.eng === 'binaural' || S.eng === 'monaural', inW = two && S.bt > 0.05 ? 0.45 : 0;
-  S.bph = ((S.bph || 0) + d * TAU_VS * Math.min(S.bt, 12)) % VS_TAU20;
-  vsEase(S, 'res', 1 - 0.75 * Math.sin(Math.PI * sm), d, 0.12); // the figure loosens mid-morph, re-forms on the plateau
-  const G = CYM.G, N = G * G, I = CYM.I, W1 = CYM.w1; I.fill(0);
-  const parts = [[M[ia], 1 - sm], [M[ia + 1], sm]];
-  for (const [m, wgt] of parts) {
-    if (wgt < 0.005) continue;
-    let mx = 1e-9; const n = m[0];
-    for (let k = 0; k < N; k++) { const r = CYM.rad[k]; if (r > 1) { W1[k] = 0; continue; } const v = cymProfile(m, r) * Math.cos(n * CYM.ang[k]); W1[k] = v * v; if (W1[k] > mx) mx = W1[k]; }
-    const sc = wgt / mx; for (let k = 0; k < N; k++) I[k] += W1[k] * sc;
-  }
-  if (inW) for (const [o, wgt] of [[BO[ib][1], 1 - tb], [BO[ib + 1][1], tb]]) {
-    if (wgt < 0.005) continue;
-    for (let k = 0; k < N; k++) { const r = CYM.rad[k]; if (r >= 0.42) continue; const v = Math.sin(Math.PI * r / 0.42) * Math.cos(o * CYM.ang[k]); I[k] += inW * wgt * v * v; }
-  }
-  // Centre: a node of every n > 0 mode, where real sand also piles up; keep a small antinode there so the middle
-  // never fills with a blob (the v14 'stuck sand' look).
-  for (let k = 0; k < N; k++) { const r = CYM.rad[k]; I[k] += 0.15 * Math.exp(-r * r / 0.0012); }
-  let mx = 1e-6; for (let k = 0; k < N; k++) if (I[k] > mx) mx = I[k];
-  vsEase(S, 'imax', mx, d, 0.1);
-  const inv = 1 / Math.max(1e-6, S.imax);
-  for (let j = 1; j < G - 1; j++) for (let i = 1; i < G - 1; i++) { const k = j * G + i; CYM.gx[k] = (I[k + 1] - I[k - 1]) * inv; CYM.gy[k] = (I[k + G] - I[k - G]) * inv; }
-  // Grain motion: kicks ~ local amplitude (off resonance the plate barely moves; we keep a floor so the
-  // old figure visibly loosens instead of freezing), plus drift toward the nodal lines.
-  const drive = (0.25 + 0.75 * S.res) * (0.7 + 0.6 * S.en) * (inW ? 0.8 + 0.2 * Math.cos(S.bph) : 1) * Math.min(1, d * 30);
+  const bt = S.bt > 0.05 ? S.bt : 1;
+  const [n0, n1, wn] = cymStep(CYM_NB, Math.max(1, Math.min(45, bt)));
+  const [s0, s1, ws] = cymStep(CYM_SC, Math.max(60, Math.min(400, S.car)));
+  S.bph = ((S.bph || 0) + d * TAU_VS * Math.min(bt, 12)) % VS_TAU20;
+  vsEase(S, 'res', 1 - 0.7 * Math.max(Math.sin(Math.PI * wn), Math.sin(Math.PI * ws)), d, 0.12); // loosens mid-morph
+  // The field is evaluated analytically at every grain (no grid), so even 24 thin rays stay exact lines.
+  const MS = [];
+  for (const [n, a] of [[n0, 1 - wn], [n1, wn]]) for (const [s, b] of [[s0, 1 - ws], [s1, ws]]) if (a * b >= 0.005) MS.push([n, a * b, cymProf(n, s)]);
+  const fld = (x, y) => {
+    const r = Math.hypot(x, y), th = Math.atan2(y, x), u = Math.min(1, r) * 160, i = Math.min(159, u | 0), t = u - i;
+    let v = 0.15 * Math.exp(-r * r / 0.0012) + 0.12 * Math.exp(-r * r / 0.02); // centre kept clear (high-n modes are flat there)
+    for (const [n, wg, P] of MS) { const q = (P[i] + (P[i + 1] - P[i]) * t) * Math.cos(n * th); v += wg * q * q; }
+    return v;
+  };
+  const E = 0.004;
+  // Grains: kicks ~ local amplitude, strong drift onto the nodal lines (crisp lines, little scatter); pulse at low beat.
+  const pul = bt < 12 ? 0.75 + 0.25 * Math.cos(S.bph) : 1;
+  const drive = (0.25 + 0.75 * S.res) * (0.7 + 0.6 * S.en) * pul * Math.min(1, d * 30);
   let seed = (S.seed || 1) | 0; const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff) - 0.5;
   const X = CYM.x, Y = CYM.y;
   for (let p = 0; p < CYM.n; p++) {
     let x = X[p], y = Y[p];
-    const amp = Math.sqrt(Math.max(0, cymSample(I, x, y)) * inv);
-    const k = 0.16 * amp * drive;
-    x += rnd() * k - cymSample(CYM.gx, x, y) * 0.2 * drive; y += rnd() * k - cymSample(CYM.gy, x, y) * 0.2 * drive;
-    const rr = Math.hypot(x, y); if (rr > 0.975) { const nr = Math.sqrt(rnd() + 0.5) * 0.9, na = (rnd() + 0.5) * TAU_VS; x = nr * Math.cos(na); y = nr * Math.sin(na); } // sand bouncing off the free edge falls back onto the plate
+    const I0 = fld(x, y), amp = Math.sqrt(I0);
+    const k = (0.11 * amp + 0.007) * drive; // the small floor lets sand spread along the lines instead of balling up
+    // pull down the gradient of |W| (a cone, not a bowl): same speed everywhere along a line, so sand spreads
+    // evenly along each nodal line instead of collecting at the crossings
+    let gx = (Math.sqrt(fld(x + E, y)) - amp) / E, gy = (Math.sqrt(fld(x, y + E)) - amp) / E; const gm = Math.hypot(gx, gy), cl = gm > 1e-6 ? Math.min(1, amp * 4) / gm : 0;
+    x += rnd() * k - gx * cl * 0.006 * drive; y += rnd() * k - gy * cl * 0.006 * drive;
+    const rr = Math.hypot(x, y); if (rr > 0.975) { const nr = Math.sqrt(rnd() + 0.5) * 0.9, na = (rnd() + 0.5) * TAU_VS; x = nr * Math.cos(na); y = nr * Math.sin(na); }
     X[p] = x; Y[p] = y;
   }
   S.seed = seed;
-  const R = vsFrame(g, w, h, S) * 0.96, cx = w / 2, cy = h / 2; // v14.1: same frame as Waves
-  g.globalCompositeOperation = 'lighter';
+  const R = vsFrame(g, w, h, S) * 0.96, cx = w / 2, cy = h / 2; // same frame as Waves
+  const pg = g.createRadialGradient(cx, cy, 0, cx, cy, R); // faint plate glow
+  pg.addColorStop(0, 'rgba(255,199,31,0.07)'); pg.addColorStop(1, 'rgba(255,199,31,0.025)');
+  g.fillStyle = pg; g.beginPath(); g.arc(cx, cy, R, 0, TAU_VS); g.fill();
+  g.globalCompositeOperation = 'lighter'; // piles brighten where grains accumulate
   const sz = Math.max(1.2, R / 150);
   for (let p = 0; p < CYM.n; p++) {
-    const amp = Math.sqrt(Math.max(0, cymSample(I, X[p], Y[p])) * inv);
-    const a = Math.max(0.14, 0.92 - amp * 1.6);
+    const amp = Math.sqrt(fld(X[p], Y[p]));
+    const a = Math.max(0.08, 0.95 - amp * 2.4);
     g.fillStyle = `rgba(255,${(190 + a * 40) | 0},${(31 + a * 60) | 0},${a.toFixed(3)})`;
     g.fillRect(cx + X[p] * R - sz / 2, cy + Y[p] * R - sz / 2, sz, sz);
   }
