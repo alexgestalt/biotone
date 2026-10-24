@@ -59,7 +59,7 @@ const PAGES = [
 ];
 const SOURCE_PAGE = { tone: 'tone', binaural: 'binaural', schumann: 'schumann', pulse: 'pulse', mood: 'moods', mixer: 'mixer' };
 const SCHUMANN = 7.83;
-const APP_BUILD = 'biotone-v13'; // keep equal to the sw.js cache version
+const APP_BUILD = 'biotone-v14'; // keep equal to the sw.js cache version
 
 function makeLayer(kind) {
   const base = { id: uid(), tag: Math.floor(Math.random() * 1e9) + 1000, kind, frequency: 200, beat: 7.83, texture: 'rain', volume: 0.5, pan: 0, muted: false };
@@ -772,6 +772,7 @@ const PAGE_RENDER = {
     const tiles = MOODS.map((x) => `<button class="tile ${x.key === m.key ? 'sel' : ''}" data-act="mood" data-arg="${x.key}"><div class="ic">${moodIcon[x.key] || I.spark}</div><div style="flex:1;min-width:0"><div class="nm">${x.label}</div><div class="bd">${moodLine(x)}</div></div>${x.key === m.key && playing ? `<div class="mw" style="width:20px;color:var(--accent)">${I.wave}</div>` : ''}</button>`).join('');
     return hdr('Moods', hdrRight(hpBadge(needsHeadphones(A.state, 'mood')))) +
       `<div class="orbflex"><div class="orbstage"><canvas data-orb="1"></canvas></div></div>
+      <div class="pill vzsel" data-pill="viz.style">${VIZ_STYLES.map(([k, l]) => `<div data-v="${k}" class="${VP.get('style') === k ? 'on' : ''}">${l}</div>`).join('')}</div>
       <div style="text-align:center"><div style="font-family:var(--rounded);font-size:24px;font-weight:300;line-height:1.2">${m.label}</div><div class="caption" style="margin-top:2px">${moodBand(m)}</div></div>
       <div class="moodwin"><div class="grid2">${tiles}</div></div>` +
       lslider('mood.tone', m.pure ? 'TONE' : 'BINAURAL TONE') + lslider('mood.music', 'MUSIC') + bed('mood.amb', lv.ambience, false) +
@@ -799,7 +800,7 @@ const PAGE_RENDER = {
   schumann() {
     const sc = A.state.schumann, def = scDefault(sc), e = sc.libraryID ? LIBRARY.find((x) => x.id === sc.libraryID) : null;
     const value = def ? '7.83' : F.short(scMain(sc));
-    const ring = `<div class="ringflex"><div class="ringstage"><canvas data-ring="1"></canvas></div></div>`;
+    const ring = `<div class="ringflex"><div class="ringstage"><canvas data-ring="1"></canvas></div></div><div class="pill vzsel" data-pill="viz.style">${VIZ_STYLES.map(([k, l]) => `<div data-v="${k}" class="${VP.get('style') === k ? 'on' : ''}">${l}</div>`).join('')}</div>`;
     const readout = `<div class="ringread">${sc.label ? `<div class="ringtag">${esc(sc.label)}</div>` : ''}<div class="ringnum"><span class="vnum${value.length > 5 ? ' long' : ''}" data-vdrag="sch.main" data-vt="sch.main" role="slider" aria-label="Frequency" aria-valuenow="${scMain(sc)}">${value}</span><span class="ringhz">Hz</span></div></div>`;
     const libRow = def ? '' : `<div class="resrow">${I.books}<span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e ? esc(tradLabel(e)) + ' · traditional use' : 'From the Library'}</span><button class="back783" data-act="reset783">${I.back}Back to 7.83</button></div>`;
     let controls;
@@ -1439,6 +1440,7 @@ function updateRingAudio(dt) {
   // Page 4 controls -> rosette shape targets, eased ~0.6 s so nothing snaps.
   const ENG_OFF = { binaural: [1 / 3, 2 / 3], monaural: [0.5, 0], isochronic: [0.1, 0.2] }; // layer phase (turns)
   const eng = sc.tone != null ? (sc.shimmer ? 'binaural' : 'monaural') : (ENG_OFF[sc.engine] ? sc.engine : 'binaural');
+  ringVis.eng = sc.tone != null && !sc.shimmer ? 'pure' : eng;
   const nz = A.state.noise, lvl = nz !== 'off' ? (A.state.noiseLevel || 0) : 0;
   const HALO = { off: 0, brown: 0.35, pink: 0.65, white: 1 };              // noise colour -> glow halo width
   const FLOW = { rain: 1.8, ocean: 0.55, wind: 1.35, stream: 1.15 };        // nature -> wave travel speed
@@ -1451,7 +1453,7 @@ function updateRingAudio(dt) {
   // ends its morph softly, with no kink; shape, opening and spin all read p4U.
   const eu4 = cl(Math.log(cl(carrier || 200, 20, 20000) / 60) / Math.log(400 / 60), 0, 1); // 60 -> 0, 400 Hz (cap) -> 1
   if (ringVis.p4Ua == null) { ringVis.p4Ua = eu4; ringVis.p4U = eu4; }
-  approach(ringVis, 'p4Ua', eu4, dt, 0.45, 0.45); approach(ringVis, 'p4U', ringVis.p4Ua, dt, 0.45, 0.45);
+  approach(ringVis, 'p4Ua', eu4, dt, 0.15, 0.15); approach(ringVis, 'p4U', ringVis.p4Ua, dt, 0.15, 0.15);
   // Trace phases, integrated (phase += speed * dt). Each is used with factor 1 in the draw, so wrapping at
   // TAU is invisible (v9 multiplied a wrapped edgePh by 0.4-1.7, which snapped the loops at every wrap).
   const P4R = [0.5, 1, -0.4, -1.3, -0.6, -1.7], sp = (0.25 + 1.1 * ringVis.p4U) * (0.6 + 0.4 * pv.flow);
@@ -1470,7 +1472,7 @@ function updateRingAudio(dt) {
   // second-order eased like p4U.
   const bu4 = beat > 0.05 ? cl(Math.log(cl(beat, 0.5, 45) / 0.5) / Math.log(90), 0, 1) : 0;
   if (ringVis.p4Ba == null) { ringVis.p4Ba = bu4; ringVis.p4B = bu4; }
-  approach(ringVis, 'p4Ba', bu4, dt, 0.45, 0.45); approach(ringVis, 'p4B', ringVis.p4Ba, dt, 0.45, 0.45);
+  approach(ringVis, 'p4Ba', bu4, dt, 0.15, 0.15); approach(ringVis, 'p4B', ringVis.p4Ba, dt, 0.15, 0.15);
   // Page-4 layer spin, each integrated from its own speed (no shared beat-only rotation any more):
   //  layer 0 = CARRIER layer, forward, 0.04 rad/s at 60 Hz -> ~0.94 rad/s at 400 Hz;
   //  layer 1 = MAIN-frequency (beat) layer, counter-rotating, ~0.05 rad/s at 1 Hz -> ~1.2 rad/s at 45 Hz;
@@ -1484,7 +1486,7 @@ function updateRingAudio(dt) {
   // The mixed layer's spin scales with both rates (gentle, ~0.05 -> ~0.28 rad/s). Directions unchanged.
   const bs4 = beat > 0.05 ? cl(Math.log(cl(beat, 1, 45)) / Math.log(45), 0, 1) : 0;
   if (ringVis.p4Sa == null) { ringVis.p4Sa = bs4; ringVis.p4S = bs4; }
-  approach(ringVis, 'p4Sa', bs4, dt, 0.45, 0.45); approach(ringVis, 'p4S', ringVis.p4Sa, dt, 0.45, 0.45);
+  approach(ringVis, 'p4Sa', bs4, dt, 0.15, 0.15); approach(ringVis, 'p4S', ringVis.p4Sa, dt, 0.15, 0.15);
   const wC = 0.04 + 0.9 * Math.pow(u0, 1.2), wB = 0.05 * Math.pow(24, ringVis.p4S);
   const W = [wC * mv, -wB * mv, (0.04 + 0.1 * wC + 0.12 * wB) * mv];
   const vi = ringVis.vzIn || (ringVis.vzIn = {});                       // reused object: no per-frame garbage
@@ -1511,6 +1513,7 @@ function pulsePeriodFor(carrier, beat) {
 }
 // Shared by the Resonance ring and the moods page; each passes its own vis state, carrier and beat.
 function updateVisAudio(ringVis, carrier, beat, dt) {
+  ringVis.car = carrier; ringVis.bt = beat; // v13.1: live engine values for the styles, read every frame
   const live = Snd.ready && (A.isPlaying || A.toolStarted || A.stats.env > 0.01);
   const rms = live ? readMasterLevel(ringVis) : 0;
   // Fast envelope catches swells (rain, waves). Slow enough that a 7.83 Hz beat does not pump the disc.
@@ -1607,7 +1610,7 @@ function frame(t) {
     const m = moodOf(A.state.moods.selected), lvm = moodLevels(A.state, m.key);
     if (box.clientWidth && box.clientHeight) {
       // Same visualizer as the Resonance page, fed by the selected mood.
-      updateVisAudio(moodVis, m.pure ? m.hz : m.carrier, m.pure ? 0 : m.beat, dt);
+      updateVisAudio(moodVis, m.pure ? m.hz : m.carrier, m.pure ? 0 : m.beat, dt); moodVis.eng = m.pure ? 'pure' : 'binaural';
       const car = m.pure ? m.hz : m.carrier, bt = m.pure ? 0 : m.beat;
       if (moodVis.spinE == null) moodVis.spinE = VP.get('spin');
       approach(moodVis, 'spinE', VP.get('spin'), dt, 0.6, 0.6);
