@@ -1,7 +1,6 @@
 // v13 selectable visual styles (Visual mix > STYLE): 'waves' (formerly 'rings', the original page 1 / page 4 visuals),
 // 'cymatics' (sand on a vibrating plate: grains settle on the nodal lines of a Chladni mode set by the
-// carrier and beat; when the frequency moves, the figure dissolves and re-forms) and 'water' (Faraday-wave
-// cymatics on a round pool seen from above). Gold only, no text.
+// carrier and beat; when the frequency moves, the figure dissolves and re-forms) (v14.2: the Water style was removed). Gold only, no text.
 // Continuity: dt capped at 50 ms, every target eased (second order), phases wrap at 20pi, modes are
 // continuous (non-integer) so the field never switches discontinuously.
 const VS_TAU20 = Math.PI * 20;
@@ -28,7 +27,7 @@ function vsInputs(f, dt) {
   return { S, dt, bhz, sp };
 }
 const TAU_VS = Math.PI * 2;
-// v14.1: the Waves frame (same radius, centre and gold living edge as drawLivingRing), shared by Cymatics and Water.
+// v14.1: the Waves frame (same radius, centre and gold living edge as drawLivingRing), used by Cymatics.
 function vsFrame(g, w, h, S) {
   const R = Math.min(w, h) * 0.5 - 8;
   g.save(); g.translate(w / 2, h / 2); g.globalCompositeOperation = 'lighter'; g.lineJoin = 'round';
@@ -128,75 +127,7 @@ function drawCymatics(cv, w, h, f, dt) {
   }
   g.globalCompositeOperation = 'source-over';
 }
-// --- Water: Faraday-wave cymatics on a round pool, seen from straight above (v14) ---------------------
-// A shallow water pool (20 mm across) is shaken vertically at the carrier f. Faraday waves answer at f/2,
-// with the capillary dispersion w^2 = (sigma/rho) k^3 (sigma 0.072 N/m, rho 1000 kg/m^3), so k grows as f^(2/3):
-// more, finer ripples at higher frequency. The pattern symmetry also climbs with frequency (rings -> square ->
-// hexagonal -> 8, 10, 12-fold quasi-crystal) by superposing N standing waves at equally spaced angles; the
-// symmetries cross-fade continuously in log-frequency so nothing ever switches abruptly. Density: the drawn
-// wavenumber is doubled (x2 in each axis = 4x the cells of a plain square grid). The beat pulses the height.
-const WAT = { G: 260, img: null, cv: null, H: null };
-const WAT_SYM = [ // [log10 Hz centre, N wave vectors (0 = concentric rings)]
-  [Math.log10(60), 0], [Math.log10(140), 2], [Math.log10(300), 3], [Math.log10(600), 4], [Math.log10(1000), 5], [Math.log10(1600), 6]];
-function watK(f) { // drawn wavenumber in radians per pool radius
-  const w = Math.PI * f, k = Math.cbrt(1000 * w * w / 0.072); // Faraday response at f/2: omega = 2 pi f / 2
-  return Math.min(140, 2 * k * 0.01); // pool radius 10 mm, x2 density
-}
-function watW(lf) { // continuous weights over the symmetry list
-  const W = WAT_SYM.map(([c]) => Math.exp(-Math.pow((lf - c) / 0.11, 2)));
-  const s = W.reduce((a, b) => a + b, 0) || 1; return W.map((x) => x / s);
-}
-function drawWater(cv, w, h, f, dt) {
-  const g = setupCanvas(cv, w, h);
-  const { S, dt: d, bhz } = vsInputs(f, dt);
-  const G = WAT.G;
-  if (!WAT.cv) { WAT.cv = document.createElement('canvas'); WAT.cv.width = WAT.cv.height = G; WAT.img = WAT.cv.getContext('2d').createImageData(G, G); WAT.H = new Float32Array(G * G); }
-  const fc = Math.min(1600, Math.max(40, S.car)), lf = Math.log10(fc), k = watK(fc), Wt = watW(lf);
-  // Slow visible standing oscillation (the real f/2 is far above frame rate; we show an aliased sway) + beat pulse.
-  S.wph = ((S.wph || 0) + d * TAU_VS * 0.35) % VS_TAU20;
-  S.wbp = ((S.wbp || 0) + d * TAU_VS * Math.min(bhz, 12)) % VS_TAU20;
-  const bf = Math.max(0, 1 - Math.max(0, bhz - 12) / 8);
-  const pulse = (S.bt > 0.05 ? 0.62 + 0.38 * bf * Math.cos(S.wbp) : 1) * (0.7 + 0.3 * S.en);
-  const tc = 0.6 + 0.4 * Math.cos(S.wph), ts = Math.sin(S.wph * 0.5);
-  const H = WAT.H, D = WAT.img.data;
-  for (let j = 0; j < G; j++) {
-    const y = j / (G - 1) * 2 - 1;
-    for (let i = 0; i < G; i++) {
-      const x = i / (G - 1) * 2 - 1, r = Math.hypot(x, y), id = j * G + i;
-      if (r > 1) { H[id] = 0; continue; }
-      let v = 0;
-      for (let s = 0; s < WAT_SYM.length; s++) {
-        const ww = Wt[s]; if (ww < 0.01) continue;
-        const N = WAT_SYM[s][1]; let p = 0;
-        if (!N) p = Math.cos(k * r) * 1.4;
-        else for (let q = 0; q < N; q++) { const a = q * Math.PI / N + 0.2; p += Math.cos(k * (x * Math.cos(a) + y * Math.sin(a)) + 0.6 * q * ts); }
-        if (N) p /= Math.sqrt(N);
-        v += ww * p;
-      }
-      H[id] = v * tc * pulse * (1 - Math.pow(r, 10)); // meniscus: pinned at the rim
-    }
-  }
-  // Glossy shading: normals from the height field, Blinn-Phong with a soft key light top-left.
-  const L = [-0.45, -0.55, 0.7], ln = Math.hypot(...L), lx = L[0] / ln, ly = L[1] / ln, lz = L[2] / ln;
-  const hx = lx, hy = ly, hz = lz + 1, hn = Math.hypot(hx, hy, hz), sl = 1.5 * Math.pow(140 / Math.max(8, k), 0.6);
-  for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
-    const id = j * G + i, o = id * 4, x = i / (G - 1) * 2 - 1, y = j / (G - 1) * 2 - 1, r = Math.hypot(x, y);
-    if (r > 1) { D[o + 3] = 0; continue; }
-    const dx = (H[id + (i < G - 1 ? 1 : 0)] - H[id - (i > 0 ? 1 : 0)]) * sl, dy = (H[id + (j < G - 1 ? G : 0)] - H[id - (j > 0 ? G : 0)]) * sl;
-    const nn = Math.hypot(dx, dy, 1), nx = -dx / nn, ny = -dy / nn, nz = 1 / nn;
-    const dif = Math.max(0, nx * lx + ny * ly + nz * lz), spec = Math.pow(Math.max(0, (nx * hx + ny * hy + nz * hz) / hn), 60);
-    const fres = 0.25 + 0.75 * Math.pow(1 - nz, 2);
-    const base = 0.07 + 0.33 * dif + 0.55 * fres;
-    D[o] = Math.min(255, 255 * (base * 0.9 + spec * 1.2)); D[o + 1] = Math.min(255, 199 * base * 0.95 + 255 * spec);
-    D[o + 2] = Math.min(255, 31 * base + 200 * spec); D[o + 3] = 255 * Math.min(1, (1 - r) * 60);
-  }
-  WAT.cv.getContext('2d').putImageData(WAT.img, 0, 0);
-  const R = Math.min(w, h) * 0.5 - 8, cx = w / 2, cy = h / 2; // v14.1: Waves frame
-  g.imageSmoothingEnabled = true; g.drawImage(WAT.cv, cx - R, cy - R, 2 * R, 2 * R);
-  vsFrame(g, w, h, S);
-}
 function drawVizStyle(style, cv, w, h, f, dt) {
   if (style === 'cymatics') { drawCymatics(cv, w, h, f, dt); return true; }
-  if (style === 'water' || style === 'ripple' || style === 'liquid') { drawWater(cv, w, h, f, dt); return true; }
   return false;
 }
