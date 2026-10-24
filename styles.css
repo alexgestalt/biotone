@@ -338,3 +338,8 @@ canvas{display:block}
 .cf.vzs .v{font-size:20px}
 .cf.vzs .b{width:36px;height:32px}
 .pill.vzamb>div{font-size:12px;padding-left:2px;padding-right:2px}
+
+/* v14: compact always-visible visual style selector under the visual (Moods + Resonance) */
+.pill.vzsel{flex:none;align-self:center;margin:4px auto 2px;width:max-content;gap:2px;padding:2px;background:rgba(255,199,31,.08);border:1px solid rgba(255,199,31,.25)}
+.pill.vzsel>div{flex:none;font-size:11px;padding:4px 11px;color:rgba(255,199,31,.8)}
+.pill.vzsel>div.on{color:#000}
