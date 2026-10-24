@@ -1,4 +1,4 @@
-// v13 selectable visual styles (Visual mix > STYLE): 'rings' (the original page 1 / page 4 visuals),
+// v13 selectable visual styles (Visual mix > STYLE): 'waves' (formerly 'rings', the original page 1 / page 4 visuals),
 // 'cymatics' (sand on a vibrating plate: grains settle on the nodal lines of a Chladni mode set by the
 // carrier and beat; when the frequency moves, the figure dissolves and re-forms) and 'water' (Faraday-wave
 // cymatics on a round pool seen from above). Gold only, no text.
@@ -28,6 +28,14 @@ function vsInputs(f, dt) {
   return { S, dt, bhz, sp };
 }
 const TAU_VS = Math.PI * 2;
+// v14.1: the Waves frame (same radius, centre and gold living edge as drawLivingRing), shared by Cymatics and Water.
+function vsFrame(g, w, h, S) {
+  const R = Math.min(w, h) * 0.5 - 8;
+  g.save(); g.translate(w / 2, h / 2); g.globalCompositeOperation = 'lighter'; g.lineJoin = 'round';
+  strokeLivingEdge(g, R, PAL[palIndex(0)], 0.8 + 0.15 * (S.en || 0), 0.5, 0, 0, S.t || 0);
+  g.restore(); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+  return R;
+}
 // --- Cymatics (physical, v13.1) -----------------------------------------------------------------------
 // The plate (js/cymmodes.js) is driven by the real tones the engine is playing this frame: the carrier and
 // the second tone at carrier + beat (binaural / monaural; isochronic and pure tones drive the carrier only).
@@ -48,7 +56,8 @@ function cymInit() {
   for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) { const x = i / (G - 1) * 2 - 1, y = j / (G - 1) * 2 - 1, k = j * G + i; CYM.rad[k] = Math.hypot(x, y); CYM.ang[k] = Math.atan2(y, x); }
   CYM.x = new Float32Array(CYM.n); CYM.y = new Float32Array(CYM.n);
   let s = 7; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
-  for (let i = 0; i < CYM.n; i++) { const r = Math.sqrt(rnd()) * 0.97, a = rnd() * TAU_VS; CYM.x[i] = r * Math.cos(a); CYM.y[i] = r * Math.sin(a); }
+  for (let i = 0; i < CYM.n; i += 4) { const r = Math.sqrt(rnd()) * 0.97, a = rnd() * TAU_VS, x = r * Math.cos(a), y = r * Math.sin(a); // mirrored in 4 (symmetric start)
+    CYM.x[i] = x; CYM.y[i] = y; CYM.x[i + 1] = -x; CYM.y[i + 1] = y; CYM.x[i + 2] = x; CYM.y[i + 2] = -y; CYM.x[i + 3] = -x; CYM.y[i + 3] = -y; }
 }
 function cymSample(A, x, y) { // bilinear sample of a grid field at plate coords in [-1, 1]
   const G = CYM.G, u = (x + 1) * 0.5 * (G - 1), v = (y + 1) * 0.5 * (G - 1);
@@ -59,45 +68,56 @@ function drawCymatics(cv, w, h, f, dt) {
   const g = setupCanvas(cv, w, h);
   const { S, dt: d } = vsInputs(f, dt);
   if (!CYM.x) cymInit();
-  const f1 = S.car, two = S.eng === 'binaural' || S.eng === 'monaural', f2 = S.car + S.bt;
-  S.bph = ((S.bph || 0) + d * TAU_VS * S.bt) % VS_TAU20;
-  const cross = two ? Math.cos(S.bph) * Math.max(0, Math.min(1, (14 - S.bt) / 6)) : 0;
-  // Modal weights for each tone, and the overall resonance strength (1 = right on a mode).
-  const G = CYM.G, N = G * G, M = CYM_MODES, wa = S.wa || (S.wa = new Float32Array(M.length)), wb = S.wb || (S.wb = new Float32Array(M.length));
-  let peak = 0;
-  for (let m = 0; m < M.length; m++) { wa[m] = cymGain(f1, M[m][2]); wb[m] = two ? cymGain(f2, M[m][2]) : 0; peak = Math.max(peak, wa[m], wb[m]); }
-  const res = Math.max(0, Math.min(1, Math.log(peak) / Math.log(CYM_Q)));
-  vsEase(S, 'res', res, d, 0.12);
-  const W1 = CYM.w1, W2 = CYM.w2, I = CYM.I; W1.fill(0); W2.fill(0);
-  for (let m = 0; m < M.length; m++) {
-    const a1 = wa[m] / peak, a2 = wb[m] / peak; if (a1 < 0.03 && a2 < 0.03) continue;
-    const n = M[m][0];
-    for (let k = 0; k < N; k++) { const r = CYM.rad[k]; if (r > 1) continue; const phi = cymProfile(M[m], r) * Math.cos(n * CYM.ang[k]); W1[k] += a1 * phi; W2[k] += a2 * phi; }
+  // v14.1 Chladni figure selection. The app's carrier range (60-400 Hz) is mapped onto the plate's mode ladder:
+  // f_plate = 86.3 * (f / 60)^(1 / 0.68), so 60-400 Hz sweeps the 16 lowest modes, (2,0) ... (0,3). Each mode is a
+  // plateau (a distinct nodal figure: n diameters x s circles); between neighbours the figure morphs over the middle
+  // 30% of the interval. Intensity is a sum of squared modes (|W|^2), so every figure is mirror-symmetric and
+  // point-symmetric about the centre. The beat adds an inner figure (symmetry order 2/3/4/6/8 rising with the beat)
+  // and pulses the drive.
+  const M = CYM_MODES, fl = Math.log(86.3 * Math.pow(Math.max(30, S.car) / 60, 1 / 0.68));
+  let ia = 0; while (ia < M.length - 2 && Math.log(M[ia + 1][2]) < fl) ia++;
+  const la = Math.log(M[ia][2]), lb = Math.log(M[ia + 1][2]);
+  const tt = Math.max(0, Math.min(1, (fl - la) / (lb - la))), sm = tt < 0.35 ? 0 : tt > 0.65 ? 1 : (() => { const q = (tt - 0.35) / 0.3; return q * q * (3 - 2 * q); })();
+  const BO = [[0.5, 2], [2, 3], [6, 4], [15, 6], [40, 8]], lbt = Math.log(Math.max(0.5, Math.min(40, S.bt || 0.5)));
+  let ib = 0; while (ib < BO.length - 2 && Math.log(BO[ib + 1][0]) < lbt) ib++;
+  const tb = Math.max(0, Math.min(1, (lbt - Math.log(BO[ib][0])) / (Math.log(BO[ib + 1][0]) - Math.log(BO[ib][0]))));
+  const two = S.eng === 'binaural' || S.eng === 'monaural', inW = two && S.bt > 0.05 ? 0.45 : 0;
+  S.bph = ((S.bph || 0) + d * TAU_VS * Math.min(S.bt, 12)) % VS_TAU20;
+  vsEase(S, 'res', 1 - 0.75 * Math.sin(Math.PI * sm), d, 0.12); // the figure loosens mid-morph, re-forms on the plateau
+  const G = CYM.G, N = G * G, I = CYM.I, W1 = CYM.w1; I.fill(0);
+  const parts = [[M[ia], 1 - sm], [M[ia + 1], sm]];
+  for (const [m, wgt] of parts) {
+    if (wgt < 0.005) continue;
+    let mx = 1e-9; const n = m[0];
+    for (let k = 0; k < N; k++) { const r = CYM.rad[k]; if (r > 1) { W1[k] = 0; continue; } const v = cymProfile(m, r) * Math.cos(n * CYM.ang[k]); W1[k] = v * v; if (W1[k] > mx) mx = W1[k]; }
+    const sc = wgt / mx; for (let k = 0; k < N; k++) I[k] += W1[k] * sc;
   }
-  let mx = 1e-6;
-  for (let k = 0; k < N; k++) { const v = W1[k] * W1[k] + W2[k] * W2[k] + 2 * W1[k] * W2[k] * cross; I[k] = v; if (v > mx) mx = v; }
+  if (inW) for (const [o, wgt] of [[BO[ib][1], 1 - tb], [BO[ib + 1][1], tb]]) {
+    if (wgt < 0.005) continue;
+    for (let k = 0; k < N; k++) { const r = CYM.rad[k]; if (r >= 0.42) continue; const v = Math.sin(Math.PI * r / 0.42) * Math.cos(o * CYM.ang[k]); I[k] += inW * wgt * v * v; }
+  }
+  // Centre: a node of every n > 0 mode, where real sand also piles up; keep a small antinode there so the middle
+  // never fills with a blob (the v14 'stuck sand' look).
+  for (let k = 0; k < N; k++) { const r = CYM.rad[k]; I[k] += 0.15 * Math.exp(-r * r / 0.0012); }
+  let mx = 1e-6; for (let k = 0; k < N; k++) if (I[k] > mx) mx = I[k];
   vsEase(S, 'imax', mx, d, 0.1);
   const inv = 1 / Math.max(1e-6, S.imax);
   for (let j = 1; j < G - 1; j++) for (let i = 1; i < G - 1; i++) { const k = j * G + i; CYM.gx[k] = (I[k + 1] - I[k - 1]) * inv; CYM.gy[k] = (I[k + G] - I[k - G]) * inv; }
   // Grain motion: kicks ~ local amplitude (off resonance the plate barely moves; we keep a floor so the
   // old figure visibly loosens instead of freezing), plus drift toward the nodal lines.
-  const drive = (0.25 + 0.75 * S.res) * (0.7 + 0.6 * S.en) * Math.min(1, d * 30);
+  const drive = (0.25 + 0.75 * S.res) * (0.7 + 0.6 * S.en) * (inW ? 0.8 + 0.2 * Math.cos(S.bph) : 1) * Math.min(1, d * 30);
   let seed = (S.seed || 1) | 0; const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff) - 0.5;
   const X = CYM.x, Y = CYM.y;
   for (let p = 0; p < CYM.n; p++) {
     let x = X[p], y = Y[p];
     const amp = Math.sqrt(Math.max(0, cymSample(I, x, y)) * inv);
     const k = 0.16 * amp * drive;
-    x += rnd() * k - cymSample(CYM.gx, x, y) * 0.12 * drive; y += rnd() * k - cymSample(CYM.gy, x, y) * 0.12 * drive;
-    const rr = Math.hypot(x, y); if (rr > 0.975) { x *= 0.975 / rr; y *= 0.975 / rr; }
+    x += rnd() * k - cymSample(CYM.gx, x, y) * 0.2 * drive; y += rnd() * k - cymSample(CYM.gy, x, y) * 0.2 * drive;
+    const rr = Math.hypot(x, y); if (rr > 0.975) { const nr = Math.sqrt(rnd() + 0.5) * 0.9, na = (rnd() + 0.5) * TAU_VS; x = nr * Math.cos(na); y = nr * Math.sin(na); } // sand bouncing off the free edge falls back onto the plate
     X[p] = x; Y[p] = y;
   }
   S.seed = seed;
-  const R = Math.min(w, h) * 0.46, cx = w / 2, cy = h / 2;
-  const pg = g.createRadialGradient(cx, cy, 0, cx, cy, R * 1.05);
-  pg.addColorStop(0, `rgba(255,199,31,${(0.04 + 0.05 * S.res).toFixed(3)})`); pg.addColorStop(1, 'rgba(255,199,31,0)');
-  g.fillStyle = pg; g.beginPath(); g.arc(cx, cy, R * 1.05, 0, TAU_VS); g.fill();
-  g.strokeStyle = `rgba(255,199,31,${(0.18 + 0.2 * S.res).toFixed(3)})`; g.lineWidth = 1; g.beginPath(); g.arc(cx, cy, R, 0, TAU_VS); g.stroke();
+  const R = vsFrame(g, w, h, S) * 0.96, cx = w / 2, cy = h / 2; // v14.1: same frame as Waves
   g.globalCompositeOperation = 'lighter';
   const sz = Math.max(1.2, R / 150);
   for (let p = 0; p < CYM.n; p++) {
@@ -171,9 +191,9 @@ function drawWater(cv, w, h, f, dt) {
     D[o + 2] = Math.min(255, 31 * base + 200 * spec); D[o + 3] = 255 * Math.min(1, (1 - r) * 60);
   }
   WAT.cv.getContext('2d').putImageData(WAT.img, 0, 0);
-  const R = Math.min(w, h) * 0.46, cx = w / 2, cy = h / 2;
+  const R = Math.min(w, h) * 0.5 - 8, cx = w / 2, cy = h / 2; // v14.1: Waves frame
   g.imageSmoothingEnabled = true; g.drawImage(WAT.cv, cx - R, cy - R, 2 * R, 2 * R);
-  g.strokeStyle = 'rgba(255,199,31,0.6)'; g.lineWidth = 1.2; g.beginPath(); g.arc(cx, cy, R, 0, TAU_VS); g.stroke();
+  vsFrame(g, w, h, S);
 }
 function drawVizStyle(style, cv, w, h, f, dt) {
   if (style === 'cymatics') { drawCymatics(cv, w, h, f, dt); return true; }
