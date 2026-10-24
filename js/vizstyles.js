@@ -99,13 +99,22 @@ function drawCymatics(cv, w, h, f, dt) {
   S.bph = ((S.bph || 0) + d * TAU_VS * Math.min(bt, 12)) % VS_TAU20;
   vsEase(S, 'res', 1 - 0.7 * Math.max(Math.sin(Math.PI * wn), Math.sin(Math.PI * ws)), d, 0.12); // loosens mid-morph
   // The field is evaluated analytically at every grain (no grid), so even 24 thin rays stay exact lines.
+  // v14.4 curved figures: each (n, s) figure is a SIGNED superposition of degenerate-neighbour modes,
+  //   F = J_n(l r) cos(n th) + A * J_0(l' r) + B * J_2n(l'' r) cos(2n th)
+  // (the ring mode closes the rays into petals/loops, the 2n mode adds the rosette/star inner curve). All terms are
+  // cos-only, so the figure is mirror-symmetric about the axis and has n-fold rotational symmetry. Neighbour figures
+  // are blended as signed fields, so nodal lines bend continuously from one shape into the next (no snapping).
+  const mixA = 0.55 + 0.25 * Math.sin(0.9 * Math.log(Math.max(60, S.car) / 60)), mixB = 0.35;
   const MS = [];
-  for (const [n, a] of [[n0, 1 - wn], [n1, wn]]) for (const [s, b] of [[s0, 1 - ws], [s1, ws]]) if (a * b >= 0.005) MS.push([n, a * b, cymProf(n, s)]);
+  for (const [n, a] of [[n0, 1 - wn], [n1, wn]]) for (const [s, b] of [[s0, 1 - ws], [s1, ws]]) if (a * b >= 0.005)
+    MS.push([a * b, n, cymProf(n, s), cymProf(0, s + 1), cymProf(2 * n, Math.max(0, s - 1))]);
   const fld = (x, y) => {
     const r = Math.hypot(x, y), th = Math.atan2(y, x), u = Math.min(1, r) * 160, i = Math.min(159, u | 0), t = u - i;
-    let v = 0.15 * Math.exp(-r * r / 0.0012) + 0.12 * Math.exp(-r * r / 0.02); // centre kept clear (high-n modes are flat there)
-    for (const [n, wg, P] of MS) { const q = (P[i] + (P[i + 1] - P[i]) * t) * Math.cos(n * th); v += wg * q * q; }
-    return v;
+    const L = (P) => P[i] + (P[i + 1] - P[i]) * t;
+    let W = 0;
+    for (const [wg, n, P1, P0, P2] of MS) W += wg * (L(P1) * Math.cos(n * th) + mixA * L(P0) + mixB * L(P2) * Math.cos(2 * n * th));
+    W /= (1 + mixA + mixB) * 0.6;
+    return W * W + 0.15 * Math.exp(-r * r / 0.0012); // keep the exact centre clear
   };
   const E = 0.004;
   // Grains: kicks ~ local amplitude, strong drift onto the nodal lines (crisp lines, little scatter); pulse at low beat.
