@@ -69,8 +69,8 @@ function cymSample(A, x, y) { // bilinear sample of a grid field at plate coords
 // W(r, th) = J_n(lambda r) cos(n th), lambda placed between the s-th and (s+1)-th zero of J_n so the figure has
 // exactly s interior nodal circles. Each step is a plateau; neighbours morph (smoothstep over the middle 30%).
 // Intensity is a sum of squared modes, so every figure is centred and mirror-symmetric. Low beats pulse the drive.
-const CYM_NB = [[1, 2], [1.7, 3], [3, 4], [4, 5], [7, 6], [11, 7], [16, 8], [22, 9], [30, 10], [42, 12]];
-const CYM_SC = [[60, 0], [100, 1], [170, 2], [330, 3]];
+const CYM_NB = [[1, 2], [2, 3], [4, 4], [8, 5], [16, 6]]; // v14.5: capped at 6-fold
+const CYM_SC = [[60, 0], [120, 1], [250, 2]];
 const CYM_PC = {};
 function cymJ(n, x) { let t = 0; const K = 64; for (let i = 0; i < K; i++) { const u = (i + 0.5) / K * Math.PI; t += Math.cos(n * u - x * Math.sin(u)); } return t / K; }
 function cymProf(n, s) { // radial profile, 161 samples, max |W| = 1 (cached)
@@ -97,40 +97,50 @@ function drawCymatics(cv, w, h, f, dt) {
   const [n0, n1, wn] = cymStep(CYM_NB, Math.max(1, Math.min(45, bt)));
   const [s0, s1, ws] = cymStep(CYM_SC, Math.max(60, Math.min(400, S.car)));
   S.bph = ((S.bph || 0) + d * TAU_VS * Math.min(bt, 12)) % VS_TAU20;
-  vsEase(S, 'res', 1 - 0.7 * Math.max(Math.sin(Math.PI * wn), Math.sin(Math.PI * ws)), d, 0.12); // loosens mid-morph
-  // The field is evaluated analytically at every grain (no grid), so even 24 thin rays stay exact lines.
-  // v14.4 curved figures: each (n, s) figure is a SIGNED superposition of degenerate-neighbour modes,
-  //   F = J_n(l r) cos(n th) + A * J_0(l' r) + B * J_2n(l'' r) cos(2n th)
-  // (the ring mode closes the rays into petals/loops, the 2n mode adds the rosette/star inner curve). All terms are
-  // cos-only, so the figure is mirror-symmetric about the axis and has n-fold rotational symmetry. Neighbour figures
-  // are blended as signed fields, so nodal lines bend continuously from one shape into the next (no snapping).
-  const mixA = 0.55 + 0.25 * Math.sin(0.9 * Math.log(Math.max(60, S.car) / 60)), mixB = 0.35;
+  vsEase(S, 'res', 1 - 0.55 * Math.max(Math.sin(Math.PI * wn), Math.sin(Math.PI * ws)), d, 0.15); // off-resonance: sand quiets
+  // v14.5 round closed figures. Each figure is a SIGNED mix of a centre-driven ring mode and petal modes of the same
+  // order n (n capped at 6, so there are never more than 6-fold petals and never a web of rays):
+  //   F = J_n(l1 p) cos(n th) + A J_0(l0 p) + B J_n(l2 p) cos(n th),  p = r / 0.86
+  // The ring term bends every diameter into a closed loop (petals / lobes), the second radial order of n nests a
+  // smaller petal ring inside. A and B vary continuously with log(beat) and log(carrier), so the curves flow with
+  // every slider move; n (beat) and s (carrier) step, and neighbours are blended as signed fields (no snapping).
+  // Outside p = 1 the plate edge is an antinode zone, so sand never lines the rim or spans the plate.
+  const lb = Math.log(bt), lc = Math.log(Math.max(60, S.car));
+  const mixA = 0.8 + 0.3 * Math.sin(1.7 * lb + 0.8 * lc), mixB = 0.45 + 0.3 * Math.cos(1.3 * lb - 0.6 * lc);
   const MS = [];
   for (const [n, a] of [[n0, 1 - wn], [n1, wn]]) for (const [s, b] of [[s0, 1 - ws], [s1, ws]]) if (a * b >= 0.005)
-    MS.push([a * b, n, cymProf(n, s), cymProf(0, s + 1), cymProf(2 * n, Math.max(0, s - 1))]);
+    MS.push([a * b, n, cymProf(n, s), cymProf(0, s + 1), cymProf(n, s + 1)]);
   const fld = (x, y) => {
-    const r = Math.hypot(x, y), th = Math.atan2(y, x), u = Math.min(1, r) * 160, i = Math.min(159, u | 0), t = u - i;
+    const r = Math.hypot(x, y), q = r / 0.86, th = Math.atan2(y, x), u = Math.min(1, q) * 160, i = Math.min(159, u | 0), t = u - i;
     const L = (P) => P[i] + (P[i + 1] - P[i]) * t;
     let W = 0;
-    for (const [wg, n, P1, P0, P2] of MS) W += wg * (L(P1) * Math.cos(n * th) + mixA * L(P0) + mixB * L(P2) * Math.cos(2 * n * th));
-    W /= (1 + mixA + mixB) * 0.6;
-    return W * W + 0.15 * Math.exp(-r * r / 0.0012); // keep the exact centre clear
+    for (const [wg, n, P1, P0, P2] of MS) { const c = Math.cos(n * th); W += wg * (L(P1) * c + mixA * L(P0) + mixB * L(P2) * c); }
+    W /= (1 + mixA + mixB) * 0.55;
+    const e = Math.max(0, Math.min(1, (r - 0.8) / 0.15)), ee = e * e * (3 - 2 * e);
+    return W * W * (1 - ee) + 0.5 * ee + 0.15 * Math.exp(-r * r / 0.0012);
   };
   const E = 0.004;
-  // Grains: kicks ~ local amplitude, strong drift onto the nodal lines (crisp lines, little scatter); pulse at low beat.
-  const pul = bt < 12 ? 0.75 + 0.25 * Math.cos(S.bph) : 1;
-  const drive = (0.25 + 0.75 * S.res) * (0.7 + 0.6 * S.en) * pul * Math.min(1, d * 30);
+  // Sand physics (Klangfiguren / Gaspar & Mezic 2025 / Dorrestijn et al. 2010): a grain leaves the plate only where the
+  // local acceleration Gamma = A w^2 / g exceeds 1; it hops a distance growing with Gamma - 1 in a random direction
+  // with a slight lean down the amplitude slope, and lands. Inside the quiet band (Gamma < 1) it stays, creeping only
+  // slightly downhill; louder drive narrows the band, so lines get thinner and crisper. Between resonances the plate
+  // barely moves and the sand lies still; at the next resonance it bounces off the antinodes and re-forms.
+  // Slider velocity (log-Hz per second, beat counts double): a slow move bends the figure continuously; a fast move
+  // throws the sand up everywhere (scatter), and the next figure forms when the slider settles on its resonance.
+  const lv = 2 * Math.log(bt) + Math.log(Math.max(30, S.car));
+  const vel = S.lv0 === undefined ? 0 : Math.abs(lv - S.lv0) / Math.max(1e-3, d); S.lv0 = lv;
+  vsEase(S, 'scat', Math.min(1, Math.max(0, (vel - 0.6) / 2.5)), d, vel > 0.6 ? 0.05 : 0.5);
+  const pul = bt < 12 ? 0.8 + 0.2 * Math.cos(S.bph) : 1;
+  const Gk = 9 * (0.2 + 0.8 * S.res) * (0.75 + 0.5 * S.en) * pul, fr = Math.min(1, d * 30);
   let seed = (S.seed || 1) | 0; const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff) - 0.5;
   const X = CYM.x, Y = CYM.y;
   for (let p = 0; p < CYM.n; p++) {
     let x = X[p], y = Y[p];
-    const I0 = fld(x, y), amp = Math.sqrt(I0);
-    const k = (0.11 * amp + 0.007) * drive; // the small floor lets sand spread along the lines instead of balling up
-    // pull down the gradient of |W| (a cone, not a bowl): same speed everywhere along a line, so sand spreads
-    // evenly along each nodal line instead of collecting at the crossings
-    let gx = (Math.sqrt(fld(x + E, y)) - amp) / E, gy = (Math.sqrt(fld(x, y + E)) - amp) / E; const gm = Math.hypot(gx, gy), cl = gm > 1e-6 ? Math.min(1, amp * 4) / gm : 0;
-    x += rnd() * k - gx * cl * 0.006 * drive; y += rnd() * k - gy * cl * 0.006 * drive;
-    const rr = Math.hypot(x, y); if (rr > 0.975) { const nr = Math.sqrt(rnd() + 0.5) * 0.9, na = (rnd() + 0.5) * TAU_VS; x = nr * Math.cos(na); y = nr * Math.sin(na); }
+    const I0 = fld(x, y), amp = Math.sqrt(I0), Gm = amp * Gk + 2.2 * S.scat + 0.6 * (1 - S.res); // off-resonance / fast move: whole plate jitters
+    let gx = (Math.sqrt(fld(x + E, y)) - amp) / E, gy = (Math.sqrt(fld(x, y + E)) - amp) / E; const gm = Math.hypot(gx, gy) || 1; gx /= gm; gy /= gm;
+    if (Gm > 1) { if (rnd() + 0.5 < 0.45 * fr) { const L = 0.035 * Math.pow(Gm - 1, 0.6), an = (rnd() + 0.5) * TAU_VS; x += L * (Math.cos(an) - 0.45 * gx); y += L * (Math.sin(an) - 0.45 * gy); } } // hop
+    else { const c = 0.0025 * Gm * fr; x += rnd() * 0.004 * fr - gx * c; y += rnd() * 0.004 * fr - gy * c; } // quiet band: creep
+    const rr = Math.hypot(x, y); if (rr > 0.975) { x *= 0.9 / rr; y *= 0.9 / rr; } // bounces back off the rim
     X[p] = x; Y[p] = y;
   }
   S.seed = seed;
@@ -142,7 +152,7 @@ function drawCymatics(cv, w, h, f, dt) {
   const sz = Math.max(1.2, R / 150);
   for (let p = 0; p < CYM.n; p++) {
     const amp = Math.sqrt(fld(X[p], Y[p]));
-    const a = Math.max(0.08, 0.95 - amp * 2.4);
+    const rp = Math.hypot(X[p], Y[p]), a = Math.max(0.05, 0.95 - amp * 2.4) * (rp > 0.82 ? Math.max(0, 1 - (rp - 0.82) / 0.12) : 1); // fade toward the edge
     g.fillStyle = `rgba(255,${(190 + a * 40) | 0},${(31 + a * 60) | 0},${a.toFixed(3)})`;
     g.fillRect(cx + X[p] * R - sz / 2, cy + Y[p] * R - sz / 2, sz, sz);
   }
