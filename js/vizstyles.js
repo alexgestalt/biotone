@@ -110,12 +110,17 @@ function drawCymatics(cv, w, h, f, dt) {
   // v14.6 continuous shape parameters, mapped smoothly to the exact beat and carrier (no buckets):
   const rsc = 0.86 * (0.9 + 0.1 * Math.sin(2.9 * lc + 0.9 * lb));          // ring radius breathes with carrier
   const tw = 0.3 * Math.sin(2.1 * lc - 1.3 * lb);                          // petal curvature (gentle swirl)
+  // v14.7 micro-detuning (real plate near resonance: a tiny frequency change shifts the nodal lines). Phases in
+  // absolute Hz so 0.1 Hz beat or 1 Hz carrier visibly moves the figure; continuous (no jumps).
+  const fb = TAU_VS * bt / 0.8, fc = TAU_VS * S.car / 9;
+  const rot = 0.06 * Math.sin(fb) + 0.05 * Math.sin(fc);                   // nodal lines rotate slightly
+  const rdt = 1 + 0.035 * Math.sin(fc + 0.7) + 0.02 * Math.sin(fb + 1.9);  // rings breathe in/out
   const rk = 0.75 + 0.4 * (0.5 + 0.5 * Math.sin(1.7 * lb + 2.4 * lc));      // lobe roundness
   const MS = [];
   for (const [n, a] of [[n0, 1 - wn], [n1, wn]]) for (const [s, b] of [[s0, 1 - ws], [s1, ws]]) if (a * b >= 0.005)
     MS.push([a * b, n, cymProf(n, s), cymProf(0, s + 1), cymProf(n, s + 1)]);
   const fld = (x, y) => {
-    const r = Math.hypot(x, y), q = r / rsc, th = Math.atan2(y, x) + tw * q * q, u = Math.min(1, q) * 160, i = Math.min(159, u | 0), t = u - i;
+    const r = Math.hypot(x, y), q = r / (rsc * rdt), th = Math.atan2(y, x) + rot + tw * q * q, u = Math.min(1, q) * 160, i = Math.min(159, u | 0), t = u - i;
     const L = (P) => P[i] + (P[i + 1] - P[i]) * t;
     let W = 0;
     for (const [wg, n, P1, P0, P2] of MS) { const c0 = Math.cos(n * th), c = Math.sign(c0) * Math.pow(Math.abs(c0), rk); W += wg * (L(P1) * c + mixA * L(P0) + mixB * L(P2) * c); }
@@ -132,18 +137,23 @@ function drawCymatics(cv, w, h, f, dt) {
   // Slider velocity (log-Hz per second, beat counts double): a slow move bends the figure continuously; a fast move
   // throws the sand up everywhere (scatter), and the next figure forms when the slider settles on its resonance.
   const lv = 2 * Math.log(bt) + Math.log(Math.max(30, S.car));
-  const vel = S.lv0 === undefined ? 0 : Math.abs(lv - S.lv0) / Math.max(1e-3, d); S.lv0 = lv;
+  const dlv = S.lv0 === undefined ? 0 : Math.abs(lv - S.lv0), vel = dlv / Math.max(1e-3, d); S.lv0 = lv;
+  vsEase(S, 'stir', Math.min(1, dlv * 400), d, dlv > 1e-4 ? 0.04 : 0.7); // any micro move: sand near lines streams and shimmers
   vsEase(S, 'scat', Math.min(1, Math.max(0, (vel - 0.6) / 2.5)), d, vel > 0.6 ? 0.05 : 0.5);
   const pul = bt < 12 ? 0.8 + 0.2 * Math.cos(S.bph) : 1;
   const Gk = 9 * (0.2 + 0.8 * S.res) * (0.75 + 0.5 * S.en) * pul, fr = Math.min(1, d * 30);
   let seed = (S.seed || 1) | 0; const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff) - 0.5;
   const X = CYM.x, Y = CYM.y;
+  // v14.7 settling clock (real footage: a figure streams in over ~1-2 s, lines keep tightening, a few stragglers linger)
+  vsEase(S, 'set', S.scat > 0.15 || S.res < 0.85 ? 0 : 1, d, S.scat > 0.15 ? 0.1 : 1.6);
+  const qj = 0.004 * (1 - 0.65 * S.set);
   for (let p = 0; p < CYM.n; p++) {
     let x = X[p], y = Y[p];
-    const I0 = fld(x, y), amp = Math.sqrt(I0), Gm = amp * Gk + 2.2 * S.scat + 0.6 * (1 - S.res); // off-resonance / fast move: whole plate jitters
+    const I0 = fld(x, y), amp = Math.sqrt(I0), Gm = amp * Gk * (1 + 0.5 * S.stir) + 0.5 * S.stir + 2.2 * S.scat + 0.6 * (1 - S.res); // off-resonance / fast move: whole plate jitters
     let gx = (Math.sqrt(fld(x + E, y)) - amp) / E, gy = (Math.sqrt(fld(x, y + E)) - amp) / E; const gm = Math.hypot(gx, gy) || 1; gx /= gm; gy /= gm;
-    if (Gm > 1) { if (rnd() + 0.5 < 0.45 * fr) { const L = 0.035 * Math.pow(Gm - 1, 0.6), an = (rnd() + 0.5) * TAU_VS; x += L * (Math.cos(an) - 0.45 * gx); y += L * (Math.sin(an) - 0.45 * gy); } } // hop
-    else { const c = 0.0025 * Gm * fr; x += rnd() * 0.004 * fr - gx * c; y += rnd() * 0.004 * fr - gy * c; } // quiet band: creep
+    const mob = p % 9 === 0 ? 0.3 : 1; // stragglers: some grains are slow to leave the antinodes
+    if (Gm > 1) { if (rnd() + 0.5 < (0.25 + 0.35 * Math.min(1, Gm - 1)) * mob * fr) { const L = 0.035 * Math.pow(Gm - 1, 0.6), an = (rnd() + 0.5) * TAU_VS; x += L * (Math.cos(an) - 0.6 * gx); y += L * (Math.sin(an) - 0.6 * gy); } } // hop
+    else { const c = 0.0025 * Gm * fr; x += rnd() * qj * fr - gx * c; y += rnd() * qj * fr - gy * c; } // quiet band: creep
     const rr = Math.hypot(x, y); if (rr > 0.975) { x *= 0.9 / rr; y *= 0.9 / rr; } // bounces back off the rim
     X[p] = x; Y[p] = y;
   }
@@ -155,8 +165,8 @@ function drawCymatics(cv, w, h, f, dt) {
   g.globalCompositeOperation = 'lighter'; // piles brighten where grains accumulate
   const sz = Math.max(1.2, R / 150);
   for (let p = 0; p < CYM.n; p++) {
-    const amp = Math.sqrt(fld(X[p], Y[p]));
-    const rp = Math.hypot(X[p], Y[p]), a = Math.max(0.05, 0.95 - amp * 2.4) * (rp > 0.82 ? Math.max(0, 1 - (rp - 0.82) / 0.12) : 1); // fade toward the edge
+    const amp = Math.sqrt(fld(X[p], Y[p])), sh = 0.82 + 0.36 * (((p * 2654435761 + (S.bph * 40 | 0)) >>> 0) % 997) / 997; // shimmer
+    const rp = Math.hypot(X[p], Y[p]), a = sh * Math.max(0.22 + 0.25 * S.scat, 0.95 - amp * 2.4) * (rp > 0.82 ? Math.max(0, 1 - (rp - 0.82) / 0.12) : 1); // fade toward the edge
     g.fillStyle = `rgba(255,${(190 + a * 40) | 0},${(31 + a * 60) | 0},${a.toFixed(3)})`;
     g.fillRect(cx + X[p] * R - sz / 2, cy + Y[p] * R - sz / 2, sz, sz);
   }
