@@ -86,7 +86,7 @@ function cymProf(n, s) { // radial profile, 161 samples, max |W| = 1 (cached)
 function cymStep(T, v) { // [[lo index, hi index, weight of hi]] on a log ladder with 30% morph band
   const lv = Math.log(v); let i = 0; while (i < T.length - 2 && Math.log(T[i + 1][0]) < lv) i++;
   const t = Math.max(0, Math.min(1, (lv - Math.log(T[i][0])) / (Math.log(T[i + 1][0]) - Math.log(T[i][0]))));
-  const sm = t < 0.35 ? 0 : t > 0.65 ? 1 : (() => { const q = (t - 0.35) / 0.3; return q * q * (3 - 2 * q); })();
+  const sm = t * t * (3 - 2 * t); // v14.6: full-range smooth blend, no plateau: every slider move changes the mode weights
   return [T[i][1], T[i + 1][1], sm];
 }
 function drawCymatics(cv, w, h, f, dt) {
@@ -97,7 +97,7 @@ function drawCymatics(cv, w, h, f, dt) {
   const [n0, n1, wn] = cymStep(CYM_NB, Math.max(1, Math.min(45, bt)));
   const [s0, s1, ws] = cymStep(CYM_SC, Math.max(60, Math.min(400, S.car)));
   S.bph = ((S.bph || 0) + d * TAU_VS * Math.min(bt, 12)) % VS_TAU20;
-  vsEase(S, 'res', 1 - 0.55 * Math.max(Math.sin(Math.PI * wn), Math.sin(Math.PI * ws)), d, 0.15); // off-resonance: sand quiets
+  vsEase(S, 'res', 1 - 0.25 * Math.max(Math.sin(Math.PI * wn), Math.sin(Math.PI * ws)), d, 0.15); // off-resonance: sand quiets
   // v14.5 round closed figures. Each figure is a SIGNED mix of a centre-driven ring mode and petal modes of the same
   // order n (n capped at 6, so there are never more than 6-fold petals and never a web of rays):
   //   F = J_n(l1 p) cos(n th) + A J_0(l0 p) + B J_n(l2 p) cos(n th),  p = r / 0.86
@@ -106,15 +106,19 @@ function drawCymatics(cv, w, h, f, dt) {
   // every slider move; n (beat) and s (carrier) step, and neighbours are blended as signed fields (no snapping).
   // Outside p = 1 the plate edge is an antinode zone, so sand never lines the rim or spans the plate.
   const lb = Math.log(bt), lc = Math.log(Math.max(60, S.car));
-  const mixA = 0.8 + 0.3 * Math.sin(1.7 * lb + 0.8 * lc), mixB = 0.45 + 0.3 * Math.cos(1.3 * lb - 0.6 * lc);
+  const mixA = (n0 <= 2 ? 1.15 : 0.85) + 0.3 * Math.sin(2.3 * lb + 1.6 * lc), mixB = 0.45 + 0.3 * Math.cos(1.9 * lb - 1.4 * lc);
+  // v14.6 continuous shape parameters, mapped smoothly to the exact beat and carrier (no buckets):
+  const rsc = 0.86 * (0.9 + 0.1 * Math.sin(2.9 * lc + 0.9 * lb));          // ring radius breathes with carrier
+  const tw = 0.3 * Math.sin(2.1 * lc - 1.3 * lb);                          // petal curvature (gentle swirl)
+  const rk = 0.75 + 0.4 * (0.5 + 0.5 * Math.sin(1.7 * lb + 2.4 * lc));      // lobe roundness
   const MS = [];
   for (const [n, a] of [[n0, 1 - wn], [n1, wn]]) for (const [s, b] of [[s0, 1 - ws], [s1, ws]]) if (a * b >= 0.005)
     MS.push([a * b, n, cymProf(n, s), cymProf(0, s + 1), cymProf(n, s + 1)]);
   const fld = (x, y) => {
-    const r = Math.hypot(x, y), q = r / 0.86, th = Math.atan2(y, x), u = Math.min(1, q) * 160, i = Math.min(159, u | 0), t = u - i;
+    const r = Math.hypot(x, y), q = r / rsc, th = Math.atan2(y, x) + tw * q * q, u = Math.min(1, q) * 160, i = Math.min(159, u | 0), t = u - i;
     const L = (P) => P[i] + (P[i + 1] - P[i]) * t;
     let W = 0;
-    for (const [wg, n, P1, P0, P2] of MS) { const c = Math.cos(n * th); W += wg * (L(P1) * c + mixA * L(P0) + mixB * L(P2) * c); }
+    for (const [wg, n, P1, P0, P2] of MS) { const c0 = Math.cos(n * th), c = Math.sign(c0) * Math.pow(Math.abs(c0), rk); W += wg * (L(P1) * c + mixA * L(P0) + mixB * L(P2) * c); }
     W /= (1 + mixA + mixB) * 0.55;
     const e = Math.max(0, Math.min(1, (r - 0.8) / 0.15)), ee = e * e * (3 - 2 * e);
     return W * W * (1 - ee) + 0.5 * ee + 0.15 * Math.exp(-r * r / 0.0012);
